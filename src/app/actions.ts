@@ -12,7 +12,12 @@ async function requireAuth() {
 
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   await requireAuth()
-  await updateTask(id, { status })
+  try {
+    await updateTask(id, { status })
+  } catch (e) {
+    console.error("[updateTaskStatus] Notion error:", e)
+    throw e
+  }
   revalidatePath("/")
 }
 

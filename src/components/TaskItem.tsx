@@ -1,6 +1,6 @@
 "use client"
 
-import { useOptimistic, useTransition, useState, useRef, useEffect } from "react"
+import { useOptimistic, useTransition, useState } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { StatusBadge } from "./StatusBadge"
 import { PriorityBadge } from "./PriorityBadge"
@@ -22,24 +22,18 @@ export function TaskItem({ task }: { task: Task }) {
   const due = formatDue(task.due)
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    if (menuOpen) document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [menuOpen])
-
-  function handleStatusChange(status: TaskStatus) {
-    setMenuOpen(false)
+  function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const status = e.target.value as TaskStatus
+    setActionError(null)
     startTransition(async () => {
       setOptimisticStatus(status)
-      await updateTaskStatus(task.id, status)
+      try {
+        await updateTaskStatus(task.id, status)
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : String(e))
+      }
     })
   }
 
@@ -55,27 +49,18 @@ export function TaskItem({ task }: { task: Task }) {
           {task.title}
         </a>
         <div className="flex flex-wrap items-center gap-2 mt-1">
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="cursor-pointer hover:opacity-70 transition-opacity"
+          <div className="relative">
+            <select
+              value={optimisticStatus ?? ""}
+              onChange={handleStatusChange}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
               aria-label="ステータスを変更"
             >
-              <StatusBadge status={optimisticStatus} />
-            </button>
-            {menuOpen && (
-              <div className="absolute left-0 top-full mt-1 z-10 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-28">
-                {STATUS_OPTIONS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 transition-colors ${s === optimisticStatus ? "font-semibold" : ""}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <StatusBadge status={optimisticStatus} />
           </div>
           <PriorityBadge priority={task.priority} />
           {due && (
@@ -92,6 +77,11 @@ export function TaskItem({ task }: { task: Task }) {
             <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
           )}
         </div>
+        {actionError && (
+          <p className="mt-1 text-xs text-red-600 bg-red-50 rounded px-2 py-1 break-all">
+            ⚠ {actionError}
+          </p>
+        )}
       </div>
     </div>
   )
