@@ -3,6 +3,7 @@
 import { useState } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { TaskItem } from "./TaskItem"
+import { TaskForm } from "./TaskForm"
 
 const FILTER_OPTIONS: { label: string; statuses: TaskStatus[] | "all" }[] = [
   { label: "進行中・未着手", statuses: ["進行中", "未着手"] },
@@ -15,6 +16,7 @@ const FILTER_OPTIONS: { label: string; statuses: TaskStatus[] | "all" }[] = [
 
 export function TaskList({ tasks }: { tasks: Task[] }) {
   const [activeFilter, setActiveFilter] = useState(0)
+  const [showForm, setShowForm] = useState(false)
 
   const filtered = FILTER_OPTIONS[activeFilter].statuses === "all"
     ? tasks
@@ -25,20 +27,29 @@ export function TaskList({ tasks }: { tasks: Task[] }) {
 
   return (
     <div>
-      <div className="flex gap-1 p-3 border-b border-gray-200 overflow-x-auto">
-        {FILTER_OPTIONS.map((opt, i) => (
-          <button
-            key={opt.label}
-            onClick={() => setActiveFilter(i)}
-            className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-              activeFilter === i
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="flex items-center gap-1 p-3 border-b border-gray-200">
+        <div className="flex gap-1 overflow-x-auto flex-1">
+          {FILTER_OPTIONS.map((opt, i) => (
+            <button
+              key={opt.label}
+              onClick={() => setActiveFilter(i)}
+              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                activeFilter === i
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="ml-2 flex-shrink-0 bg-blue-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg leading-none hover:bg-blue-700 transition-colors"
+          aria-label="タスクを追加"
+        >
+          +
+        </button>
       </div>
 
       {filtered.length === 0 ? (
@@ -54,6 +65,8 @@ export function TaskList({ tasks }: { tasks: Task[] }) {
       )}
 
       <p className="text-center text-xs text-gray-300 py-3">{filtered.length}件</p>
+
+      {showForm && <TaskForm onClose={() => setShowForm(false)} />}
     </div>
   )
 }
