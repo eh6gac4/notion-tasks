@@ -1,86 +1,98 @@
 "use client"
 
-import { useOptimistic, useTransition, useState } from "react"
+import { useOptimistic, useTransition } from "react"
 import type { Task, TaskStatus } from "@/types/task"
-import { StatusBadge } from "./StatusBadge"
-import { PriorityBadge } from "./PriorityBadge"
 import { updateTaskStatus } from "@/app/actions"
 
 const STATUS_OPTIONS: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
 
-function formatDue(due: string | null): { label: string; overdue: boolean } | null {
-  if (!due) return null
-  const date = new Date(due)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const overdue = date < today
-  const label = date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })
-  return { label, overdue }
+const STATUS_STYLES: Record<TaskStatus, string> = {
+  "未着手":       "bg-gray-100 text-gray-600",
+  "進行中":       "bg-blue-100 text-blue-700",
+  "確認中":       "bg-yellow-100 text-yellow-700",
+  "一時中断":     "bg-orange-100 text-orange-700",
+  "完了":         "bg-green-100 text-green-700",
+  "中止":         "bg-red-100 text-red-600",
+  "アーカイブ済み": "bg-gray-100 text-gray-400",
+}
+
+const PRIORITY_STYLES = {
+  high:   { label: "↑ High", color: "text-red-500" },
+  medium: { label: "→ Med",  color: "text-yellow-500" },
+  low:    { label: "↓ Low",  color: "text-green-500" },
 }
 
 export function TaskItem({ task }: { task: Task }) {
-  const due = formatDue(task.due)
   const [, startTransition] = useTransition()
-  const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
-  const [actionError, setActionError] = useState<string | null>(null)
+  const [status, setStatus] = useOptimistic(task.status)
 
-  function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const status = e.target.value as TaskStatus
-    setActionError(null)
-    startTransition(async () => {
-      setOptimisticStatus(status)
-      try {
-        await updateTaskStatus(task.id, status)
-      } catch (e) {
-        setActionError(e instanceof Error ? e.message : String(e))
-      }
-    })
-  }
+  const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
+
+  const due = task.due ? new Date(task.due) : null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const isOverdue = due !== null && due < today
 
   return (
-    <div className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0">
-      <div className="flex-1 min-w-0">
-        <a
-          href={task.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-gray-900 hover:underline line-clamp-1"
-        >
-          {task.title}
-        </a>
-        <div className="flex flex-wrap items-center gap-2 mt-1">
-          <div className="relative">
-            <select
-              value={optimisticStatus ?? ""}
-              onChange={handleStatusChange}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-              aria-label="ステータスを変更"
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <StatusBadge status={optimisticStatus} />
-          </div>
-          <PriorityBadge priority={task.priority} />
-          {due && (
-            <span className={`text-xs ${due.overdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
-              {due.overdue ? "⚠ " : ""}{due.label}
-            </span>
-          )}
-          {task.tags.map((tag) => (
-            <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-              {tag}
-            </span>
-          ))}
-          {task.childTaskIds.length > 0 && (
-            <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
-          )}
+    <div className="px-4 py-4 active:bg-gray-50">
+      <a
+        href={task.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block mb-2.5"
+      >
+        <p className="text-base font-medium text-gray-900 leading-snug">{task.title}</p>
+      </a>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Status — native select overlaid on badge */}
+        <div className="relative inline-flex">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle}`}>
+            {status ?? "未着手"}
+          </span>
+          <select
+            value={status ?? "未着手"}
+            onChange={(e) => {
+              const next = e.target.value as TaskStatus
+              startTransition(async () => {
+                setStatus(next)
+                await updateTaskStatus(task.id, next)
+              })
+            }}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            aria-label="ステータスを変更"
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
-        {actionError && (
-          <p className="mt-1 text-xs text-red-600 bg-red-50 rounded px-2 py-1 break-all">
-            ⚠ {actionError}
-          </p>
+
+        {/* Priority */}
+        {task.priority && (
+          <span className={`text-xs font-medium ${PRIORITY_STYLES[task.priority].color}`}>
+            {PRIORITY_STYLES[task.priority].label}
+          </span>
+        )}
+
+        {/* Due */}
+        {due && (
+          <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
+            {isOverdue ? "⚠ " : ""}
+            {due.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+          </span>
+        )}
+
+        {/* Tags */}
+        {task.tags.slice(0, 2).map((tag) => (
+          <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+            {tag}
+          </span>
+        ))}
+
+        {/* Child task count */}
+        {task.childTaskIds.length > 0 && (
+          <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
         )}
       </div>
     </div>
