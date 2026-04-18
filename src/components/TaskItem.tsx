@@ -27,16 +27,12 @@ export function TaskItem({ task }: { task: Task }) {
   const [status, setStatus] = useState<TaskStatus | null>(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
 
-  // サーバー更新後にバッジとselectを同期
   useEffect(() => {
     setStatus(task.status)
-    if (selectRef.current) {
-      selectRef.current.value = task.status ?? "未着手"
-    }
+    if (selectRef.current) selectRef.current.value = task.status ?? "未着手"
   }, [task.status])
 
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
-
   const due = task.due ? new Date(task.due) : null
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -44,12 +40,7 @@ export function TaskItem({ task }: { task: Task }) {
 
   return (
     <div className="px-4 py-4 active:bg-gray-50">
-      <a
-        href={task.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block mb-2.5"
-      >
+      <a href={task.url} target="_blank" rel="noopener noreferrer" className="block mb-2.5">
         <p className="text-base font-medium text-gray-900 leading-snug">{task.title}</p>
       </a>
 
@@ -83,20 +74,14 @@ export function TaskItem({ task }: { task: Task }) {
             {PRIORITY_STYLES[task.priority].label}
           </span>
         )}
-
         {due && (
           <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
-            {isOverdue ? "⚠ " : ""}
-            {due.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+            {isOverdue ? "⚠ " : ""}{due.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
           </span>
         )}
-
         {task.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-            {tag}
-          </span>
+          <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{tag}</span>
         ))}
-
         {task.childTaskIds.length > 0 && (
           <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
         )}

@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { auth, signOut } from "@/auth"
 import { getTasks } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
+import { HydrationCheck } from "@/components/HydrationCheck"
 import type { TaskStatus } from "@/types/task"
 
 const FILTER_STATUSES: Record<string, TaskStatus[]> = {
@@ -36,6 +37,7 @@ export default async function Page() {
         </div>
       </header>
 
+      <HydrationCheck />
       <TaskManager tasks={tasks} currentFilter={filter} />
     </div>
   )
