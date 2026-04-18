@@ -44,7 +44,7 @@ export function TaskItem({ task }: { task: Task }) {
     <div className="px-4 py-4 active:bg-gray-50 dark:active:bg-gray-800">
       <button
         onClick={() => setShowDetail(true)}
-        className="block w-full text-left mb-2.5"
+        className="block w-full text-left mb-2.5 min-h-[44px] flex items-center"
       >
         <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug">{task.title}</p>
       </button>
