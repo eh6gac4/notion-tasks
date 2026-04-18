@@ -15,17 +15,18 @@ test("スナップショット撮影", async ({ page }) => {
     fullPage: true,
   })
 
-  // フィルター変更
-  await page.selectOption("select", "all")
+  // フィルター変更（data-testid でフィルター専用 select を明示指定）
+  await page.locator("[data-testid='filter-select']").selectOption("all")
   await page.waitForTimeout(800)
   await page.screenshot({ path: `${outDir}/home-filter-all.png`, fullPage: true })
 
-  // ボトムシート
+  // ボトムシート（バックドロップクリックで閉じる）
   const firstTask = page.locator("ul li button").first()
   if (await firstTask.isVisible()) {
     await firstTask.click()
     await page.waitForTimeout(400)
     await page.screenshot({ path: `${outDir}/detail-sheet.png`, fullPage: true })
-    await page.keyboard.press("Escape")
+    await page.mouse.click(10, 10)
+    await page.waitForTimeout(400)
   }
 })

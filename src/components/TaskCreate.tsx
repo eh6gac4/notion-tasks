@@ -107,10 +107,8 @@ export function TaskCreate() {
                 placeholder="TASK NAME (required)"
                 required
                 autoFocus
-                className="w-full rounded-xl px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none"
-                style={{ border: "1px solid rgba(255,0,204,0.3)", transition: "border-color 0.2s" }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "#ff00cc"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,0,204,0.3)"}
+                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc]"
+                style={{ transition: "border-color 0.2s" }}
               />
 
               <div className="grid grid-cols-2 gap-3">

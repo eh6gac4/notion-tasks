@@ -30,6 +30,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
 
       <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-2.5 flex-shrink-0">
         <select
+          data-testid="filter-select"
           value={filterKey}
           onChange={(e) => {
             const next = e.target.value

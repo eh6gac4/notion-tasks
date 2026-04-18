@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className="h-full bg-[#0d0014] antialiased font-[family-name:var(--font-dot-gothic)]">{children}</body>
+      <body className="h-full bg-[#0d0014] antialiased">{children}</body>
     </html>
   )
 }
