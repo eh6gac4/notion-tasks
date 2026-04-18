@@ -48,7 +48,20 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
 
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
-          {filtered.length === 0 ? (
+          {isPending ? (
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              {[...Array(5)].map((_, i) => (
+                <li key={i} className="px-4 py-4">
+                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-3"
+                    style={{ width: `${60 + (i % 3) * 13}%` }} />
+                  <div className="flex gap-2">
+                    <div className="h-5 w-14 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                    <div className="h-5 w-10 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : filtered.length === 0 ? (
             <p className="text-center text-gray-400 dark:text-gray-600 text-sm py-20">タスクがありません</p>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -59,7 +72,9 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
               ))}
             </ul>
           )}
-          <p className="text-center text-xs text-gray-300 dark:text-gray-700 py-4 pb-24">{filtered.length}件</p>
+          {!isPending && (
+            <p className="text-center text-xs text-gray-300 dark:text-gray-700 py-4 pb-24">{filtered.length}件</p>
+          )}
         </div>
       </main>
 
