@@ -5,7 +5,12 @@ type Entry = { count: number; lockedUntil: number | null }
 
 const store = new Map<string, Entry>()
 
+const DEV_IPS = new Set(["unknown", "127.0.0.1", "::1", "::ffff:127.0.0.1"])
+
 export function checkRateLimit(ip: string): { blocked: boolean; remaining: number; unlocksAt: Date | null } {
+  if (process.env.NODE_ENV !== "production" || DEV_IPS.has(ip)) {
+    return { blocked: false, remaining: LIMIT, unlocksAt: null }
+  }
   const now = Date.now()
   const entry = store.get(ip) ?? { count: 0, lockedUntil: null }
 
@@ -21,6 +26,9 @@ export function checkRateLimit(ip: string): { blocked: boolean; remaining: numbe
 }
 
 export function recordFailure(ip: string): { blocked: boolean; remaining: number } {
+  if (process.env.NODE_ENV !== "production" || DEV_IPS.has(ip)) {
+    return { blocked: false, remaining: LIMIT }
+  }
   const now = Date.now()
   const entry = store.get(ip) ?? { count: 0, lockedUntil: null }
   const count = entry.count + 1

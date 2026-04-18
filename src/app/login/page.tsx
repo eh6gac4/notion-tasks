@@ -58,10 +58,11 @@ export default async function LoginPage({
           className="space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               ユーザー名
             </label>
             <input
+              id="username"
               name="username"
               type="text"
               required
@@ -70,10 +71,11 @@ export default async function LoginPage({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               パスワード
             </label>
             <input
+              id="password"
               name="password"
               type="password"
               required
