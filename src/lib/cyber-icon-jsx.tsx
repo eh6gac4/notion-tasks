@@ -2,7 +2,6 @@ export function cyberIconJsx(size: number) {
   const isSmall = size <= 48
   const dotSpacing = isSmall ? 4 : 12
   const dotRadius = isSmall ? 0.5 : 1
-  const borderWidth = isSmall ? 2 : Math.max(4, Math.floor(size / 64))
   const checkSize = Math.floor(size * 0.58)
   const strokeWidth = isSmall ? 2 : 2.5
 
@@ -17,8 +16,6 @@ export function cyberIconJsx(size: number) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: `${borderWidth}px solid rgba(255,0,204,0.8)`,
-        boxSizing: "border-box",
       }}
     >
       <svg
