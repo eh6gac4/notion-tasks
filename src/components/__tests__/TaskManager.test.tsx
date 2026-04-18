@@ -99,13 +99,13 @@ describe("TaskManager フィルター", () => {
 
   it("タスク数を表示する", () => {
     render(<TaskManager tasks={tasks} currentFilter="all" />)
-    expect(screen.getByText("5件")).toBeInTheDocument()
+    expect(screen.getByText("5 TASKS")).toBeInTheDocument()
   })
 
   it("フィルターに一致するタスクがない場合「タスクがありません」を表示する", () => {
     const noTasks = [makeTask({ status: "完了" })]
     render(<TaskManager tasks={noTasks} currentFilter="todo" />)
-    expect(screen.getByText("タスクがありません")).toBeInTheDocument()
+    expect(screen.getByText("— NO TASKS —")).toBeInTheDocument()
   })
 
   it("status が null のタスクは any ステータスフィルターにマッチしない", () => {
