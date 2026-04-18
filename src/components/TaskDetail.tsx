@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useTransition } from "react"
+import { useState, useRef, useTransition, useEffect } from "react"
 import type { Task, TaskStatus, TaskPriority } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 
@@ -26,6 +26,16 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [, startTransition] = useTransition()
   const [status, setStatus] = useState<TaskStatus | null>(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    requestAnimationFrame(() => setVisible(true))
+  }, [])
+
+  function handleClose() {
+    setVisible(false)
+    setTimeout(onClose, 280)
+  }
 
   const due = task.due ? new Date(task.due) : null
   const today = new Date()
@@ -36,11 +46,16 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+        onClick={handleClose}
+      />
 
-      <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto">
-        {/* Handle */}
-        <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-4" />
+      <div className={`relative bg-white dark:bg-gray-900 rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto transition-transform duration-300 ease-out ${visible ? "translate-y-0" : "translate-y-full"}`}>
+        {/* Handle — タップで閉じる */}
+        <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1">
+          <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
+        </button>
 
         {/* Title */}
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 leading-snug mb-4">
