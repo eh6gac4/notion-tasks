@@ -16,7 +16,7 @@ const FILTERS: { label: string; key: string; statuses: TaskStatus[] | null }[] =
 ]
 
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const [filterKey, setFilterKey] = useState(currentFilter)
 
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
@@ -26,6 +26,10 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      {/* ローディングバー */}
+      <div className={`h-0.5 bg-blue-500 transition-all duration-300 ${isPending ? "opacity-100" : "opacity-0"}`}
+        style={{ width: isPending ? "80%" : "0%" }} />
+
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2.5 flex-shrink-0">
         <select
           value={filterKey}

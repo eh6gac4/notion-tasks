@@ -9,12 +9,15 @@ export default function Loading() {
         </div>
       </header>
 
+      {/* Progress bar */}
+      <div className="h-0.5 bg-blue-500 animate-pulse w-2/3" />
+
       {/* Filter skeleton */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2.5">
         <div className="h-10 w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
       </div>
 
-      {/* Task list skeleton */}
+      {/* Task skeletons */}
       <div className="flex-1 overflow-hidden">
         <div className="max-w-2xl mx-auto">
           {[...Array(6)].map((_, i) => (
