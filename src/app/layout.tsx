@@ -4,7 +4,7 @@ import "./globals.css"
 
 const dotGothic = DotGothic16({
   weight: "400",
-  subsets: ["latin", "japanese"],
+  subsets: ["latin"],
   display: "swap",
   preload: false,
   variable: "--font-dot-gothic",
