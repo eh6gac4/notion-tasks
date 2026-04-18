@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* CSS-based task filtering — no React state needed */
+.task-list[data-filter="active"] li:not([data-status="進行中"]):not([data-status="未着手"]) { display: none; }
+.task-list[data-filter="todo"]   li:not([data-status="未着手"])  { display: none; }
+.task-list[data-filter="doing"]  li:not([data-status="進行中"])  { display: none; }
+.task-list[data-filter="review"] li:not([data-status="確認中"])  { display: none; }
+.task-list[data-filter="paused"] li:not([data-status="一時中断"]) { display: none; }

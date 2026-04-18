@@ -1,27 +1,12 @@
-import { Suspense } from "react"
 import { auth, signOut } from "@/auth"
 import { getTasks } from "@/lib/notion"
-import { FilterTabs } from "@/components/FilterTabs"
 import { TaskManager } from "@/components/TaskManager"
-import type { TaskStatus } from "@/types/task"
 
-const FILTER_STATUSES: Record<string, TaskStatus[]> = {
-  active: ["進行中", "未着手"],
-  todo:   ["未着手"],
-  doing:  ["進行中"],
-  review: ["確認中"],
-  paused: ["一時中断"],
-  all:    ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"],
-}
-
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ filter?: string }>
-}) {
-  const [session, { filter = "active" }] = await Promise.all([auth(), searchParams])
-  const statuses = FILTER_STATUSES[filter] ?? FILTER_STATUSES.active
-  const tasks = await getTasks({ statuses })
+export default async function Page() {
+  const [session, tasks] = await Promise.all([
+    auth(),
+    getTasks({ statuses: ["未着手", "進行中", "確認中", "一時中断"] }),
+  ])
 
   return (
     <div className="flex flex-col h-full">
@@ -36,12 +21,6 @@ export default async function Page({
           </div>
         </div>
       </header>
-
-      <div className="bg-white border-b border-gray-100">
-        <Suspense fallback={<div className="h-12" />}>
-          <FilterTabs initialFilter={filter} />
-        </Suspense>
-      </div>
 
       <TaskManager tasks={tasks} />
     </div>
