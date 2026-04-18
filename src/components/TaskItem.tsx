@@ -59,7 +59,8 @@ export function TaskItem({ task }: { task: Task }) {
                 await updateTaskStatus(task.id, next)
               })
             }}
-            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            className="absolute inset-0 w-full h-full cursor-pointer"
+            style={{ opacity: 0.001 }}
             aria-label="ステータスを変更"
           >
             {STATUS_OPTIONS.map((s) => (
