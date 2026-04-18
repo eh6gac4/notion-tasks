@@ -1,19 +1,11 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import type { Task, TaskStatus } from "@/types/task"
+import type { Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskCreate } from "./TaskCreate"
 import { setFilterAction } from "@/app/actions"
-
-const FILTERS: { label: string; key: string; statuses: TaskStatus[] | null }[] = [
-  { label: "進行中・未着手", key: "active", statuses: ["進行中", "未着手"] },
-  { label: "未着手",         key: "todo",   statuses: ["未着手"] },
-  { label: "進行中",         key: "doing",  statuses: ["進行中"] },
-  { label: "確認中",         key: "review", statuses: ["確認中"] },
-  { label: "一時中断",       key: "paused", statuses: ["一時中断"] },
-  { label: "すべて",         key: "all",    statuses: null },
-]
+import { FILTERS } from "@/constants/filters"
 
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
   const [isPending, startTransition] = useTransition()

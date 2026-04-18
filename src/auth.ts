@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import { config } from "@/config"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -10,8 +11,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       authorize({ username, password }) {
         if (
-          username === process.env.APP_USERNAME &&
-          password === process.env.APP_PASSWORD
+          username === config.auth.username &&
+          password === config.auth.password
         ) {
           return { id: "1", name: username as string }
         }

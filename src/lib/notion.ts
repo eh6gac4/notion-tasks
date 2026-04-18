@@ -1,10 +1,12 @@
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { NOTION_PROPS } from "@/constants/notion"
+import { config } from "@/config"
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN })
+const notion = new Client({ auth: config.notion.token })
 
-const DATABASE_ID = process.env.NOTION_DATABASE_ID!
+const DATABASE_ID = config.notion.databaseId
 // collection:// prefix stripped — dataSources.query needs UUID only
 const DATA_SOURCE_ID = "7a3367e3-d695-4c23-8e7e-18ead8c56a33"
 
@@ -15,50 +17,65 @@ function extractRelationIds(prop: unknown): string[] {
   return (p.relation as Array<{ id: string }>).map((r) => r.id)
 }
 
+function extractTitle(props: PageObjectResponse["properties"]): string {
+  const p = props[NOTION_PROPS.TITLE] as { type: "title"; title: Array<{ plain_text: string }> }
+  return p?.title?.map((t) => t.plain_text).join("") ?? ""
+}
+
+function extractStatus(props: PageObjectResponse["properties"]): TaskStatus | null {
+  const p = props[NOTION_PROPS.STATUS] as { type: "status"; status: { name: string } | null }
+  return (p?.status?.name ?? null) as TaskStatus | null
+}
+
+function extractPriority(props: PageObjectResponse["properties"]): TaskPriority | null {
+  const p = props[NOTION_PROPS.PRIORITY] as { type: "select"; select: { name: string } | null }
+  return (p?.select?.name ?? null) as TaskPriority | null
+}
+
+function extractDueDate(props: PageObjectResponse["properties"]): string | null {
+  const p = props[NOTION_PROPS.DUE] as { type: "date"; date: { start: string } | null }
+  return p?.date?.start ?? null
+}
+
+function extractTags(props: PageObjectResponse["properties"]): TaskTag[] {
+  const p = props[NOTION_PROPS.TAG] as { type: "multi_select"; multi_select: Array<{ name: string }> }
+  return (p?.multi_select?.map((t) => t.name) ?? []) as TaskTag[]
+}
+
+function extractAssignees(props: PageObjectResponse["properties"]): string[] {
+  const p = props[NOTION_PROPS.ASSIGNEE] as { type: "people"; people: Array<{ id: string }> }
+  return p?.people?.map((p) => p.id) ?? []
+}
+
+function extractSource(props: PageObjectResponse["properties"]): string | null {
+  const p = props[NOTION_PROPS.SOURCE] as { type: "rich_text"; rich_text: Array<{ plain_text: string }> }
+  return p?.rich_text?.map((t) => t.plain_text).join("") || null
+}
+
+function extractSourceUrl(props: PageObjectResponse["properties"]): string | null {
+  const p = props[NOTION_PROPS.SOURCE_URL] as { type: "url"; url: string | null }
+  return p?.url ?? null
+}
+
 function pageToTask(page: PageObjectResponse): Task {
   const props = page.properties
-
-  const titleProp = props["タイトル"] as { type: "title"; title: Array<{ plain_text: string }> }
-  const title = titleProp?.title?.map((t) => t.plain_text).join("") ?? ""
-
-  const statusProp = props["Status"] as { type: "status"; status: { name: string } | null }
-  const status = (statusProp?.status?.name ?? null) as TaskStatus | null
-
-  const priorityProp = props["Priority"] as { type: "select"; select: { name: string } | null }
-  const priority = (priorityProp?.select?.name ?? null) as TaskPriority | null
-
-  const dueProp = props["Due"] as { type: "date"; date: { start: string } | null }
-  const due = dueProp?.date?.start ?? null
-
-  const tagsProp = props["Tag"] as { type: "multi_select"; multi_select: Array<{ name: string }> }
-  const tags = (tagsProp?.multi_select?.map((t) => t.name) ?? []) as TaskTag[]
-
-  const assigneesProp = props["Assignee"] as { type: "people"; people: Array<{ id: string }> }
-  const assignees = assigneesProp?.people?.map((p) => p.id) ?? []
-
-  const sourceProp = props["Source"] as { type: "rich_text"; rich_text: Array<{ plain_text: string }> }
-  const source = sourceProp?.rich_text?.map((t) => t.plain_text).join("") || null
-
-  const sourceUrlProp = props["SourceURL"] as { type: "url"; url: string | null }
-  const sourceUrl = sourceUrlProp?.url ?? null
-
   return {
     id: page.id,
     url: page.url,
-    title,
-    status,
-    priority,
-    due,
-    tags,
-    assignees,
-    source,
-    sourceUrl,
-    parentTaskIds: extractRelationIds(props["親タスク"]),
-    childTaskIds: extractRelationIds(props["子タスク"]),
-    prevTaskIds: extractRelationIds(props["前タスク"]),
-    nextTaskIds: extractRelationIds(props["次タスク"]),
-    createdTime: page.created_time,
-    lastEditedTime: page.last_edited_time,
+    title:        extractTitle(props),
+    status:       extractStatus(props),
+    priority:     extractPriority(props),
+    due:          extractDueDate(props),
+    tags:         extractTags(props),
+    assignees:    extractAssignees(props),
+    source:       extractSource(props),
+    sourceUrl:    extractSourceUrl(props),
+    parentTaskIds: extractRelationIds(props[NOTION_PROPS.PARENT]),
+    childTaskIds:  extractRelationIds(props[NOTION_PROPS.CHILD]),
+    prevTaskIds:   extractRelationIds(props[NOTION_PROPS.PREV]),
+    nextTaskIds:   extractRelationIds(props[NOTION_PROPS.NEXT]),
+    createdTime:     page.created_time,
+    lastEditedTime:  page.last_edited_time,
   }
 }
 
@@ -68,23 +85,28 @@ export async function getTasks(options?: {
 }): Promise<Task[]> {
   const activeStatuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
 
-  const response = await notion.dataSources.query({
-    data_source_id: DATA_SOURCE_ID,
-    filter: {
-      or: activeStatuses.map((s) => ({
-        property: "Status",
-        status: { equals: s },
-      })),
-    },
-    sorts: [
-      { property: "Priority", direction: "ascending" },
-      { property: "Due", direction: "ascending" },
-    ],
-  })
+  try {
+    const response = await notion.dataSources.query({
+      data_source_id: DATA_SOURCE_ID,
+      filter: {
+        or: activeStatuses.map((s) => ({
+          property: NOTION_PROPS.STATUS,
+          status: { equals: s },
+        })),
+      },
+      sorts: [
+        { property: NOTION_PROPS.PRIORITY, direction: "ascending" },
+        { property: NOTION_PROPS.DUE,      direction: "ascending" },
+      ],
+    })
 
-  return response.results
-    .filter((r): r is PageObjectResponse => r.object === "page" && "properties" in r)
-    .map(pageToTask)
+    return response.results
+      .filter((r): r is PageObjectResponse => r.object === "page" && "properties" in r)
+      .map(pageToTask)
+  } catch (e) {
+    console.error("[getTasks] Notion error:", e)
+    return []
+  }
 }
 
 export async function getTask(id: string): Promise<Task | null> {
@@ -99,16 +121,16 @@ export async function getTask(id: string): Promise<Task | null> {
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
   const properties: Record<string, unknown> = {
-    タイトル: { title: [{ text: { content: input.title } }] },
+    [NOTION_PROPS.TITLE]: { title: [{ text: { content: input.title } }] },
   }
 
-  if (input.status) properties["Status"] = { status: { name: input.status } }
-  if (input.priority) properties["Priority"] = { select: { name: input.priority } }
-  if (input.due) properties["Due"] = { date: { start: input.due } }
-  if (input.tags?.length) properties["Tag"] = { multi_select: input.tags.map((t) => ({ name: t })) }
-  if (input.source) properties["Source"] = { rich_text: [{ text: { content: input.source } }] }
-  if (input.sourceUrl) properties["SourceURL"] = { url: input.sourceUrl }
-  if (input.parentTaskId) properties["親タスク"] = { relation: [{ id: input.parentTaskId }] }
+  if (input.status)      properties[NOTION_PROPS.STATUS]     = { status: { name: input.status } }
+  if (input.priority)    properties[NOTION_PROPS.PRIORITY]   = { select: { name: input.priority } }
+  if (input.due)         properties[NOTION_PROPS.DUE]        = { date: { start: input.due } }
+  if (input.tags?.length) properties[NOTION_PROPS.TAG]       = { multi_select: input.tags.map((t) => ({ name: t })) }
+  if (input.source)      properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
+  if (input.sourceUrl)   properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
+  if (input.parentTaskId) properties[NOTION_PROPS.PARENT]   = { relation: [{ id: input.parentTaskId }] }
 
   const page = await notion.pages.create({
     parent: { data_source_id: DATA_SOURCE_ID, type: "data_source_id" },
@@ -121,13 +143,13 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
 export async function updateTask(id: string, input: UpdateTaskInput): Promise<Task> {
   const properties: Record<string, unknown> = {}
 
-  if (input.title !== undefined) properties["タイトル"] = { title: [{ text: { content: input.title } }] }
-  if (input.status !== undefined) properties["Status"] = { status: { name: input.status } }
-  if (input.priority !== undefined) properties["Priority"] = { select: { name: input.priority } }
-  if (input.due !== undefined) properties["Due"] = input.due ? { date: { start: input.due } } : { date: null }
-  if (input.tags !== undefined) properties["Tag"] = { multi_select: input.tags.map((t) => ({ name: t })) }
-  if (input.source !== undefined) properties["Source"] = { rich_text: [{ text: { content: input.source } }] }
-  if (input.sourceUrl !== undefined) properties["SourceURL"] = { url: input.sourceUrl }
+  if (input.title !== undefined)    properties[NOTION_PROPS.TITLE]      = { title: [{ text: { content: input.title } }] }
+  if (input.status !== undefined)   properties[NOTION_PROPS.STATUS]     = { status: { name: input.status } }
+  if (input.priority !== undefined) properties[NOTION_PROPS.PRIORITY]   = { select: { name: input.priority } }
+  if (input.due !== undefined)      properties[NOTION_PROPS.DUE]        = input.due ? { date: { start: input.due } } : { date: null }
+  if (input.tags !== undefined)     properties[NOTION_PROPS.TAG]        = { multi_select: input.tags.map((t) => ({ name: t })) }
+  if (input.source !== undefined)   properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
+  if (input.sourceUrl !== undefined) properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
 
   const page = await notion.pages.update({
     page_id: id,

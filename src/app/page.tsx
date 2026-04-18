@@ -3,16 +3,7 @@ import { auth, signOut } from "@/auth"
 import { getTasks } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
-import type { TaskStatus } from "@/types/task"
-
-const FILTER_STATUSES: Record<string, TaskStatus[]> = {
-  active: ["進行中", "未着手"],
-  todo:   ["未着手"],
-  doing:  ["進行中"],
-  review: ["確認中"],
-  paused: ["一時中断"],
-  all:    ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"],
-}
+import { getQueryStatuses } from "@/constants/filters"
 
 export default async function Page() {
   const cookieStore = await cookies()
@@ -20,7 +11,7 @@ export default async function Page() {
 
   const [session, tasks] = await Promise.all([
     auth(),
-    getTasks({ statuses: FILTER_STATUSES[filter] ?? FILTER_STATUSES.active }),
+    getTasks({ statuses: getQueryStatuses(filter) }),
   ])
 
   return (
