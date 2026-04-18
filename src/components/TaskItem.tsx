@@ -1,6 +1,6 @@
 "use client"
 
-import { useOptimistic, useTransition } from "react"
+import { useState, useEffect, useTransition } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 
@@ -24,7 +24,14 @@ const PRIORITY_STYLES = {
 
 export function TaskItem({ task }: { task: Task }) {
   const [, startTransition] = useTransition()
-  const [status, setStatus] = useOptimistic(task.status)
+  // startTransition内のstate更新が効かないデバイスに対応するため
+  // useOptimisticではなくuseState + useEffectで代替
+  const [status, setStatus] = useState<TaskStatus | null>(task.status)
+
+  // サーバーからの更新（revalidatePath後）に追従
+  useEffect(() => {
+    setStatus(task.status)
+  }, [task.status])
 
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
 
@@ -45,7 +52,6 @@ export function TaskItem({ task }: { task: Task }) {
       </a>
 
       <div className="flex flex-wrap items-center gap-2">
-        {/* Status — native select overlaid on badge */}
         <div className="relative inline-flex">
           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle}`}>
             {status ?? "未着手"}
@@ -54,8 +60,8 @@ export function TaskItem({ task }: { task: Task }) {
             value={status ?? "未着手"}
             onChange={(e) => {
               const next = e.target.value as TaskStatus
+              setStatus(next)  // 即時反映（startTransition外）
               startTransition(async () => {
-                setStatus(next)
                 await updateTaskStatus(task.id, next)
               })
             }}
@@ -69,14 +75,12 @@ export function TaskItem({ task }: { task: Task }) {
           </select>
         </div>
 
-        {/* Priority */}
         {task.priority && (
           <span className={`text-xs font-medium ${PRIORITY_STYLES[task.priority].color}`}>
             {PRIORITY_STYLES[task.priority].label}
           </span>
         )}
 
-        {/* Due */}
         {due && (
           <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
             {isOverdue ? "⚠ " : ""}
@@ -84,14 +88,12 @@ export function TaskItem({ task }: { task: Task }) {
           </span>
         )}
 
-        {/* Tags */}
         {task.tags.slice(0, 2).map((tag) => (
           <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
             {tag}
           </span>
         ))}
 
-        {/* Child task count */}
         {task.childTaskIds.length > 0 && (
           <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
         )}

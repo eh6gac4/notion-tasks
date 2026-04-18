@@ -1,6 +1,6 @@
 "use client"
 
-import { useOptimistic, useTransition } from "react"
+import { useState, useTransition } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskCreate } from "./TaskCreate"
@@ -17,9 +17,9 @@ const FILTERS: { label: string; key: string; statuses: TaskStatus[] | null }[] =
 
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
   const [, startTransition] = useTransition()
-  const [optimisticFilter, setOptimisticFilter] = useOptimistic(currentFilter)
+  const [filterKey, setFilterKey] = useState(currentFilter)
 
-  const current = FILTERS.find((f) => f.key === optimisticFilter) ?? FILTERS[0]
+  const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
   const filtered = current.statuses
     ? tasks.filter((t) => t.status && current.statuses!.includes(t.status))
     : tasks
@@ -29,11 +29,11 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
       {/* フィルター: mainの外、stickyなし */}
       <div className="bg-white border-b border-gray-100 px-4 py-2.5 flex-shrink-0">
         <select
-          value={optimisticFilter}
+          value={filterKey}
           onChange={(e) => {
             const next = e.target.value
+            setFilterKey(next)  // 即時反映（startTransition外）
             startTransition(async () => {
-              setOptimisticFilter(next)
               await setFilterAction(next)
             })
           }}
