@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useTransition } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
+import { TaskDetail } from "./TaskDetail"
 
 const STATUS_OPTIONS: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
 
@@ -25,6 +26,7 @@ const PRIORITY_STYLES = {
 export function TaskItem({ task }: { task: Task }) {
   const [, startTransition] = useTransition()
   const [status, setStatus] = useState<TaskStatus | null>(task.status)
+  const [showDetail, setShowDetail] = useState(false)
   const selectRef = useRef<HTMLSelectElement>(null)
 
   useEffect(() => {
@@ -40,9 +42,12 @@ export function TaskItem({ task }: { task: Task }) {
 
   return (
     <div className="px-4 py-4 active:bg-gray-50 dark:active:bg-gray-800">
-      <a href={task.url} target="_blank" rel="noopener noreferrer" className="block mb-2.5">
+      <button
+        onClick={() => setShowDetail(true)}
+        className="block w-full text-left mb-2.5"
+      >
         <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug">{task.title}</p>
-      </a>
+      </button>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
@@ -88,6 +93,13 @@ export function TaskItem({ task }: { task: Task }) {
           <span className="text-xs text-gray-400 dark:text-gray-500">子{task.childTaskIds.length}件</span>
         )}
       </div>
+
+      {showDetail && (
+        <TaskDetail
+          task={{ ...task, status }}
+          onClose={() => setShowDetail(false)}
+        />
+      )}
     </div>
   )
 }
