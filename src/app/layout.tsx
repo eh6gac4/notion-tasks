@@ -4,7 +4,7 @@ import "./globals.css"
 
 const dotGothic = DotGothic16({
   weight: "400",
-  subsets: ["latin"],
+  subsets: ["latin", "japanese"],
   display: "swap",
   preload: false,
   variable: "--font-dot-gothic",
@@ -21,12 +21,13 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   colorScheme: "dark",
+  themeColor: "#ff00cc",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className="h-full bg-[#0d0014] antialiased">{children}</body>
+      <body className={`h-full bg-[#0d0014] antialiased ${dotGothic.className}`}>{children}</body>
     </html>
   )
 }
