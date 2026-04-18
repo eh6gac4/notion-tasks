@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect, useRef, useTransition } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 
@@ -24,13 +24,15 @@ const PRIORITY_STYLES = {
 
 export function TaskItem({ task }: { task: Task }) {
   const [, startTransition] = useTransition()
-  // startTransition内のstate更新が効かないデバイスに対応するため
-  // useOptimisticではなくuseState + useEffectで代替
   const [status, setStatus] = useState<TaskStatus | null>(task.status)
+  const selectRef = useRef<HTMLSelectElement>(null)
 
-  // サーバーからの更新（revalidatePath後）に追従
+  // サーバー更新後にバッジとselectを同期
   useEffect(() => {
     setStatus(task.status)
+    if (selectRef.current) {
+      selectRef.current.value = task.status ?? "未着手"
+    }
   }, [task.status])
 
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
@@ -57,10 +59,11 @@ export function TaskItem({ task }: { task: Task }) {
             {status ?? "未着手"}
           </span>
           <select
-            value={status ?? "未着手"}
+            ref={selectRef}
+            defaultValue={status ?? "未着手"}
             onChange={(e) => {
               const next = e.target.value as TaskStatus
-              setStatus(next)  // 即時反映（startTransition外）
+              setStatus(next)
               startTransition(async () => {
                 await updateTaskStatus(task.id, next)
               })
