@@ -26,27 +26,28 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      {/* フィルター: mainの外、stickyなし */}
+      <div className="bg-white border-b border-gray-100 px-4 py-2.5 flex-shrink-0">
+        <select
+          value={optimisticFilter}
+          onChange={(e) => {
+            const next = e.target.value
+            startTransition(async () => {
+              setOptimisticFilter(next)
+              await setFilterAction(next)
+            })
+          }}
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {FILTERS.map((f) => (
+            <option key={f.key} value={f.key}>{f.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* タスクリスト: ここだけスクロール */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
-          {/* フィルターをscrollableエリア内に配置（スクロールコンテナ外ではonChangeが動かない） */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-2.5 z-10">
-            <select
-              value={optimisticFilter}
-              onChange={(e) => {
-                const next = e.target.value
-                startTransition(async () => {
-                  setOptimisticFilter(next)
-                  await setFilterAction(next)
-                })
-              }}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {FILTERS.map((f) => (
-                <option key={f.key} value={f.key}>{f.label}</option>
-              ))}
-            </select>
-          </div>
-
           {filtered.length === 0 ? (
             <p className="text-center text-gray-400 text-sm py-20">タスクがありません</p>
           ) : (
