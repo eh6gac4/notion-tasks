@@ -11,13 +11,13 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  colorScheme: "light",
+  colorScheme: "light dark",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className="h-full" suppressHydrationWarning>
-      <body className="h-full bg-gray-50 antialiased">{children}</body>
+      <body className="h-full bg-gray-50 dark:bg-gray-950 antialiased">{children}</body>
     </html>
   )
 }

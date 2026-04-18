@@ -26,18 +26,15 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* フィルター: mainの外、stickyなし */}
-      <div className="bg-white border-b border-gray-100 px-4 py-2.5 flex-shrink-0">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2.5 flex-shrink-0">
         <select
           value={filterKey}
           onChange={(e) => {
             const next = e.target.value
-            setFilterKey(next)  // 即時反映（startTransition外）
-            startTransition(async () => {
-              await setFilterAction(next)
-            })
+            setFilterKey(next)
+            startTransition(async () => { await setFilterAction(next) })
           }}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {FILTERS.map((f) => (
             <option key={f.key} value={f.key}>{f.label}</option>
@@ -45,13 +42,12 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
         </select>
       </div>
 
-      {/* タスクリスト: ここだけスクロール */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
           {filtered.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm py-20">タスクがありません</p>
+            <p className="text-center text-gray-400 dark:text-gray-600 text-sm py-20">タスクがありません</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {filtered.map((task) => (
                 <li key={task.id}>
                   <TaskItem task={task} />
@@ -59,7 +55,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
               ))}
             </ul>
           )}
-          <p className="text-center text-xs text-gray-300 py-4 pb-24">{filtered.length}件</p>
+          <p className="text-center text-xs text-gray-300 dark:text-gray-700 py-4 pb-24">{filtered.length}件</p>
         </div>
       </main>
 

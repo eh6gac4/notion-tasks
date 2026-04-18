@@ -80,11 +80,11 @@ export function TaskCreate() {
           />
 
           {/* Sheet */}
-          <div className="relative bg-white rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto">
             {/* Handle */}
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-5" />
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-5" />
 
-            <h2 className="text-lg font-semibold text-gray-900 mb-5">タスクを追加</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-5">タスクを追加</h2>
 
             <form ref={formRef} action={handleAction} className="flex flex-col gap-4">
               {/* Title */}
@@ -94,7 +94,7 @@ export function TaskCreate() {
                 placeholder="タスク名（必須）"
                 required
                 autoFocus
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-base placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
               {/* Status + Priority */}
@@ -102,7 +102,7 @@ export function TaskCreate() {
                 <select
                   name="status"
                   defaultValue="未着手"
-                  className="border border-gray-200 rounded-xl px-3 py-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {(["未着手", "進行中", "確認中"] as TaskStatus[]).map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -111,7 +111,7 @@ export function TaskCreate() {
                 <select
                   name="priority"
                   defaultValue=""
-                  className="border border-gray-200 rounded-xl px-3 py-3.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Priority</option>
                   <option value="high">↑ High</option>
@@ -122,17 +122,17 @@ export function TaskCreate() {
 
               {/* Due */}
               <div>
-                <label className="block text-xs text-gray-500 mb-1.5">期限</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">期限</label>
                 <input
                   name="due"
                   type="date"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               {/* Tags */}
               <div>
-                <p className="text-xs text-gray-500 mb-2">タグ</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">タグ</p>
                 <div className="flex flex-wrap gap-2">
                   {TAG_OPTIONS.map((tag) => (
                     <button

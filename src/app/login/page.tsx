@@ -22,9 +22,9 @@ export default async function LoginPage({
   if (session?.user) redirect(callbackUrl ?? "/")
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow p-8">
-        <h1 className="text-xl font-semibold text-gray-800 mb-6">ログイン</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-xl shadow p-8">
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6">ログイン</h1>
         <form
           action={async (formData) => {
             "use server"
@@ -58,7 +58,7 @@ export default async function LoginPage({
           className="space-y-4"
         >
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               ユーザー名
             </label>
             <input
@@ -67,11 +67,11 @@ export default async function LoginPage({
               type="text"
               required
               autoComplete="username"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               パスワード
             </label>
             <input
@@ -80,7 +80,7 @@ export default async function LoginPage({
               type="password"
               required
               autoComplete="current-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 

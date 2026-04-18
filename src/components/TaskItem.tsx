@@ -7,19 +7,19 @@ import { updateTaskStatus } from "@/app/actions"
 const STATUS_OPTIONS: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
 
 const STATUS_STYLES: Record<TaskStatus, string> = {
-  "未着手":       "bg-gray-100 text-gray-600",
-  "進行中":       "bg-blue-100 text-blue-700",
-  "確認中":       "bg-yellow-100 text-yellow-700",
-  "一時中断":     "bg-orange-100 text-orange-700",
-  "完了":         "bg-green-100 text-green-700",
-  "中止":         "bg-red-100 text-red-600",
-  "アーカイブ済み": "bg-gray-100 text-gray-400",
+  "未着手":       "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  "進行中":       "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  "確認中":       "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  "一時中断":     "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+  "完了":         "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  "中止":         "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
+  "アーカイブ済み": "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600",
 }
 
 const PRIORITY_STYLES = {
-  high:   { label: "↑ High", color: "text-red-500" },
-  medium: { label: "→ Med",  color: "text-yellow-500" },
-  low:    { label: "↓ Low",  color: "text-green-500" },
+  high:   { label: "↑ High", color: "text-red-500 dark:text-red-400" },
+  medium: { label: "→ Med",  color: "text-yellow-500 dark:text-yellow-400" },
+  low:    { label: "↓ Low",  color: "text-green-500 dark:text-green-400" },
 }
 
 export function TaskItem({ task }: { task: Task }) {
@@ -39,9 +39,9 @@ export function TaskItem({ task }: { task: Task }) {
   const isOverdue = due !== null && due < today
 
   return (
-    <div className="px-4 py-4 active:bg-gray-50">
+    <div className="px-4 py-4 active:bg-gray-50 dark:active:bg-gray-800">
       <a href={task.url} target="_blank" rel="noopener noreferrer" className="block mb-2.5">
-        <p className="text-base font-medium text-gray-900 leading-snug">{task.title}</p>
+        <p className="text-base font-medium text-gray-900 dark:text-gray-100 leading-snug">{task.title}</p>
       </a>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -75,15 +75,17 @@ export function TaskItem({ task }: { task: Task }) {
           </span>
         )}
         {due && (
-          <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400"}`}>
+          <span className={`text-xs ${isOverdue ? "text-red-500 font-medium" : "text-gray-400 dark:text-gray-500"}`}>
             {isOverdue ? "⚠ " : ""}{due.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{tag}</span>
+          <span key={tag} className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+            {tag}
+          </span>
         ))}
         {task.childTaskIds.length > 0 && (
-          <span className="text-xs text-gray-400">子{task.childTaskIds.length}件</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">子{task.childTaskIds.length}件</span>
         )}
       </div>
     </div>
