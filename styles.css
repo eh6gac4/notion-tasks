@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=DotGothic16&display=swap");
+
+:root {
+  color-scheme: dark;
+  font-family: "DotGothic16", "MS Gothic", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #b6fffb;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(0, 255, 255, 0.2), transparent 35%),
+    radial-gradient(circle at 80% 90%, rgba(255, 0, 255, 0.15), transparent 30%),
+    linear-gradient(160deg, #02020a 0%, #050512 45%, #0d0a21 100%);
+}
+
+.app {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 0 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2.1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00f6ff;
+  text-shadow: 0 0 8px rgba(0, 246, 255, 0.8), 0 0 18px rgba(0, 246, 255, 0.6);
+}
+
+p {
+  margin-top: 10px;
+  color: #ff5eff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 7px rgba(255, 94, 255, 0.75);
+}
+
+.card {
+  margin-top: 24px;
+  background: rgba(6, 12, 32, 0.78);
+  border: 1px solid #00f6ff;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow:
+    0 0 8px rgba(0, 246, 255, 0.7),
+    0 0 28px rgba(0, 246, 255, 0.25),
+    inset 0 0 22px rgba(255, 0, 255, 0.18);
+  backdrop-filter: blur(2px);
+}
+
+ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+li {
+  letter-spacing: 0.06em;
+}
+
+li + li {
+  margin-top: 12px;
+}
