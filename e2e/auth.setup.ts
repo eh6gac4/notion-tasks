@@ -7,7 +7,7 @@ setup("authenticate", async ({ page }) => {
   await page.goto("/login")
   await page.getByLabel("ユーザー名").fill(process.env.APP_USERNAME!)
   await page.getByLabel("パスワード").fill(process.env.APP_PASSWORD!)
-  await page.getByRole("button", { name: "ログイン" }).click()
+  await page.getByRole("button", { name: "ACCESS" }).click()
   await page.waitForURL("/")
   await expect(page.locator("h1")).toContainText("To-do")
 

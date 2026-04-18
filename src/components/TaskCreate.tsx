@@ -13,9 +13,14 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-blue-600 text-white rounded-xl py-4 text-base font-semibold disabled:opacity-50 active:bg-blue-700 transition-colors"
+      className="w-full rounded-xl py-4 text-sm tracking-widest uppercase disabled:opacity-40 transition-all"
+      style={{
+        backgroundColor: "#ff00cc",
+        color: "#0d0014",
+        boxShadow: pending ? "none" : "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+      }}
     >
-      {pending ? "作成中…" : "作成する"}
+      {pending ? "CREATING..." : "CREATE TASK"}
     </button>
   )
 }
@@ -64,7 +69,12 @@ export function TaskCreate() {
       {/* FAB */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-8 right-6 z-10 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center text-3xl active:bg-blue-700 transition-colors"
+        className="fixed bottom-8 right-6 z-10 w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all active:scale-95"
+        style={{
+          backgroundColor: "#ff00cc",
+          color: "#0d0014",
+          boxShadow: "0 0 15px rgba(255,0,204,0.6), 0 0 40px rgba(255,0,204,0.3)",
+        }}
         aria-label="タスクを追加"
       >
         +
@@ -73,36 +83,42 @@ export function TaskCreate() {
       {/* Bottom sheet */}
       {open && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70" onClick={handleClose} />
+
           <div
-            className="absolute inset-0 bg-black/50"
-            onClick={handleClose}
-          />
-
-          {/* Sheet */}
-          <div className="relative bg-white dark:bg-gray-900 rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto">
+            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
+            style={{
+              backgroundColor: "#160022",
+              borderTop: "1px solid rgba(255,0,204,0.5)",
+              boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+            }}
+          >
             {/* Handle */}
-            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mb-5" />
+            <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
 
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-5">タスクを追加</h2>
+            <h2 className="text-sm text-[#ff00cc] tracking-widest uppercase mb-5 cyber-glow-text-sm">
+              ✦ New Task
+            </h2>
 
             <form ref={formRef} action={handleAction} className="flex flex-col gap-4">
-              {/* Title */}
               <input
                 name="title"
                 type="text"
-                placeholder="タスク名（必須）"
+                placeholder="TASK NAME (required)"
                 required
                 autoFocus
-                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none"
+                style={{ border: "1px solid rgba(255,0,204,0.3)", transition: "border-color 0.2s" }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#ff00cc"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,0,204,0.3)"}
               />
 
-              {/* Status + Priority */}
               <div className="grid grid-cols-2 gap-3">
                 <select
                   name="status"
                   defaultValue="未着手"
-                  className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-xl px-3 py-3.5 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+                  style={{ border: "1px solid rgba(255,0,204,0.3)" }}
                 >
                   {(["未着手", "進行中", "確認中"] as TaskStatus[]).map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -111,7 +127,8 @@ export function TaskCreate() {
                 <select
                   name="priority"
                   defaultValue=""
-                  className="border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-xl px-3 py-3.5 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+                  style={{ border: "1px solid rgba(255,0,204,0.3)" }}
                 >
                   <option value="">Priority</option>
                   <option value="high">↑ High</option>
@@ -120,30 +137,30 @@ export function TaskCreate() {
                 </select>
               </div>
 
-              {/* Due */}
               <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1.5">期限</label>
+                <label className="block text-xs text-[#996688] mb-1.5 tracking-widest uppercase">期限</label>
                 <input
                   name="due"
                   type="date"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3.5 text-base text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-xl px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+                  style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
                 />
               </div>
 
-              {/* Tags */}
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">タグ</p>
+                <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">タグ</p>
                 <div className="flex flex-wrap gap-2">
                   {TAG_OPTIONS.map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                      className="px-3 py-1.5 rounded-full text-xs transition-all"
+                      style={
                         selectedTags.includes(tag)
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-100 text-gray-600 active:bg-gray-200"
-                      }`}
+                          ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
+                          : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                      }
                     >
                       {tag}
                     </button>

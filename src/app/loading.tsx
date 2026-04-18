@@ -1,34 +1,30 @@
 export default function Loading() {
   return (
     <div className="flex flex-col h-full">
-      {/* Header skeleton */}
-      <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+      <header className="sticky top-0 z-20 bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)]">
         <div className="flex items-center justify-between px-4 h-14">
-          <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-4 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+          <div className="h-3 w-16 bg-[#1e002e] rounded animate-pulse" />
+          <div className="h-3 w-20 bg-[#160022] rounded animate-pulse" />
         </div>
       </header>
 
-      {/* Progress bar */}
-      <div className="h-0.5 bg-blue-500 animate-pulse w-2/3" />
+      <div className="h-0.5 bg-[#ff00cc] animate-pulse w-2/3" style={{ boxShadow: "0 0 8px #ff00cc" }} />
 
-      {/* Filter skeleton */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 py-2.5">
-        <div className="h-10 w-full bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-2.5">
+        <div className="h-10 w-full bg-[#160022] rounded-xl animate-pulse" />
       </div>
 
-      {/* Task skeletons */}
       <div className="flex-1 overflow-hidden">
         <div className="max-w-2xl mx-auto">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div key={i} className="px-4 py-4 border-b border-[rgba(255,0,204,0.1)]">
               <div
-                className="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-3"
+                className="h-4 bg-[#1e002e] rounded animate-pulse mb-3"
                 style={{ width: `${65 + (i % 3) * 12}%` }}
               />
               <div className="flex gap-2">
-                <div className="h-5 w-14 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
-                <div className="h-5 w-10 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                <div className="h-5 w-14 bg-[#160022] rounded-full animate-pulse" />
+                <div className="h-5 w-10 bg-[#160022] rounded-full animate-pulse" />
               </div>
             </div>
           ))}
