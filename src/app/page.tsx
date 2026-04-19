@@ -23,10 +23,10 @@ export default async function Page() {
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-xs text-[#996688]">{session?.user?.name}</span>
-            <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }}>
+            <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }} className="flex items-center">
               <button
                 type="submit"
-                className="text-xs text-[#996688] hover:text-[#ff00cc] py-1 transition-colors"
+                className="text-xs text-[#996688] hover:text-[#ff00cc] transition-colors"
               >
                 logout
               </button>
