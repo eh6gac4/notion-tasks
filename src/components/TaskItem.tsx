@@ -24,13 +24,11 @@ export function TaskItem({ task }: { task: Task }) {
   const isOverdue = due !== null && due < today
 
   return (
-    <div className="px-4 py-4 active:bg-[#160022] transition-colors">
-      <button
-        onClick={() => setShowDetail(true)}
-        className="block w-full text-left mb-2.5 min-h-[44px] flex items-center"
-      >
-        <p className="text-sm text-[#ffbbee] leading-snug">{task.title}</p>
-      </button>
+    <div
+      className="px-4 py-4 active:bg-[#160022] transition-colors cursor-pointer"
+      onClick={() => setShowDetail(true)}
+    >
+      <p className="block w-full text-left mb-2.5 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
@@ -40,6 +38,7 @@ export function TaskItem({ task }: { task: Task }) {
           <select
             ref={selectRef}
             defaultValue={status ?? "未着手"}
+            onClick={(e) => e.stopPropagation()}
             onChange={(e) => {
               const next = e.target.value as TaskStatus
               setStatus(next)
