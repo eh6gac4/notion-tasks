@@ -15,11 +15,11 @@ test.describe("タップ応答調査", () => {
 
     // 全タスクをタップしてボトムシートが開くか確認
     for (let i = 0; i < Math.min(count, 5); i++) {
-      const btn = items.nth(i).locator("button").first()
-      const box = await btn.boundingBox()
+      const titleEl = items.nth(i).locator("p").first()
+      const box = await titleEl.boundingBox()
       console.log(`  → タスク${i + 1} タップ領域: ${JSON.stringify(box)}`)
 
-      await btn.click()
+      await titleEl.click()
       const sheet = page.locator('[class*="translate-y"]').first()
       const isVisible = await sheet.isVisible().catch(() => false)
       console.log(`  → タスク${i + 1} ボトムシート表示: ${isVisible}`)
@@ -35,10 +35,10 @@ test.describe("タップ応答調査", () => {
     const items = page.locator("ul.divide-y li")
     const firstItem = items.first()
 
-    const titleBtn = firstItem.locator("button").first()
+    const titleEl = firstItem.locator("p").first()
     const statusSelect = firstItem.locator("select").first()
 
-    const titleBox = await titleBtn.boundingBox()
+    const titleBox = await titleEl.boundingBox()
     const selectBox = await statusSelect.boundingBox()
 
     console.log(`  → タイトルボタン: ${JSON.stringify(titleBox)}`)

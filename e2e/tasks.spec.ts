@@ -58,15 +58,18 @@ test.describe("タスク一覧", () => {
     const firstSelect = firstItem.locator("select")
     const before = await firstSelect.inputValue()
 
-    // "進行中" ボタンで変更（selectOption は WebKit で onChange が発火しない場合があるためボタンを使う）
+    // selectOption は WebKit で onChange が発火しない場合があるため、常にボタンで変更する
+    // 「進行中」の場合は「完了」ボタンで一時的に変更してから「進行中」ボタンを表示させる
     if (before === "進行中") {
-      await firstSelect.selectOption("未着手")
-      await page.waitForTimeout(1500)
+      await firstItem.getByRole("button", { name: "完了" }).click()
+      await expect(firstItem.getByRole("button", { name: "進行中" })).toBeVisible({ timeout: 3000 })
     }
 
     const next = "進行中"
+    const nextBtn = firstItem.getByRole("button", { name: next })
+    await expect(nextBtn).toBeVisible({ timeout: 5000 })
     console.log(`  → "${await firstSelect.inputValue()}" → "${next}" に変更`)
-    await firstItem.getByRole("button", { name: next }).click()
+    await nextBtn.click()
 
     // Notion反映を待つ
     await page.waitForTimeout(3000)
@@ -78,8 +81,9 @@ test.describe("タスク一覧", () => {
     console.log(`  → リロード後のステータス: "${after}"`)
     expect(after).toBe(next)
 
-    // 元に戻す
-    await page.locator("ul.divide-y li select").first().selectOption(before === "進行中" ? "未着手" : before)
+    // 元に戻す（ベストエフォート: selectOption は Chrome でのみ確実に動作）
+    const restoreStatus = before === "進行中" ? "未着手" : before
+    await page.locator("ul.divide-y li select").first().selectOption(restoreStatus)
     await page.waitForTimeout(2000)
   })
 })
