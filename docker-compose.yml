@@ -1,6 +1,18 @@
 services:
   dev:
-    build: .
+    image: node:20-alpine
+    working_dir: /app
+    command: >
+      sh -c "
+        HASH_FILE=/cache/pkg_hash &&
+        CURRENT=\$(md5sum /app/package.json | cut -d' ' -f1) &&
+        if [ \"\$(cat \$HASH_FILE 2>/dev/null)\" != \"\$CURRENT\" ]; then
+          echo 'package.json changed, running npm install...' &&
+          npm install &&
+          echo \$CURRENT > \$HASH_FILE;
+        fi &&
+        npm run dev
+      "
     ports:
       - "3000:3000"
     volumes:
