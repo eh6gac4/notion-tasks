@@ -25,8 +25,8 @@ test.describe("タップ応答調査", () => {
       console.log(`  → タスク${i + 1} ボトムシート表示: ${isVisible}`)
       expect(isVisible).toBe(true)
 
-      // 閉じる
-      await page.locator('[class*="bg-black\\/50"]').click()
+      // 閉じる（ボトムシートに被らないよう左上をクリック）
+      await page.locator('[class*="bg-black\\/50"]').click({ position: { x: 10, y: 10 } })
       await page.waitForTimeout(400)
     }
   })

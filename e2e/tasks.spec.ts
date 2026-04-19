@@ -54,14 +54,19 @@ test.describe("タスク一覧", () => {
   })
 
   test("ステータス変更がNotionに反映される", async ({ page }) => {
-    const statusSelects = page.locator("ul.divide-y li select")
-    const firstSelect = statusSelects.first()
-
+    const firstItem = page.locator("ul.divide-y li").first()
+    const firstSelect = firstItem.locator("select")
     const before = await firstSelect.inputValue()
-    const next = before === "未着手" ? "進行中" : "未着手"
 
-    console.log(`  → "${before}" → "${next}" に変更`)
-    await firstSelect.selectOption(next)
+    // "進行中" ボタンで変更（selectOption は WebKit で onChange が発火しない場合があるためボタンを使う）
+    if (before === "進行中") {
+      await firstSelect.selectOption("未着手")
+      await page.waitForTimeout(1500)
+    }
+
+    const next = "進行中"
+    console.log(`  → "${await firstSelect.inputValue()}" → "${next}" に変更`)
+    await firstItem.getByRole("button", { name: next }).click()
 
     // Notion反映を待つ
     await page.waitForTimeout(3000)
@@ -74,7 +79,7 @@ test.describe("タスク一覧", () => {
     expect(after).toBe(next)
 
     // 元に戻す
-    await page.locator("ul.divide-y li select").first().selectOption(before)
+    await page.locator("ul.divide-y li select").first().selectOption(before === "進行中" ? "未着手" : before)
     await page.waitForTimeout(2000)
   })
 })

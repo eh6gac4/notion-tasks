@@ -77,6 +77,25 @@ export function TaskItem({ task }: { task: Task }) {
         )}
       </div>
 
+      <div className="flex gap-2 mt-2">
+        {(["進行中", "完了", "中止"] as TaskStatus[]).filter((s) => s !== status).map((s) => (
+          <button
+            key={s}
+            onClick={(e) => {
+              e.stopPropagation()
+              setStatus(s)
+              if (selectRef.current) selectRef.current.value = s
+              startTransition(async () => {
+                await updateTaskStatus(task.id, s)
+              })
+            }}
+            className={`text-xs px-2.5 py-1 rounded-full border min-h-[36px] active:opacity-70 transition-opacity ${STATUS_STYLES[s]}`}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
       {showDetail && (
         <TaskDetail
           task={{ ...task, status }}
