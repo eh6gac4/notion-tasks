@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
@@ -79,17 +80,12 @@ function pageToTask(page: PageObjectResponse): Task {
   }
 }
 
-export async function getTasks(options?: {
-  statuses?: TaskStatus[]
-  includeCompleted?: boolean
-}): Promise<Task[]> {
-  const activeStatuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
-
+async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
   try {
     const response = await notion.dataSources.query({
       data_source_id: DATA_SOURCE_ID,
       filter: {
-        or: activeStatuses.map((s) => ({
+        or: statuses.map((s) => ({
           property: NOTION_PROPS.STATUS,
           status: { equals: s },
         })),
@@ -107,6 +103,18 @@ export async function getTasks(options?: {
     console.error("[getTasks] Notion error:", e)
     return []
   }
+}
+
+export function getTasks(options?: {
+  statuses?: TaskStatus[]
+  includeCompleted?: boolean
+}): Promise<Task[]> {
+  const statuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
+  return unstable_cache(
+    () => fetchTasks(statuses),
+    ["tasks", statuses.join(",")],
+    { tags: ["tasks"] }
+  )()
 }
 
 export async function getTask(id: string): Promise<Task | null> {

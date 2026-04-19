@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useTransition } from "react"
+import { useOptimistic, useTransition, useState, useRef } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { TaskDetail } from "./TaskDetail"
@@ -8,15 +8,11 @@ import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styl
 
 export function TaskItem({ task }: { task: Task }) {
   const [, startTransition] = useTransition()
-  const [status, setStatus] = useState<TaskStatus | null>(task.status)
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const [showDetail, setShowDetail] = useState(false)
   const selectRef = useRef<HTMLSelectElement>(null)
 
-  useEffect(() => {
-    setStatus(task.status)
-    if (selectRef.current) selectRef.current.value = task.status ?? "未着手"
-  }, [task.status])
-
+  const status = optimisticStatus
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
   const due = task.due ? new Date(task.due) : null
   const today = new Date()
@@ -41,8 +37,9 @@ export function TaskItem({ task }: { task: Task }) {
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => {
               const next = e.target.value as TaskStatus
-              setStatus(next)
               startTransition(async () => {
+                setOptimisticStatus(next)
+                if (selectRef.current) selectRef.current.value = next
                 await updateTaskStatus(task.id, next)
               })
             }}
@@ -82,9 +79,8 @@ export function TaskItem({ task }: { task: Task }) {
             key={s}
             onClick={(e) => {
               e.stopPropagation()
-              setStatus(s)
-              if (selectRef.current) selectRef.current.value = s
               startTransition(async () => {
+                setOptimisticStatus(s)
                 await updateTaskStatus(task.id, s)
               })
             }}

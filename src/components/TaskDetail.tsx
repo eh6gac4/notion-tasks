@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useRef, useTransition, useEffect } from "react"
+import { useOptimistic, useTransition, useRef, useState, useEffect } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
 
 export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [, startTransition] = useTransition()
-  const [status, setStatus] = useState<TaskStatus | null>(task.status)
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -25,6 +25,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   today.setHours(0, 0, 0, 0)
   const isOverdue = due !== null && due < today
 
+  const status = optimisticStatus
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
 
   return (
@@ -64,8 +65,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
               defaultValue={status ?? "未着手"}
               onChange={(e) => {
                 const next = e.target.value as TaskStatus
-                setStatus(next)
                 startTransition(async () => {
+                  setOptimisticStatus(next)
                   await updateTaskStatus(task.id, next)
                 })
               }}
