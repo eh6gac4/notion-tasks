@@ -1,5 +1,5 @@
-const CACHE_NAME = "notion-tasks-v1"
-const STATIC_CACHE_NAME = "notion-tasks-static-v1"
+const CACHE_NAME = "notion-tasks-v2"
+const STATIC_CACHE_NAME = "notion-tasks-static-v2"
 
 // Static assets that can be cached long-term (content-hashed filenames)
 const STATIC_ORIGINS_PATTERNS = [
@@ -47,12 +47,20 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
-  // Network-first for navigation and dynamic routes (tasks data must be fresh)
+  // Stale-while-revalidate for navigation: serve cached HTML instantly on 2nd+ launch
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.open(CACHE_NAME).then((cache) => cache.match("/") ?? Response.error())
-      )
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request)
+        const fetchPromise = fetch(request)
+          .then((res) => {
+            if (res.ok) cache.put(request, res.clone())
+            return res
+          })
+          .catch(() => null)
+        // Serve cache immediately if available, update in background
+        return cached ?? fetchPromise ?? Response.error()
+      })
     )
     return
   }
