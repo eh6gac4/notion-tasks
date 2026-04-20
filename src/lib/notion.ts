@@ -4,6 +4,9 @@ import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoint
 import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask } from "@/lib/mock-tasks"
+
+const IS_DEV = process.env.NODE_ENV === "development"
 
 const notion = new Client({ auth: config.notion.token })
 
@@ -110,6 +113,7 @@ export function getTasks(options?: {
   includeCompleted?: boolean
 }): Promise<Task[]> {
   const statuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
+  if (IS_DEV) return Promise.resolve(getMockTasks(statuses))
   return unstable_cache(
     () => fetchTasks(statuses),
     ["tasks", statuses.join(",")],
@@ -118,6 +122,7 @@ export function getTasks(options?: {
 }
 
 export async function getTask(id: string): Promise<Task | null> {
+  if (IS_DEV) return getMockTask(id) ?? null
   try {
     const page = await notion.pages.retrieve({ page_id: id })
     if (page.object !== "page" || !("properties" in page)) return null
@@ -128,6 +133,7 @@ export async function getTask(id: string): Promise<Task | null> {
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
+  if (IS_DEV) return createMockTask(input)
   const properties: Record<string, unknown> = {
     [NOTION_PROPS.TITLE]: { title: [{ text: { content: input.title } }] },
   }
@@ -149,6 +155,11 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
 }
 
 export async function updateTask(id: string, input: UpdateTaskInput): Promise<Task> {
+  if (IS_DEV) {
+    const task = updateMockTask(id, input)
+    if (!task) throw new Error(`Mock task ${id} not found`)
+    return task
+  }
   const properties: Record<string, unknown> = {}
 
   if (input.title !== undefined)    properties[NOTION_PROPS.TITLE]      = { title: [{ text: { content: input.title } }] }

@@ -56,6 +56,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistration />
         <SplashScreen />
         {children}
+        {process.env.NODE_ENV === "development" && (
+          <div
+            style={{
+              position: "fixed",
+              bottom: "12px",
+              right: "12px",
+              zIndex: 9999,
+              background: "rgba(13, 0, 20, 0.85)",
+              border: "1px solid #ffcc00",
+              color: "#ffcc00",
+              fontSize: "10px",
+              fontWeight: "bold",
+              letterSpacing: "0.15em",
+              padding: "3px 7px",
+              boxShadow: "0 0 8px #ffcc00, inset 0 0 8px rgba(255,204,0,0.1)",
+              pointerEvents: "none",
+            }}
+          >
+            DEV
+          </div>
+        )}
       </body>
     </html>
   )

@@ -1,7 +1,9 @@
 function requireEnv(key: string): string {
   const val = process.env[key]
-  if (!val) throw new Error(`Missing required environment variable: ${key}`)
-  return val
+  if (!val && process.env.NODE_ENV !== "development") {
+    throw new Error(`Missing required environment variable: ${key}`)
+  }
+  return val ?? ""
 }
 
 export const config = {
