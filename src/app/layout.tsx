@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { DotGothic16 } from "next/font/google"
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 import "./globals.css"
 
 const dotGothic = DotGothic16({
@@ -27,7 +28,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className={`h-full bg-[#0d0014] antialiased ${dotGothic.className}`}>{children}</body>
+      <body className={`h-full bg-[#0d0014] antialiased ${dotGothic.className}`}>
+        <ServiceWorkerRegistration />
+        {children}
+      </body>
     </html>
   )
 }
