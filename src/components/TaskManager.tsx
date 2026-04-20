@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import type { Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskCreate } from "./TaskCreate"
-import { setFilterAction } from "@/app/actions"
+import { setFilterAction, refreshTasksAction } from "@/app/actions"
 import { FILTERS } from "@/constants/filters"
 
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
@@ -28,7 +28,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
         }}
       />
 
-      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-2.5 flex-shrink-0">
+      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-2.5 flex-shrink-0 flex gap-2">
         <select
           data-testid="filter-select"
           value={filterKey}
@@ -44,6 +44,15 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
             <option key={f.key} value={f.key}>{f.label}</option>
           ))}
         </select>
+        <button
+          data-testid="refresh-button"
+          disabled={isPending}
+          onClick={() => startTransition(async () => { await refreshTasksAction() })}
+          className="flex-shrink-0 w-10 h-10 rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] disabled:opacity-40 transition-colors"
+          style={{ fontSize: "1.1rem" }}
+        >
+          <span className={isPending ? "animate-spin inline-block" : ""}>↻</span>
+        </button>
       </div>
 
       <main className="flex-1 overflow-y-auto">

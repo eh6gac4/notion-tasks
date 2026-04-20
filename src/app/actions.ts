@@ -41,3 +41,9 @@ export async function updateTaskAction(id: string, input: UpdateTaskInput) {
   revalidateTag("tasks", "default")
   revalidatePath("/")
 }
+
+export async function refreshTasksAction() {
+  await requireAuth()
+  revalidateTag("tasks", "default")
+  revalidatePath("/")
+}
