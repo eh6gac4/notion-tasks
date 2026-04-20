@@ -84,9 +84,9 @@ export function TaskItem({ task }: { task: Task }) {
                 await updateTaskStatus(task.id, s)
               })
             }}
-            className={`text-xs px-2.5 py-1 rounded-full border min-h-[36px] active:opacity-70 transition-opacity ${STATUS_STYLES[s]}`}
+            className={`text-xs px-3 py-1 rounded-md border min-h-[36px] active:opacity-70 hover:opacity-80 transition-opacity ${STATUS_STYLES[s]}`}
           >
-            {s}
+            → {s}
           </button>
         ))}
       </div>
