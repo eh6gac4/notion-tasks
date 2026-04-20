@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             style={{
               position: "fixed",
               bottom: "12px",
-              right: "12px",
+              left: "12px",
               zIndex: 9999,
               background: "rgba(13, 0, 20, 0.85)",
               border: "1px solid #ffcc00",
