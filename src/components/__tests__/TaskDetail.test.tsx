@@ -5,6 +5,7 @@ import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
   updateTaskStatus: vi.fn().mockResolvedValue(undefined),
+  updateTaskAction: vi.fn().mockResolvedValue(undefined),
 }))
 
 // requestAnimationFrame を同期実行してアニメーション初期化を完了させる
@@ -44,7 +45,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
 describe("TaskDetail レンダリング", () => {
   it("タスクタイトルを表示する", () => {
     render(<TaskDetail task={makeTask({ title: "買い物リスト" })} onClose={() => {}} />)
-    expect(screen.getByText("買い物リスト")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("買い物リスト")).toBeInTheDocument()
   })
 
   it("現在のステータスバッジを表示する", () => {
@@ -72,23 +73,22 @@ describe("TaskDetail レンダリング", () => {
     expect(screen.getByText("↓ Low")).toBeInTheDocument()
   })
 
-  it("priority が null のとき優先度ラベルを表示しない", () => {
+  it("priority が null のとき priority select が未設定になる", () => {
     render(<TaskDetail task={makeTask({ priority: null })} onClose={() => {}} />)
-    expect(screen.queryByText("↑ High")).not.toBeInTheDocument()
+    expect(screen.getByDisplayValue("未設定")).toBeInTheDocument()
   })
 
-  it("未来の due date を⚠なしで表示する", () => {
+  it("未来の due date が date input に反映される", () => {
     const future = new Date()
     future.setDate(future.getDate() + 7)
     const due = future.toISOString().split("T")[0]
     render(<TaskDetail task={makeTask({ due })} onClose={() => {}} />)
-    const dateEl = screen.getByText(/\d{4}年\d+月\d+日/)
-    expect(dateEl.textContent).not.toContain("⚠")
+    expect(screen.getByDisplayValue(due)).toBeInTheDocument()
   })
 
-  it("過去の due date を⚠付きで表示する（期限切れ）", () => {
+  it("過去の due date が date input に反映される", () => {
     render(<TaskDetail task={makeTask({ due: "2020-01-01" })} onClose={() => {}} />)
-    expect(screen.getByText(/⚠/)).toBeInTheDocument()
+    expect(screen.getByDisplayValue("2020-01-01")).toBeInTheDocument()
   })
 
   it("due が null のとき日付を表示しない", () => {
@@ -137,8 +137,9 @@ describe("TaskDetail ステータス変更", () => {
     mock.mockClear()
 
     render(<TaskDetail task={makeTask({ id: "t1", status: "未着手" })} onClose={() => {}} />)
-    const select = screen.getByRole("combobox")
-    fireEvent.change(select, { target: { value: "進行中" } })
+    // ステータス select は最初の combobox
+    const selects = screen.getAllByRole("combobox")
+    fireEvent.change(selects[0], { target: { value: "進行中" } })
 
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith("t1", "進行中")
@@ -147,8 +148,8 @@ describe("TaskDetail ステータス変更", () => {
 
   it("ステータス変更後にバッジが更新される", async () => {
     render(<TaskDetail task={makeTask({ status: "未着手" })} onClose={() => {}} />)
-    const select = screen.getByRole("combobox")
-    fireEvent.change(select, { target: { value: "完了" } })
+    const selects = screen.getAllByRole("combobox")
+    fireEvent.change(selects[0], { target: { value: "完了" } })
 
     await waitFor(() => {
       expect(screen.getAllByText("完了").length).toBeGreaterThan(0)
@@ -162,7 +163,8 @@ describe("TaskDetail 閉じる動作", () => {
     const onClose = vi.fn()
     render(<TaskDetail task={makeTask()} onClose={onClose} />)
 
-    const handleBtn = screen.getByRole("button")
+    // ハンドルボタンは最初のボタン
+    const handleBtn = screen.getAllByRole("button")[0]
     fireEvent.click(handleBtn)
 
     expect(onClose).not.toHaveBeenCalled()

@@ -1,15 +1,22 @@
 "use client"
 
 import { useOptimistic, useTransition, useRef, useState, useEffect } from "react"
-import type { Task, TaskStatus } from "@/types/task"
-import { updateTaskStatus } from "@/app/actions"
+import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
+import { updateTaskStatus, updateTaskAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
 
+const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
+
 export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
   const [visible, setVisible] = useState(false)
+
+  const [editTitle, setEditTitle] = useState(task.title)
+  const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
+  const [editDue, setEditDue] = useState(task.due ?? "")
+  const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -20,10 +27,23 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     setTimeout(onClose, 280)
   }
 
-  const due = task.due ? new Date(task.due) : null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const isOverdue = due !== null && due < today
+  function toggleTag(tag: TaskTag) {
+    setEditTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    )
+  }
+
+  function handleSave() {
+    startTransition(async () => {
+      await updateTaskAction(task.id, {
+        title: editTitle,
+        priority: editPriority || undefined,
+        due: editDue || null,
+        tags: editTags,
+      })
+      handleClose()
+    })
+  }
 
   const status = optimisticStatus
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
@@ -49,9 +69,14 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
         </button>
 
         {/* Title */}
-        <h2 className="text-base text-[#ffbbee] leading-snug mb-4">
-          {task.title}
-        </h2>
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] mb-4"
+          style={{ transition: "border-color 0.2s" }}
+          aria-label="タイトル"
+        />
 
         {/* Status */}
         <div className="mb-4">
@@ -80,36 +105,51 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           </div>
         </div>
 
-        {/* Details */}
-        <div className="space-y-3">
-          {task.priority && (
-            <Row label="Priority">
-              <span className={`text-sm ${PRIORITY_STYLES[task.priority].color}`}>
-                {PRIORITY_STYLES[task.priority].label}
-              </span>
-            </Row>
-          )}
+        {/* Editable fields */}
+        <div className="space-y-4">
+          <Row label="Priority">
+            <select
+              value={editPriority}
+              onChange={(e) => setEditPriority(e.target.value as TaskPriority | "")}
+              className="rounded-xl px-3 py-2 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+            >
+              <option value="">未設定</option>
+              <option value="high">↑ High</option>
+              <option value="medium">→ Med</option>
+              <option value="low">↓ Low</option>
+            </select>
+          </Row>
 
-          {due && (
-            <Row label="期限">
-              <span className={`text-sm ${isOverdue ? "text-[#ff3355]" : "text-[#ffbbee]"}`}>
-                {isOverdue ? "⚠ " : ""}
-                {due.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}
-              </span>
-            </Row>
-          )}
+          <Row label="期限">
+            <input
+              type="date"
+              value={editDue}
+              onChange={(e) => setEditDue(e.target.value)}
+              className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+            />
+          </Row>
 
-          {task.tags.length > 0 && (
-            <Row label="タグ">
-              <div className="flex flex-wrap gap-1.5">
-                {task.tags.map((tag) => (
-                  <span key={tag} className="text-xs text-[#996688] bg-[#0d0014] border border-[rgba(255,0,204,0.2)] px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </Row>
-          )}
+          <Row label="タグ">
+            <div className="flex flex-wrap gap-2">
+              {TAG_OPTIONS.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className="px-3 py-1.5 rounded-full text-xs transition-all"
+                  style={
+                    editTags.includes(tag)
+                      ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
+                      : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                  }
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </Row>
 
           {task.source && (
             <Row label="ソース">
@@ -139,12 +179,26 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           )}
         </div>
 
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={isPending || !editTitle.trim()}
+          className="mt-6 w-full rounded-xl py-3.5 text-sm tracking-widest uppercase disabled:opacity-40 transition-all"
+          style={{
+            backgroundColor: "#ff00cc",
+            color: "#0d0014",
+            boxShadow: isPending ? "none" : "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+          }}
+        >
+          {isPending ? "SAVING..." : "SAVE CHANGES"}
+        </button>
+
         {/* Notion link */}
         <a
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
+          className="mt-3 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
           style={{ border: "1px solid rgba(255,0,204,0.25)" }}
         >
           Open in Notion →
