@@ -6,6 +6,7 @@ import { TaskItem } from "./TaskItem"
 import { TaskCreate } from "./TaskCreate"
 import { setFilterAction, refreshTasksAction } from "@/app/actions"
 import { FILTERS } from "@/constants/filters"
+import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
 
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
   const [isPending, startTransition] = useTransition()
@@ -15,6 +16,10 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
   const filtered = current.statuses
     ? tasks.filter((t) => t.status && current.statuses!.includes(t.status))
     : tasks
+
+  const isGrouped = !current.statuses || current.statuses.length > 1
+  const groups = isGrouped ? groupAndSort(filtered) : null
+  const sortedFlat = !isGrouped ? sortByPriorityAndDue(filtered) : null
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -91,12 +96,26 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
             <p className="text-center text-[#553355] text-xs py-20 tracking-widest">
               — NO TASKS —
             </p>
+          ) : isGrouped ? (
+            <>
+              {groups!.map(({ status, tasks: groupTasks }) => (
+                <section key={status}>
+                  <div className="px-4 py-1.5 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014]">
+                    <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
+                    <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
+                  </div>
+                  <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+                    {groupTasks.map((task) => (
+                      <li key={task.id}><TaskItem task={task} /></li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </>
           ) : (
             <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
-              {filtered.map((task) => (
-                <li key={task.id}>
-                  <TaskItem task={task} />
-                </li>
+              {sortedFlat!.map((task) => (
+                <li key={task.id}><TaskItem task={task} /></li>
               ))}
             </ul>
           )}
