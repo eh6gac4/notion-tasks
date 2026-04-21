@@ -2,7 +2,7 @@ services:
   dev:
     image: node:20-alpine
     working_dir: /app
-    restart: always
+    restart: unless-stopped
     command: sh -c "npm install && npm run dev"
     ports:
       - "3000:3000"
