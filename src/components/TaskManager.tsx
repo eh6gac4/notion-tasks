@@ -100,7 +100,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
             <>
               {groups!.map(({ status, tasks: groupTasks }) => (
                 <section key={status}>
-                  <div className="px-4 py-1.5 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014]">
+                  <div className="px-4 py-1.5 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
                     <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
                     <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
                   </div>
