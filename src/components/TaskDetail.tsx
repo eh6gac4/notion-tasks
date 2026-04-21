@@ -1,19 +1,18 @@
 "use client"
 
-import { useOptimistic, useTransition, useRef, useState, useEffect } from "react"
+import { useTransition, useState, useEffect } from "react"
 import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
-import { updateTaskStatus, updateTaskAction } from "@/app/actions"
-import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
+import { updateTaskAction } from "@/app/actions"
+import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
 export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
   const [isPending, startTransition] = useTransition()
-  const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
-  const selectRef = useRef<HTMLSelectElement>(null)
   const [visible, setVisible] = useState(false)
 
   const [editTitle, setEditTitle] = useState(task.title)
+  const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
   const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
   const [editDue, setEditDue] = useState(task.due ?? "")
   const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
@@ -27,26 +26,36 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     setTimeout(onClose, 280)
   }
 
-  function toggleTag(tag: TaskTag) {
-    setEditTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
-  }
-
-  function handleSave() {
+  function save(input: Parameters<typeof updateTaskAction>[1]) {
     startTransition(async () => {
-      await updateTaskAction(task.id, {
-        title: editTitle,
-        priority: editPriority || undefined,
-        due: editDue || null,
-        tags: editTags,
-      })
-      handleClose()
+      await updateTaskAction(task.id, input)
     })
   }
 
-  const status = optimisticStatus
-  const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
+  function handleStatusChange(next: TaskStatus) {
+    setEditStatus(next)
+    save({ status: next })
+  }
+
+  function handlePriorityChange(next: TaskPriority | "") {
+    setEditPriority(next)
+    save({ priority: next || undefined })
+  }
+
+  function handleDueChange(next: string) {
+    setEditDue(next)
+    save({ due: next || null })
+  }
+
+  function toggleTag(tag: TaskTag) {
+    const next = editTags.includes(tag)
+      ? editTags.filter((t) => t !== tag)
+      : [...editTags, tag]
+    setEditTags(next)
+    save({ tags: next })
+  }
+
+  const statusStyle = STATUS_STYLES[editStatus] ?? STATUS_STYLES["未着手"]
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -61,6 +70,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           backgroundColor: "#160022",
           borderTop: "1px solid rgba(255,0,204,0.5)",
           boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+          opacity: isPending ? 0.85 : 1,
+          transition: "opacity 0.15s",
         }}
       >
         {/* Handle */}
@@ -68,11 +79,12 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
         </button>
 
-        {/* Title */}
+        {/* Title — blur で保存 */}
         <input
           type="text"
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
+          onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
           className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] mb-4"
           style={{ transition: "border-color 0.2s" }}
           aria-label="タイトル"
@@ -83,18 +95,11 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           <p className="text-xs text-[#996688] mb-1.5 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
             <span className={`px-3 py-1.5 rounded-full text-sm ${statusStyle}`}>
-              {status ?? "未着手"}
+              {editStatus}
             </span>
             <select
-              ref={selectRef}
-              defaultValue={status ?? "未着手"}
-              onChange={(e) => {
-                const next = e.target.value as TaskStatus
-                startTransition(async () => {
-                  setOptimisticStatus(next)
-                  await updateTaskStatus(task.id, next)
-                })
-              }}
+              value={editStatus}
+              onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
               className="absolute inset-0 w-full h-full cursor-pointer"
               style={{ opacity: 0.001 }}
             >
@@ -110,7 +115,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           <Row label="Priority">
             <select
               value={editPriority}
-              onChange={(e) => setEditPriority(e.target.value as TaskPriority | "")}
+              onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
               className="rounded-xl px-3 py-2 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
               style={{ border: "1px solid rgba(255,0,204,0.3)" }}
             >
@@ -125,7 +130,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
             <input
               type="date"
               value={editDue}
-              onChange={(e) => setEditDue(e.target.value)}
+              onChange={(e) => handleDueChange(e.target.value)}
               className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
               style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
             />
@@ -179,26 +184,12 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           )}
         </div>
 
-        {/* Save button */}
-        <button
-          onClick={handleSave}
-          disabled={isPending || !editTitle.trim()}
-          className="mt-6 w-full rounded-xl py-3.5 text-sm tracking-widest uppercase disabled:opacity-40 transition-all"
-          style={{
-            backgroundColor: "#ff00cc",
-            color: "#0d0014",
-            boxShadow: isPending ? "none" : "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
-          }}
-        >
-          {isPending ? "SAVING..." : "SAVE CHANGES"}
-        </button>
-
         {/* Notion link */}
         <a
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
+          className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
           style={{ border: "1px solid rgba(255,0,204,0.25)" }}
         >
           Open in Notion →

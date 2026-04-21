@@ -4,7 +4,6 @@ import { TaskDetail } from "@/components/TaskDetail"
 import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
-  updateTaskStatus: vi.fn().mockResolvedValue(undefined),
   updateTaskAction: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -130,29 +129,70 @@ describe("TaskDetail レンダリング", () => {
   })
 })
 
-describe("TaskDetail ステータス変更", () => {
-  it("select 変更で updateTaskStatus が呼ばれる", async () => {
-    const { updateTaskStatus } = await import("@/app/actions")
-    const mock = vi.mocked(updateTaskStatus)
+describe("TaskDetail フィールド変更", () => {
+  it("ステータス変更で updateTaskAction が即時呼ばれる", async () => {
+    const { updateTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
     render(<TaskDetail task={makeTask({ id: "t1", status: "未着手" })} onClose={() => {}} />)
-    // ステータス select は最初の combobox
     const selects = screen.getAllByRole("combobox")
     fireEvent.change(selects[0], { target: { value: "進行中" } })
 
     await waitFor(() => {
-      expect(mock).toHaveBeenCalledWith("t1", "進行中")
+      expect(mock).toHaveBeenCalledWith("t1", { status: "進行中" })
     })
   })
 
-  it("ステータス変更後にバッジが更新される", async () => {
+  it("ステータス変更後にバッジが即時更新される", async () => {
     render(<TaskDetail task={makeTask({ status: "未着手" })} onClose={() => {}} />)
     const selects = screen.getAllByRole("combobox")
     fireEvent.change(selects[0], { target: { value: "完了" } })
 
     await waitFor(() => {
       expect(screen.getAllByText("完了").length).toBeGreaterThan(0)
+    })
+  })
+
+  it("Priority 変更で updateTaskAction が即時呼ばれる", async () => {
+    const { updateTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1" })} onClose={() => {}} />)
+    const selects = screen.getAllByRole("combobox")
+    fireEvent.change(selects[1], { target: { value: "high" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { priority: "high" })
+    })
+  })
+
+  it("タグトグルで updateTaskAction が即時呼ばれる", async () => {
+    const { updateTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", tags: [] })} onClose={() => {}} />)
+    fireEvent.click(screen.getByText("Tech"))
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { tags: ["Tech"] })
+    })
+  })
+
+  it("タイトル blur で updateTaskAction が呼ばれる", async () => {
+    const { updateTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", title: "旧タイトル" })} onClose={() => {}} />)
+    const titleInput = screen.getByRole("textbox", { name: "タイトル" })
+    fireEvent.change(titleInput, { target: { value: "新タイトル" } })
+    fireEvent.blur(titleInput)
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { title: "新タイトル" })
     })
   })
 })

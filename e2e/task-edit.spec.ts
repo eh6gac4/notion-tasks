@@ -27,22 +27,11 @@ test.describe("タスク詳細編集", () => {
     await expect(page.locator('select').nth(1)).toBeVisible()
   })
 
-  test("SAVE CHANGESボタンが表示される", async ({ page }) => {
+  test("SAVE CHANGESボタンが存在しない（即時保存方式）", async ({ page }) => {
     const firstItem = page.locator("ul.divide-y li").first()
     await firstItem.locator("p").first().click()
 
-    await expect(page.locator('button:has-text("SAVE CHANGES")')).toBeVisible({ timeout: 3_000 })
-  })
-
-  test("タイトルを空にするとSAVEボタンが無効になる", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
-    await firstItem.locator("p").first().click()
-
-    const titleInput = page.locator('input[aria-label="タイトル"]')
-    await expect(titleInput).toBeVisible({ timeout: 3_000 })
-    await titleInput.fill("")
-
-    const saveBtn = page.locator('button:has-text("SAVE CHANGES")')
-    await expect(saveBtn).toBeDisabled()
+    await expect(page.locator('input[aria-label="タイトル"]')).toBeVisible({ timeout: 3_000 })
+    await expect(page.locator('button:has-text("SAVE CHANGES")')).not.toBeVisible()
   })
 })
