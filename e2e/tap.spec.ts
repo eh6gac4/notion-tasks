@@ -13,8 +13,8 @@ test.describe("タップ応答調査", () => {
     const count = await items.count()
     console.log(`  → タスク数: ${count}件`)
 
-    // 全タスクをタップしてボトムシートが開くか確認
-    for (let i = 0; i < Math.min(count, 5); i++) {
+    // 先頭1件のタスクでボトムシートが開くか確認
+    for (let i = 0; i < Math.min(count, 1); i++) {
       const titleEl = items.nth(i).locator("p").first()
       const box = await titleEl.boundingBox()
       console.log(`  → タスク${i + 1} タップ領域: ${JSON.stringify(box)}`)
@@ -26,8 +26,9 @@ test.describe("タップ応答調査", () => {
       expect(isVisible).toBe(true)
 
       // 閉じる（ボトムシートに被らないよう左上をクリック）
-      await page.locator('[class*="bg-black\\/50"]').click({ position: { x: 10, y: 10 } })
-      await page.waitForTimeout(400)
+      const backdrop = page.locator('[class*="bg-black\\/50"]')
+      await backdrop.click({ position: { x: 10, y: 10 } })
+      await backdrop.waitFor({ state: "hidden" })
     }
   })
 

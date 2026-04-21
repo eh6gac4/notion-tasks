@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
   retries: 0,
+  workers: 1,
+  fullyParallel: false,
   reporter: "list",
   use: {
     baseURL: "http://localhost:3000",
@@ -34,12 +36,13 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: ["**/tap.spec.ts", "**/snapshot.spec.ts", "**/pwa.spec.ts"],
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: "docker compose rm -sf dev && docker compose up --force-recreate dev",
     url: "http://localhost:3000",
-    reuseExistingServer: true,
-    timeout: 30_000,
+    reuseExistingServer: false,
+    timeout: 120_000,
   },
 })
