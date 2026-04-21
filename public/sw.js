@@ -47,19 +47,17 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
-  // Stale-while-revalidate for navigation: serve cached HTML instantly on 2nd+ launch
+  // Network-first for navigation: always fetch fresh HTML, fall back to cache when offline
   if (request.mode === "navigate") {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(request)
-        const fetchPromise = fetch(request)
-          .then((res) => {
-            if (res.ok) cache.put(request, res.clone())
-            return res
-          })
-          .catch(() => null)
-        // Serve cache immediately if available, update in background
-        return cached ?? fetchPromise ?? Response.error()
+        try {
+          const res = await fetch(request)
+          if (res.ok) cache.put(request, res.clone())
+          return res
+        } catch {
+          return (await cache.match(request)) ?? Response.error()
+        }
       })
     )
     return

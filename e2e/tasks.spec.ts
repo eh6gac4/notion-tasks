@@ -3,8 +3,10 @@ import { test, expect } from "@playwright/test"
 test.use({ storageState: "e2e/.auth/user.json" })
 
 test.describe("タスク一覧", () => {
+  test.describe.configure({ mode: "serial" })
   test.beforeEach(async ({ page }) => {
-    await page.goto("/")
+    // dev環境のモックデータをリセット（/reset がresetMockTasks()を呼んで"/"にリダイレクト）
+    await page.goto("/reset")
     await page.waitForSelector("ul.divide-y", { timeout: 15_000 })
   })
 
@@ -54,37 +56,28 @@ test.describe("タスク一覧", () => {
   })
 
   test("ステータス変更がNotionに反映される", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
-    const firstSelect = firstItem.locator("select")
-    const before = await firstSelect.inputValue()
-
+    // beforeEach でモックデータをリセット済みのため先頭タスクは常に未着手
     // selectOption は WebKit で onChange が発火しない場合があるため、常にボタンで変更する
-    // 「進行中」の場合は「完了」ボタンで一時的に変更してから「進行中」ボタンを表示させる
-    if (before === "進行中") {
-      await firstItem.getByRole("button", { name: "完了" }).click()
-      await expect(firstItem.getByRole("button", { name: "進行中" })).toBeVisible({ timeout: 3000 })
-    }
+    const firstItem = page.locator("ul.divide-y li").first()
+    const before = await firstItem.locator("select").inputValue()
 
     const next = "進行中"
     const nextBtn = firstItem.getByRole("button", { name: next })
     await expect(nextBtn).toBeVisible({ timeout: 5000 })
-    console.log(`  → "${await firstSelect.inputValue()}" → "${next}" に変更`)
+    console.log(`  → "${before}" → "${next}" に変更`)
     await nextBtn.click()
 
     // Notion反映を待つ
     await page.waitForTimeout(3000)
 
-    // ページリロードして永続化を確認
+    // 進行中フィルターでリロードして永続化を確認（サーバーアクション完了を待つ）
+    await page.locator("[data-testid='filter-select']").selectOption("doing")
+    await page.waitForTimeout(1500)
     await page.reload()
     await page.waitForSelector("ul.divide-y")
     const after = await page.locator("ul.divide-y li select").first().inputValue()
     console.log(`  → リロード後のステータス: "${after}"`)
     expect(after).toBe(next)
-
-    // 元に戻す（ベストエフォート: selectOption は Chrome でのみ確実に動作）
-    const restoreStatus = before === "進行中" ? "未着手" : before
-    await page.locator("ul.divide-y li select").first().selectOption(restoreStatus)
-    await page.waitForTimeout(2000)
   })
 })
 

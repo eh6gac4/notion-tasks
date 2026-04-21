@@ -152,6 +152,11 @@ const INITIAL_TASKS: Task[] = [
 let store: Task[] = INITIAL_TASKS.map((t) => ({ ...t }))
 let nextId = 100
 
+export function resetMockTasks() {
+  store = INITIAL_TASKS.map((t) => ({ ...t }))
+  nextId = 100
+}
+
 export function getMockTasks(statuses?: TaskStatus[]): Task[] {
   if (!statuses) return [...store]
   return store.filter((t) => t.status !== null && statuses.includes(t.status))
