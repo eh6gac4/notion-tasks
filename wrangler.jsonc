@@ -27,6 +27,12 @@
 			"bucket_name": "notion-tasks-opennext-cache"
 		}
 	],
+	"routes": [
+		{
+			"pattern": "todo.eh6gac4.work",
+			"custom_domain": true
+		}
+	],
 	"images": {
 		// Enable image optimization
 		// see https://opennext.js.org/cloudflare/howtos/image
