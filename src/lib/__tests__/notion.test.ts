@@ -13,6 +13,11 @@ const { mockPages, mockDataSources } = vi.hoisted(() => ({
   },
 }))
 
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: () => unknown) => fn,
+  revalidateTag: vi.fn(),
+}))
+
 vi.mock("@notionhq/client", () => ({
   // new Client() が呼び出されるため通常の function が必要
   Client: vi.fn(function () {
@@ -423,6 +428,15 @@ describe("updateTask", () => {
     await updateTask("id-1", { status: "完了" })
     const props = mockPages.update.mock.calls[0][0].properties
     expect(props["Status"]).toEqual({ status: { name: "完了" } })
+  })
+
+  it("未着手 → 進行中 のステータス変更を Notion API に送信する", async () => {
+    mockPages.update.mockResolvedValue(makePage({ status: "進行中" }))
+    const result = await updateTask("task-abc", { status: "進行中" })
+    const call = mockPages.update.mock.calls[0][0]
+    expect(call.page_id).toBe("task-abc")
+    expect(call.properties["Status"]).toEqual({ status: { name: "進行中" } })
+    expect(result.status).toBe("進行中")
   })
 
   it("due を null でクリアできる", async () => {
