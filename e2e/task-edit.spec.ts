@@ -4,8 +4,8 @@ test.use({ storageState: "e2e/.auth/user.json" })
 
 test.describe("タスク詳細編集", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/")
-    await page.waitForSelector("ul.divide-y li", { timeout: 15_000 })
+    await page.goto("/reset")
+    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("ボトムシートにタイトル入力欄が表示される", async ({ page }) => {

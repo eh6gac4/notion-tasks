@@ -24,10 +24,9 @@ test("スナップショット撮影", async ({ page }) => {
   const firstTask = page.locator("ul li button").first()
   if (await firstTask.isVisible()) {
     await firstTask.click()
-    await page.waitForSelector('[class*="translate-y"]')
+    await page.locator("div.rounded-t-2xl").first().waitFor({ state: "visible" })
     await page.screenshot({ path: `${outDir}/detail-sheet.png`, fullPage: true })
-    const backdrop = page.locator('[class*="bg-black\\/50"]')
     await page.mouse.click(10, 10)
-    await backdrop.waitFor({ state: "hidden" })
+    await page.locator("div.bg-black\\/50").waitFor({ state: "hidden" })
   }
 })

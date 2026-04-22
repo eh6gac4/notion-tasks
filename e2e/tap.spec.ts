@@ -4,8 +4,8 @@ test.use({ storageState: "e2e/.auth/user.json" })
 
 test.describe("タップ応答調査", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/")
-    await page.waitForSelector("ul.divide-y li", { timeout: 15_000 })
+    await page.goto("/reset")
+    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("タスクタイトルをタップするとボトムシートが開く", async ({ page }) => {
@@ -20,15 +20,17 @@ test.describe("タップ応答調査", () => {
       console.log(`  → タスク${i + 1} タップ領域: ${JSON.stringify(box)}`)
 
       await titleEl.click()
-      const sheet = page.locator('[class*="translate-y"]').first()
-      const isVisible = await sheet.isVisible().catch(() => false)
+      // ボトムシートのパネル（rounded-t-2xl）が表示されるのを待つ
+      const sheet = page.locator("div.rounded-t-2xl").first()
+      await sheet.waitFor({ state: "visible", timeout: 5_000 })
+      const isVisible = await sheet.isVisible()
       console.log(`  → タスク${i + 1} ボトムシート表示: ${isVisible}`)
       expect(isVisible).toBe(true)
 
-      // 閉じる（ボトムシートに被らないよう左上をクリック）
-      const backdrop = page.locator('[class*="bg-black\\/50"]')
+      // 閉じる（バックドロップをクリック）
+      const backdrop = page.locator("div.bg-black\\/50")
       await backdrop.click({ position: { x: 10, y: 10 } })
-      await backdrop.waitFor({ state: "hidden" })
+      await sheet.waitFor({ state: "hidden", timeout: 5_000 })
     }
   })
 
