@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import type { Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
+import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
 import { setFilterAction, refreshTasksAction } from "@/app/actions"
 import { FILTERS } from "@/constants/filters"
@@ -11,6 +12,8 @@ import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
 export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
   const [isPending, startTransition] = useTransition()
   const [filterKey, setFilterKey] = useState(currentFilter)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
 
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
   const filtered = current.statuses
@@ -106,7 +109,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
                   </div>
                   <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
                     {groupTasks.map((task) => (
-                      <li key={task.id}><TaskItem task={task} /></li>
+                      <li key={task.id}><TaskItem task={task} onSelect={setSelectedTaskId} /></li>
                     ))}
                   </ul>
                 </section>
@@ -115,7 +118,7 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
           ) : (
             <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
               {sortedFlat!.map((task) => (
-                <li key={task.id}><TaskItem task={task} /></li>
+                <li key={task.id}><TaskItem task={task} onSelect={setSelectedTaskId} /></li>
               ))}
             </ul>
           )}
@@ -128,6 +131,9 @@ export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFi
       </main>
 
       <TaskCreate />
+      {selectedTask && (
+        <TaskDetail task={selectedTask} onClose={() => setSelectedTaskId(null)} />
+      )}
     </div>
   )
 }
