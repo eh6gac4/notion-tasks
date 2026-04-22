@@ -74,9 +74,9 @@ describe("TaskItem レンダリング", () => {
     const due = futureDate.toISOString().split("T")[0]
     render(<TaskItem task={makeTask({ due })} onSelect={vi.fn()} />)
     // 期限表示あり
-    const dueDateEl = screen.getByText(
-      new Date(due).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })
-    )
+    const d = new Date(due)
+    const formatted = `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`
+    const dueDateEl = screen.getByText(formatted)
     expect(dueDateEl).toBeInTheDocument()
     expect(dueDateEl.textContent).not.toContain("⚠")
   })
