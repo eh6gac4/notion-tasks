@@ -3,6 +3,11 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.253"],
   devIndicators: false,
+  experimental: {
+    // Disable persistent Turbopack cache — Docker paths differ from host paths,
+    // causing stale cache entries and PostCSS worker timeouts.
+    turbopackFileSystemCacheForDev: false,
+  },
   async headers() {
     return [
       {

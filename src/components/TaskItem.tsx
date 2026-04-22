@@ -58,7 +58,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
         )}
         {due && (
           <span className={`text-xs ${isOverdue ? "text-[#ff3355]" : "text-[#996688]"}`}>
-            {isOverdue ? "⚠ " : ""}{due.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+            {isOverdue ? "⚠ " : ""}{String(due.getMonth() + 1).padStart(2, "0")}/{String(due.getDate()).padStart(2, "0")}
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (

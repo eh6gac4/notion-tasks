@@ -44,3 +44,6 @@ e2e/.auth/
 
 # OpenNext
 .open-next
+
+# deploy script (contains secrets)
+deploy.sh
