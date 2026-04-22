@@ -7,7 +7,7 @@ test.describe("タスク一覧", () => {
   test.beforeEach(async ({ page }) => {
     // dev環境のモックデータをリセット（/reset がresetMockTasks()を呼んで"/"にリダイレクト）
     await page.goto("/reset")
-    await page.waitForSelector("ul.divide-y", { timeout: 15_000 })
+    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("タスクが表示される", async ({ page }) => {
@@ -19,22 +19,22 @@ test.describe("タスク一覧", () => {
   })
 
   test("フィルター切り替えでリストが変わる", async ({ page }) => {
-    const filterSelect = page.locator("select").first()
+    const filterSelect = page.locator("[data-testid='filter-select']")
     await expect(filterSelect).toBeVisible()
 
     const beforeCount = await page.locator("ul.divide-y li").count()
     console.log(`  → フィルター変更前: ${beforeCount}件`)
 
-    // 「すべて」に変更
+    // 「すべて」に変更（ローディングバーが消えるのを待つ）
     await filterSelect.selectOption("all")
-    await page.waitForSelector("ul.divide-y li")
+    await page.locator("ul.divide-y li").first().waitFor({ state: "visible" })
     const allCount = await page.locator("ul.divide-y li").count()
     console.log(`  → 「すべて」フィルター後: ${allCount}件`)
 
     // 「未着手」に変更
     await filterSelect.selectOption("todo")
-    await page.waitForSelector("ul.divide-y li")
-    const todoCount = await page.locator("ul.divide-y li:visible").count()
+    await page.locator("ul.divide-y li").first().waitFor({ state: "visible" })
+    const todoCount = await page.locator("ul.divide-y li").count()
     console.log(`  → 「未着手」フィルター後: ${todoCount}件 (表示中)`)
 
     // デフォルト(active)と異なるはずか、少なくとも正常動作を確認

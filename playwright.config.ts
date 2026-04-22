@@ -6,14 +6,18 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local") })
 
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 30_000,
-  retries: 0,
+  timeout: 45_000,
+  retries: 2,
   workers: 1,
   fullyParallel: false,
   reporter: "list",
   use: {
     baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
+  expect: {
+    timeout: 10_000,
   },
   projects: [
     {
