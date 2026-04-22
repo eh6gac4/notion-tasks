@@ -152,6 +152,11 @@ const INITIAL_TASKS: Task[] = [
 let store: Task[] = INITIAL_TASKS.map((t) => ({ ...t }))
 let nextId = 100
 
+const mockBlockStore = new Map<string, string>([
+  ["mock-1", "## 作業メモ\n\n- ファームウェアバージョン確認\n- バックアップ取得後に適用"],
+  ["mock-2", "## 構成\n\n- 導入\n- 本題\n- まとめ"],
+])
+
 export function resetMockTasks() {
   store = INITIAL_TASKS.map((t) => ({ ...t }))
   nextId = 100
@@ -188,6 +193,14 @@ export function createMockTask(input: CreateTaskInput): Task {
   }
   store.push(task)
   return task
+}
+
+export function getMockTaskBlocks(id: string): string {
+  return mockBlockStore.get(id) ?? ""
+}
+
+export function updateMockTaskBlocks(id: string, content: string): void {
+  mockBlockStore.set(id, content)
 }
 
 export function updateMockTask(id: string, input: UpdateTaskInput): Task | null {

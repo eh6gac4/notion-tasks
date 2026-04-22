@@ -1,10 +1,10 @@
 import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
-import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
+import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
-import { getMockTasks, getMockTask, createMockTask, updateMockTask } from "@/lib/mock-tasks"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks } from "@/lib/mock-tasks"
 
 const IS_DEV = process.env.NODE_ENV === "development"
 
@@ -176,4 +176,178 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
   })
 
   return pageToTask(page as PageObjectResponse)
+}
+
+// --- Block content helpers ---
+
+function extractPlainText(richText: Array<{ plain_text: string }>): string {
+  return richText.map((r) => r.plain_text).join("")
+}
+
+function isFullBlockObjectResponse(
+  block: BlockObjectResponse | PartialBlockObjectResponse
+): block is BlockObjectResponse {
+  return "type" in block
+}
+
+function blocksToMarkdown(blocks: BlockObjectResponse[]): string {
+  const lines: string[] = []
+
+  for (const block of blocks) {
+    const b = block as Record<string, unknown>
+    const type = b.type as string
+
+    if (type === "heading_1") {
+      const rt = (b["heading_1"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`# ${extractPlainText(rt)}`)
+    } else if (type === "heading_2") {
+      const rt = (b["heading_2"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`## ${extractPlainText(rt)}`)
+    } else if (type === "heading_3") {
+      const rt = (b["heading_3"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`### ${extractPlainText(rt)}`)
+    } else if (type === "bulleted_list_item") {
+      const rt = (b["bulleted_list_item"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`- ${extractPlainText(rt)}`)
+    } else if (type === "numbered_list_item") {
+      const rt = (b["numbered_list_item"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`1. ${extractPlainText(rt)}`)
+    } else if (type === "to_do") {
+      const td = b["to_do"] as { rich_text: Array<{ plain_text: string }>; checked: boolean }
+      const check = td.checked ? "[x]" : "[ ]"
+      lines.push(`- ${check} ${extractPlainText(td.rich_text)}`)
+    } else if (type === "quote") {
+      const rt = (b["quote"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(`> ${extractPlainText(rt)}`)
+    } else if (type === "code") {
+      const cd = b["code"] as { rich_text: Array<{ plain_text: string }>; language?: string }
+      lines.push("```")
+      lines.push(extractPlainText(cd.rich_text))
+      lines.push("```")
+    } else if (type === "divider") {
+      lines.push("---")
+    } else if (type === "paragraph") {
+      const rt = (b["paragraph"] as { rich_text: Array<{ plain_text: string }> }).rich_text
+      lines.push(extractPlainText(rt))
+    } else {
+      // fallback: try to extract any rich_text
+      const inner = b[type] as { rich_text?: Array<{ plain_text: string }> } | undefined
+      if (inner?.rich_text) lines.push(extractPlainText(inner.rich_text))
+    }
+  }
+
+  return lines.join("\n")
+}
+
+function markdownToNotionBlocks(markdown: string): object[] {
+  const blocks: object[] = []
+  const lines = markdown.split("\n")
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // Fenced code block
+    if (line.startsWith("```")) {
+      const codeLines: string[] = []
+      i++
+      while (i < lines.length && !lines[i].startsWith("```")) {
+        codeLines.push(lines[i])
+        i++
+      }
+      blocks.push({
+        type: "code",
+        code: {
+          rich_text: [{ type: "text", text: { content: codeLines.join("\n") } }],
+          language: "plain text",
+        },
+      })
+      i++ // skip closing ```
+      continue
+    }
+
+    if (line === "---") {
+      blocks.push({ type: "divider", divider: {} })
+    } else if (line.startsWith("# ")) {
+      blocks.push({ type: "heading_1", heading_1: { rich_text: [{ type: "text", text: { content: line.slice(2) } }] } })
+    } else if (line.startsWith("## ")) {
+      blocks.push({ type: "heading_2", heading_2: { rich_text: [{ type: "text", text: { content: line.slice(3) } }] } })
+    } else if (line.startsWith("### ")) {
+      blocks.push({ type: "heading_3", heading_3: { rich_text: [{ type: "text", text: { content: line.slice(4) } }] } })
+    } else if (/^- \[x\] /i.test(line)) {
+      blocks.push({ type: "to_do", to_do: { rich_text: [{ type: "text", text: { content: line.slice(6) } }], checked: true } })
+    } else if (/^- \[ \] /.test(line)) {
+      blocks.push({ type: "to_do", to_do: { rich_text: [{ type: "text", text: { content: line.slice(6) } }], checked: false } })
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      blocks.push({ type: "bulleted_list_item", bulleted_list_item: { rich_text: [{ type: "text", text: { content: line.slice(2) } }] } })
+    } else if (/^\d+\. /.test(line)) {
+      const content = line.replace(/^\d+\. /, "")
+      blocks.push({ type: "numbered_list_item", numbered_list_item: { rich_text: [{ type: "text", text: { content } }] } })
+    } else if (line.startsWith("> ")) {
+      blocks.push({ type: "quote", quote: { rich_text: [{ type: "text", text: { content: line.slice(2) } }] } })
+    } else {
+      blocks.push({ type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: line } }] } })
+    }
+
+    i++
+  }
+
+  return blocks
+}
+
+export async function getTaskBlocks(id: string): Promise<string> {
+  if (IS_DEV) return getMockTaskBlocks(id)
+  try {
+    const allBlocks: BlockObjectResponse[] = []
+    let cursor: string | undefined = undefined
+
+    do {
+      const response = await notion.blocks.children.list({
+        block_id: id,
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+      allBlocks.push(...response.results.filter(isFullBlockObjectResponse))
+      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+    } while (cursor)
+
+    return blocksToMarkdown(allBlocks)
+  } catch (e) {
+    console.error("[getTaskBlocks] Notion error:", e)
+    return ""
+  }
+}
+
+export async function updateTaskBlocks(id: string, markdown: string): Promise<void> {
+  if (IS_DEV) {
+    updateMockTaskBlocks(id, markdown)
+    return
+  }
+  try {
+    // Fetch and delete existing blocks
+    let cursor: string | undefined = undefined
+    do {
+      const response = await notion.blocks.children.list({
+        block_id: id,
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+      for (const block of response.results) {
+        await notion.blocks.delete({ block_id: block.id })
+      }
+      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+    } while (cursor)
+
+    // Append new blocks from markdown
+    const newBlocks = markdownToNotionBlocks(markdown)
+    if (newBlocks.length > 0) {
+      await notion.blocks.children.append({
+        block_id: id,
+        children: newBlocks as Parameters<typeof notion.blocks.children.append>[0]["children"],
+      })
+    }
+  } catch (e) {
+    console.error("[updateTaskBlocks] Notion error:", e)
+    throw e
+  }
 }

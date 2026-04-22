@@ -1,8 +1,8 @@
 "use client"
 
-import { useTransition, useState, useEffect } from "react"
+import { useTransition, useState, useEffect, useRef } from "react"
 import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
-import { updateTaskAction } from "@/app/actions"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
@@ -17,9 +17,72 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [editDue, setEditDue] = useState(task.due ?? "")
   const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
+  const [blocks, setBlocks] = useState<string | null>(null)
+  const [isLoadingBlocks, setIsLoadingBlocks] = useState(true)
+  const [isEditingBlocks, setIsEditingBlocks] = useState(false)
+  const [editBlocksContent, setEditBlocksContent] = useState("")
+  const [isSavingBlocks, setIsSavingBlocks] = useState(false)
+  const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
+  const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadBlocks() {
+      setBlocks(null)
+      setIsLoadingBlocks(true)
+      setIsEditingBlocks(false)
+      setIsSavingBlocks(false)
+      setBlocksLoadError(null)
+      setBlocksSaveError(null)
+
+      try {
+        const md = await getTaskBlocksAction(task.id)
+        if (cancelled) return
+        setBlocks(md)
+      } catch {
+        if (cancelled) return
+        setBlocks("")
+        setBlocksLoadError("本文の読み込みに失敗しました。")
+      } finally {
+        if (cancelled) return
+        setIsLoadingBlocks(false)
+      }
+    }
+
+    void loadBlocks()
+
+    return () => {
+      cancelled = true
+    }
+  }, [task.id])
+
+  function startEditingBlocks() {
+    setEditBlocksContent(blocks ?? "")
+    setBlocksSaveError(null)
+    setIsEditingBlocks(true)
+    setTimeout(() => textareaRef.current?.focus(), 50)
+  }
+
+  async function handleSaveBlocks() {
+    setIsSavingBlocks(true)
+    setBlocksSaveError(null)
+
+    try {
+      await updateTaskBlocksAction(task.id, editBlocksContent)
+      setBlocks(editBlocksContent)
+      setIsEditingBlocks(false)
+    } catch {
+      setBlocksSaveError("本文の保存に失敗しました。")
+    } finally {
+      setIsSavingBlocks(false)
+    }
+  }
 
   function handleClose() {
     setVisible(false)
@@ -184,6 +247,78 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           )}
         </div>
 
+        {/* 本文 */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-[#996688] tracking-widest uppercase">本文</p>
+            {!isLoadingBlocks && !isEditingBlocks && (
+              <button
+                type="button"
+                onClick={startEditingBlocks}
+                className="text-xs text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
+              >
+                編集
+              </button>
+            )}
+          </div>
+
+          {blocksLoadError && !isEditingBlocks && (
+            <p className="mb-2 text-xs text-[#ff77aa]">{blocksLoadError}</p>
+          )}
+
+          {isLoadingBlocks ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-[rgba(255,0,204,0.3)] border-t-[#ff00cc] animate-spin" />
+            </div>
+          ) : isEditingBlocks ? (
+            <div>
+              <textarea
+                ref={textareaRef}
+                value={editBlocksContent}
+                onChange={(e) => {
+                  setEditBlocksContent(e.target.value)
+                  // auto-resize
+                  const el = e.target
+                  el.style.height = "auto"
+                  el.style.height = `${el.scrollHeight}px`
+                }}
+                className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none focus:border-[#ff00cc] resize-none min-h-[120px] font-mono"
+                style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+                placeholder="Markdownで入力（# 見出し、- リスト など）"
+              />
+              <div className="flex gap-2 mt-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBlocksSaveError(null)
+                    setIsEditingBlocks(false)
+                  }}
+                  className="px-4 py-1.5 rounded-xl text-xs text-[#996688] hover:text-[#ffbbee] transition-colors"
+                  style={{ border: "1px solid rgba(255,0,204,0.2)" }}
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingBlocks}
+                  onClick={handleSaveBlocks}
+                  className="px-4 py-1.5 rounded-xl text-xs text-[#0d0014] transition-all"
+                  style={{ backgroundColor: isSavingBlocks ? "rgba(255,0,204,0.5)" : "#ff00cc" }}
+                >
+                  {isSavingBlocks ? "保存中…" : "保存"}
+                </button>
+              </div>
+              {blocksSaveError && (
+                <p className="mt-2 text-xs text-[#ff77aa]">{blocksSaveError}</p>
+              )}
+            </div>
+          ) : blocks ? (
+            <MarkdownPreview content={blocks} />
+          ) : (
+            <p className="text-xs text-[#553355] italic">本文なし</p>
+          )}
+        </div>
+
         {/* Notion link */}
         <a
           href={task.url}
@@ -206,4 +341,81 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="flex-1">{children}</div>
     </div>
   )
+}
+
+function MarkdownPreview({ content }: { content: string }) {
+  const lines = content.split("\n")
+  let inCode = false
+  const codeLines: string[] = []
+  const elements: React.ReactNode[] = []
+
+  const flushCode = (key: number) => {
+    elements.push(
+      <pre
+        key={key}
+        className="rounded-lg px-3 py-2 text-xs text-[#ffbbee] font-mono overflow-x-auto my-1"
+        style={{ backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,0,204,0.15)" }}
+      >
+        {codeLines.join("\n")}
+      </pre>
+    )
+    codeLines.length = 0
+  }
+
+  lines.forEach((line, i) => {
+    if (line.startsWith("```")) {
+      if (inCode) {
+        flushCode(i)
+        inCode = false
+      } else {
+        inCode = true
+      }
+      return
+    }
+    if (inCode) {
+      codeLines.push(line)
+      return
+    }
+
+    if (line === "---") {
+      elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
+    } else if (line.startsWith("# ")) {
+      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-0.5">{line.slice(2)}</p>)
+    } else if (line.startsWith("## ")) {
+      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-1.5 mb-0.5">{line.slice(3)}</p>)
+    } else if (line.startsWith("### ")) {
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-0.5">{line.slice(4)}</p>)
+    } else if (/^- \[x\] /i.test(line)) {
+      elements.push(
+        <p key={i} className="text-[#996688] text-sm line-through">
+          <span className="mr-1.5 not-italic">☑</span>{line.slice(6)}
+        </p>
+      )
+    } else if (/^- \[ \] /.test(line)) {
+      elements.push(
+        <p key={i} className="text-[#cc99bb] text-sm">
+          <span className="mr-1.5">☐</span>{line.slice(6)}
+        </p>
+      )
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">・</span>{line.slice(2)}</p>)
+    } else if (/^\d+\. /.test(line)) {
+      const match = line.match(/^(\d+)\. (.*)/)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">{match?.[1]}.</span>{match?.[2]}</p>)
+    } else if (line.startsWith("> ")) {
+      elements.push(
+        <p key={i} className="text-[#996688] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(255,0,204,0.4)" }}>
+          {line.slice(2)}
+        </p>
+      )
+    } else if (line === "") {
+      elements.push(<div key={i} className="h-2" />)
+    } else {
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm">{line}</p>)
+    }
+  })
+
+  if (inCode && codeLines.length > 0) flushCode(lines.length)
+
+  return <div className="space-y-0.5">{elements}</div>
 }
