@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition, useState, useEffect, useRef } from "react"
+import { useTransition, useState, useEffect, useRef, useCallback } from "react"
 import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
@@ -25,9 +25,88 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
   const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const touchStartYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const isEditingBlocksRef = useRef(isEditingBlocks)
+  useEffect(() => { isEditingBlocksRef.current = isEditingBlocks }, [isEditingBlocks])
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
+  }, [])
+
+  // 背景スクロール抑制
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  const handleCloseRef = useRef<() => void>(() => {})
+
+  const handleCloseCb = useCallback(() => {
+    setVisible(false)
+    setTimeout(onClose, 280)
+  }, [onClose])
+
+  useEffect(() => {
+    handleCloseRef.current = handleCloseCb
+  }, [handleCloseCb])
+
+  // スワイプダウンで閉じる
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    const el = panel
+
+    const THRESHOLD = 80
+
+    function onTouchStart(e: TouchEvent) {
+      touchStartYRef.current = e.touches[0].clientY
+      isDraggingRef.current = false
+      dragYRef.current = 0
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      const deltaY = e.touches[0].clientY - touchStartYRef.current
+      if (deltaY <= 0) return
+      if (el.scrollTop > 0) return
+      // textarea 編集中は無効
+      if (isEditingBlocksRef.current) return
+
+      isDraggingRef.current = true
+      dragYRef.current = deltaY
+      e.preventDefault()
+      setIsDragging(true)
+      setDragOffset(deltaY)
+    }
+
+    function onTouchEnd() {
+      if (!isDraggingRef.current) return
+      const delta = dragYRef.current
+      isDraggingRef.current = false
+      dragYRef.current = 0
+      setIsDragging(false)
+
+      if (delta >= THRESHOLD) {
+        handleCloseRef.current()
+      } else {
+        setDragOffset(0)
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true })
+    el.addEventListener("touchmove", onTouchMove, { passive: false })
+    el.addEventListener("touchend", onTouchEnd, { passive: true })
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart)
+      el.removeEventListener("touchmove", onTouchMove)
+      el.removeEventListener("touchend", onTouchEnd)
+    }
   }, [])
 
   useEffect(() => {
@@ -85,8 +164,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }
 
   function handleClose() {
-    setVisible(false)
-    setTimeout(onClose, 280)
+    handleCloseCb()
   }
 
   function save(input: Parameters<typeof updateTaskAction>[1]) {
@@ -128,13 +206,19 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
       />
 
       <div
-        className={`relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto transition-transform duration-300 ease-out ${visible ? "translate-y-0" : "translate-y-full"}`}
+        ref={panelRef}
+        className={`relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto ${isDragging ? "" : "transition-transform duration-300 ease-out"} ${visible && !isDragging ? "translate-y-0" : isDragging ? "" : "translate-y-full"}`}
         style={{
           backgroundColor: "#160022",
           borderTop: "1px solid rgba(255,0,204,0.5)",
           boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
           opacity: isPending ? 0.85 : 1,
-          transition: "opacity 0.15s",
+          transition: isDragging ? "opacity 0.15s" : "opacity 0.15s, transform 0.3s ease-out",
+          transform: isDragging
+            ? `translateY(${dragOffset}px)`
+            : visible
+              ? "translateY(0)"
+              : "translateY(100%)",
         }}
       >
         {/* Handle */}
