@@ -332,3 +332,48 @@ describe("TaskDetail 閉じる動作", () => {
     vi.useRealTimers()
   })
 })
+
+describe("TaskDetail スワイプ動作", () => {
+  it("マウント時に body.style.overflow が hidden になる", () => {
+    document.body.style.overflow = ""
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+    expect(document.body.style.overflow).toBe("hidden")
+  })
+
+  it("アンマウント時に body.style.overflow が元に戻る", () => {
+    document.body.style.overflow = "auto"
+    const { unmount } = render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+    unmount()
+    expect(document.body.style.overflow).toBe("auto")
+  })
+
+  it("80px 以上スワイプで onClose が 280ms 後に呼ばれる", () => {
+    vi.useFakeTimers()
+    const onClose = vi.fn()
+    const { container } = render(<TaskDetail task={makeTask()} onClose={onClose} />)
+
+    const panel = container.querySelector(".rounded-t-2xl") as HTMLElement
+    act(() => {
+      fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
+      fireEvent.touchMove(panel, { touches: [{ clientY: 90 }] })
+      fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 90 }] })
+    })
+
+    expect(onClose).not.toHaveBeenCalled()
+    act(() => { vi.advanceTimersByTime(280) })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it("80px 未満スワイプでは onClose は呼ばれない", () => {
+    const onClose = vi.fn()
+    const { container } = render(<TaskDetail task={makeTask()} onClose={onClose} />)
+
+    const panel = container.querySelector(".rounded-t-2xl") as HTMLElement
+    fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
+    fireEvent.touchMove(panel, { touches: [{ clientY: 50 }] })
+    fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 50 }] })
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+})
