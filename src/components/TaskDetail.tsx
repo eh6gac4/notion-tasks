@@ -22,6 +22,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [isEditingBlocks, setIsEditingBlocks] = useState(false)
   const [editBlocksContent, setEditBlocksContent] = useState("")
   const [isSavingBlocks, setIsSavingBlocks] = useState(false)
+  const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
+  const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -29,12 +31,58 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }, [])
 
   useEffect(() => {
-    setIsLoadingBlocks(true)
-    getTaskBlocksAction(task.id).then((md) => {
-      setBlocks(md)
-      setIsLoadingBlocks(false)
-    })
+    let cancelled = false
+
+    async function loadBlocks() {
+      setBlocks(null)
+      setIsLoadingBlocks(true)
+      setIsEditingBlocks(false)
+      setIsSavingBlocks(false)
+      setBlocksLoadError(null)
+      setBlocksSaveError(null)
+
+      try {
+        const md = await getTaskBlocksAction(task.id)
+        if (cancelled) return
+        setBlocks(md)
+      } catch {
+        if (cancelled) return
+        setBlocks("")
+        setBlocksLoadError("本文の読み込みに失敗しました。")
+      } finally {
+        if (cancelled) return
+        setIsLoadingBlocks(false)
+      }
+    }
+
+    void loadBlocks()
+
+    return () => {
+      cancelled = true
+    }
   }, [task.id])
+
+  function startEditingBlocks() {
+    setEditBlocksContent(blocks ?? "")
+    setBlocksSaveError(null)
+    setIsEditingBlocks(true)
+    setTimeout(() => textareaRef.current?.focus(), 50)
+  }
+
+  async function handleSaveBlocks() {
+    setIsSavingBlocks(true)
+    setBlocksSaveError(null)
+
+    try {
+      await updateTaskBlocksAction(task.id, editBlocksContent)
+      setBlocks(editBlocksContent)
+      setIsEditingBlocks(false)
+    } catch {
+      setBlocksSaveError("本文の保存に失敗しました。")
+    } finally {
+      setIsSavingBlocks(false)
+    }
+  }
 
   function handleClose() {
     setVisible(false)
@@ -206,17 +254,17 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
             {!isLoadingBlocks && !isEditingBlocks && (
               <button
                 type="button"
-                onClick={() => {
-                  setEditBlocksContent(blocks ?? "")
-                  setIsEditingBlocks(true)
-                  setTimeout(() => textareaRef.current?.focus(), 50)
-                }}
+                onClick={startEditingBlocks}
                 className="text-xs text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
               >
                 編集
               </button>
             )}
           </div>
+
+          {blocksLoadError && !isEditingBlocks && (
+            <p className="mb-2 text-xs text-[#ff77aa]">{blocksLoadError}</p>
+          )}
 
           {isLoadingBlocks ? (
             <div className="flex justify-center py-4">
@@ -241,7 +289,10 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
               <div className="flex gap-2 mt-2 justify-end">
                 <button
                   type="button"
-                  onClick={() => setIsEditingBlocks(false)}
+                  onClick={() => {
+                    setBlocksSaveError(null)
+                    setIsEditingBlocks(false)
+                  }}
                   className="px-4 py-1.5 rounded-xl text-xs text-[#996688] hover:text-[#ffbbee] transition-colors"
                   style={{ border: "1px solid rgba(255,0,204,0.2)" }}
                 >
@@ -250,19 +301,16 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 <button
                   type="button"
                   disabled={isSavingBlocks}
-                  onClick={async () => {
-                    setIsSavingBlocks(true)
-                    await updateTaskBlocksAction(task.id, editBlocksContent)
-                    setBlocks(editBlocksContent)
-                    setIsEditingBlocks(false)
-                    setIsSavingBlocks(false)
-                  }}
+                  onClick={handleSaveBlocks}
                   className="px-4 py-1.5 rounded-xl text-xs text-[#0d0014] transition-all"
                   style={{ backgroundColor: isSavingBlocks ? "rgba(255,0,204,0.5)" : "#ff00cc" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
                 </button>
               </div>
+              {blocksSaveError && (
+                <p className="mt-2 text-xs text-[#ff77aa]">{blocksSaveError}</p>
+              )}
             </div>
           ) : blocks ? (
             <MarkdownPreview content={blocks} />

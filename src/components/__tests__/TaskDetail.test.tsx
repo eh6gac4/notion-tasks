@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { TaskDetail } from "@/components/TaskDetail"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction } from "@/app/actions"
 import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
@@ -11,10 +12,14 @@ vi.mock("@/app/actions", () => ({
 
 // requestAnimationFrame を同期実行してアニメーション初期化を完了させる
 beforeEach(() => {
+  vi.clearAllMocks()
   vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
     cb(0)
     return 0
   })
+  vi.mocked(updateTaskAction).mockResolvedValue(undefined)
+  vi.mocked(getTaskBlocksAction).mockResolvedValue("")
+  vi.mocked(updateTaskBlocksAction).mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -41,6 +46,18 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     lastEditedTime: "2024-01-01T00:00:00.000Z",
     ...overrides,
   }
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+
+  return { promise, resolve, reject }
 }
 
 describe("TaskDetail レンダリング", () => {
@@ -133,7 +150,6 @@ describe("TaskDetail レンダリング", () => {
 
 describe("TaskDetail フィールド変更", () => {
   it("ステータス変更で updateTaskAction が即時呼ばれる", async () => {
-    const { updateTaskAction } = await import("@/app/actions")
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
@@ -157,7 +173,6 @@ describe("TaskDetail フィールド変更", () => {
   })
 
   it("Priority 変更で updateTaskAction が即時呼ばれる", async () => {
-    const { updateTaskAction } = await import("@/app/actions")
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
@@ -171,7 +186,6 @@ describe("TaskDetail フィールド変更", () => {
   })
 
   it("タグトグルで updateTaskAction が即時呼ばれる", async () => {
-    const { updateTaskAction } = await import("@/app/actions")
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
@@ -184,7 +198,6 @@ describe("TaskDetail フィールド変更", () => {
   })
 
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {
-    const { updateTaskAction } = await import("@/app/actions")
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
@@ -196,6 +209,96 @@ describe("TaskDetail フィールド変更", () => {
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith("t1", { title: "新タイトル" })
     })
+  })
+})
+
+describe("TaskDetail 本文編集", () => {
+  it("取得した本文を表示する", async () => {
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("## 本文見出し\n\n- 箇条書き")
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    expect(await screen.findByText("本文見出し")).toBeInTheDocument()
+    expect(screen.getByText("箇条書き")).toBeInTheDocument()
+  })
+
+  it("編集して保存すると updateTaskBlocksAction が呼ばれる", async () => {
+    const updateBlocksMock = vi.mocked(updateTaskBlocksAction)
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("元の本文")
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    await screen.findByText("元の本文")
+    fireEvent.click(screen.getByRole("button", { name: "編集" }))
+    fireEvent.change(screen.getByPlaceholderText("Markdownで入力（# 見出し、- リスト など）"), {
+      target: { value: "更新後の本文" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+
+    await waitFor(() => {
+      expect(updateBlocksMock).toHaveBeenCalledWith("t1", "更新後の本文")
+    })
+
+    expect(await screen.findByText("更新後の本文")).toBeInTheDocument()
+  })
+
+  it("本文取得に失敗してもローディングから復帰する", async () => {
+    vi.mocked(getTaskBlocksAction).mockRejectedValueOnce(new Error("load failed"))
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    expect(await screen.findByText("本文の読み込みに失敗しました。")).toBeInTheDocument()
+    expect(screen.getByText("本文なし")).toBeInTheDocument()
+  })
+
+  it("本文保存に失敗しても編集中のまま復帰する", async () => {
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("元の本文")
+    vi.mocked(updateTaskBlocksAction).mockRejectedValueOnce(new Error("save failed"))
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    await screen.findByText("元の本文")
+    fireEvent.click(screen.getByRole("button", { name: "編集" }))
+    fireEvent.change(screen.getByPlaceholderText("Markdownで入力（# 見出し、- リスト など）"), {
+      target: { value: "保存失敗本文" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+
+    expect(await screen.findByText("本文の保存に失敗しました。")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("保存失敗本文")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled()
+    })
+  })
+
+  it("task.id 切り替え後に古い本文取得結果で上書きしない", async () => {
+    const first = deferred<string>()
+    const second = deferred<string>()
+
+    vi.mocked(getTaskBlocksAction).mockImplementation((id: string) => {
+      if (id === "t1") return first.promise
+      if (id === "t2") return second.promise
+      return Promise.resolve("")
+    })
+
+    const { rerender } = render(<TaskDetail task={makeTask({ id: "t1" })} onClose={() => {}} />)
+
+    rerender(<TaskDetail task={makeTask({ id: "t2", url: "https://notion.so/t2" })} onClose={() => {}} />)
+
+    await act(async () => {
+      second.resolve("新しい本文")
+    })
+
+    expect(await screen.findByText("新しい本文")).toBeInTheDocument()
+
+    await act(async () => {
+      first.resolve("古い本文")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText("古い本文")).not.toBeInTheDocument()
+    })
+    expect(screen.getByText("新しい本文")).toBeInTheDocument()
   })
 })
 

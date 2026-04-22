@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
-import type { PageObjectResponse, BlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
+import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
@@ -184,9 +184,14 @@ function extractPlainText(richText: Array<{ plain_text: string }>): string {
   return richText.map((r) => r.plain_text).join("")
 }
 
+function isFullBlockObjectResponse(
+  block: BlockObjectResponse | PartialBlockObjectResponse
+): block is BlockObjectResponse {
+  return "type" in block
+}
+
 function blocksToMarkdown(blocks: BlockObjectResponse[]): string {
   const lines: string[] = []
-  let inCode = false
 
   for (const block of blocks) {
     const b = block as Record<string, unknown>
@@ -230,9 +235,6 @@ function blocksToMarkdown(blocks: BlockObjectResponse[]): string {
       if (inner?.rich_text) lines.push(extractPlainText(inner.rich_text))
     }
   }
-
-  // suppress unused variable warning
-  void inCode
 
   return lines.join("\n")
 }
@@ -305,7 +307,7 @@ export async function getTaskBlocks(id: string): Promise<string> {
         page_size: 100,
         ...(cursor ? { start_cursor: cursor } : {}),
       })
-      allBlocks.push(...(response.results as BlockObjectResponse[]))
+      allBlocks.push(...response.results.filter(isFullBlockObjectResponse))
       cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
     } while (cursor)
 
