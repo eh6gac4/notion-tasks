@@ -1,15 +1,13 @@
 "use client"
 
-import { useOptimistic, useTransition, useState, useRef } from "react"
+import { useOptimistic, useTransition, useRef } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
-import { TaskDetail } from "./TaskDetail"
 import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
 
-export function TaskItem({ task }: { task: Task }) {
+export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
-  const [showDetail, setShowDetail] = useState(false)
   const selectRef = useRef<HTMLSelectElement>(null)
 
   const status = optimisticStatus
@@ -22,7 +20,7 @@ export function TaskItem({ task }: { task: Task }) {
   return (
     <div
       className="px-4 py-4 active:bg-[#160022] transition-colors cursor-pointer"
-      onClick={() => setShowDetail(true)}
+      onClick={() => onSelect(task.id)}
     >
       <p className="block w-full text-left mb-2.5 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
 
@@ -91,12 +89,6 @@ export function TaskItem({ task }: { task: Task }) {
         ))}
       </div>
 
-      {showDetail && (
-        <TaskDetail
-          task={{ ...task, status }}
-          onClose={() => setShowDetail(false)}
-        />
-      )}
     </div>
   )
 }

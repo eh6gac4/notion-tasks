@@ -1,15 +1,21 @@
 "use client"
 
-import { useOptimistic, useTransition, useRef, useState, useEffect } from "react"
-import type { Task, TaskStatus } from "@/types/task"
-import { updateTaskStatus } from "@/app/actions"
-import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
+import { useTransition, useState, useEffect } from "react"
+import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
+import { updateTaskAction } from "@/app/actions"
+import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
+
+const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
 export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
-  const [, startTransition] = useTransition()
-  const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
-  const selectRef = useRef<HTMLSelectElement>(null)
+  const [isPending, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
+
+  const [editTitle, setEditTitle] = useState(task.title)
+  const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
+  const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
+  const [editDue, setEditDue] = useState(task.due ?? "")
+  const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
@@ -20,13 +26,36 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     setTimeout(onClose, 280)
   }
 
-  const due = task.due ? new Date(task.due) : null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const isOverdue = due !== null && due < today
+  function save(input: Parameters<typeof updateTaskAction>[1]) {
+    startTransition(async () => {
+      await updateTaskAction(task.id, input)
+    })
+  }
 
-  const status = optimisticStatus
-  const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
+  function handleStatusChange(next: TaskStatus) {
+    setEditStatus(next)
+    save({ status: next })
+  }
+
+  function handlePriorityChange(next: TaskPriority | "") {
+    setEditPriority(next)
+    save({ priority: next || undefined })
+  }
+
+  function handleDueChange(next: string) {
+    setEditDue(next)
+    save({ due: next || null })
+  }
+
+  function toggleTag(tag: TaskTag) {
+    const next = editTags.includes(tag)
+      ? editTags.filter((t) => t !== tag)
+      : [...editTags, tag]
+    setEditTags(next)
+    save({ tags: next })
+  }
+
+  const statusStyle = STATUS_STYLES[editStatus] ?? STATUS_STYLES["未着手"]
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -41,6 +70,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           backgroundColor: "#160022",
           borderTop: "1px solid rgba(255,0,204,0.5)",
           boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+          opacity: isPending ? 0.85 : 1,
+          transition: "opacity 0.15s",
         }}
       >
         {/* Handle */}
@@ -48,28 +79,27 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
         </button>
 
-        {/* Title */}
-        <h2 className="text-base text-[#ffbbee] leading-snug mb-4">
-          {task.title}
-        </h2>
+        {/* Title — blur で保存 */}
+        <input
+          type="text"
+          value={editTitle}
+          onChange={(e) => setEditTitle(e.target.value)}
+          onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
+          className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] mb-4"
+          style={{ transition: "border-color 0.2s" }}
+          aria-label="タイトル"
+        />
 
         {/* Status */}
         <div className="mb-4">
           <p className="text-xs text-[#996688] mb-1.5 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
             <span className={`px-3 py-1.5 rounded-full text-sm ${statusStyle}`}>
-              {status ?? "未着手"}
+              {editStatus}
             </span>
             <select
-              ref={selectRef}
-              defaultValue={status ?? "未着手"}
-              onChange={(e) => {
-                const next = e.target.value as TaskStatus
-                startTransition(async () => {
-                  setOptimisticStatus(next)
-                  await updateTaskStatus(task.id, next)
-                })
-              }}
+              value={editStatus}
+              onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
               className="absolute inset-0 w-full h-full cursor-pointer"
               style={{ opacity: 0.001 }}
             >
@@ -80,36 +110,51 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           </div>
         </div>
 
-        {/* Details */}
-        <div className="space-y-3">
-          {task.priority && (
-            <Row label="Priority">
-              <span className={`text-sm ${PRIORITY_STYLES[task.priority].color}`}>
-                {PRIORITY_STYLES[task.priority].label}
-              </span>
-            </Row>
-          )}
+        {/* Editable fields */}
+        <div className="space-y-4">
+          <Row label="Priority">
+            <select
+              value={editPriority}
+              onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
+              className="rounded-xl px-3 py-2 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+            >
+              <option value="">未設定</option>
+              <option value="high">↑ High</option>
+              <option value="medium">→ Med</option>
+              <option value="low">↓ Low</option>
+            </select>
+          </Row>
 
-          {due && (
-            <Row label="期限">
-              <span className={`text-sm ${isOverdue ? "text-[#ff3355]" : "text-[#ffbbee]"}`}>
-                {isOverdue ? "⚠ " : ""}
-                {due.toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" })}
-              </span>
-            </Row>
-          )}
+          <Row label="期限">
+            <input
+              type="date"
+              value={editDue}
+              onChange={(e) => handleDueChange(e.target.value)}
+              className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+            />
+          </Row>
 
-          {task.tags.length > 0 && (
-            <Row label="タグ">
-              <div className="flex flex-wrap gap-1.5">
-                {task.tags.map((tag) => (
-                  <span key={tag} className="text-xs text-[#996688] bg-[#0d0014] border border-[rgba(255,0,204,0.2)] px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </Row>
-          )}
+          <Row label="タグ">
+            <div className="flex flex-wrap gap-2">
+              {TAG_OPTIONS.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className="px-3 py-1.5 rounded-full text-xs transition-all"
+                  style={
+                    editTags.includes(tag)
+                      ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
+                      : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                  }
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </Row>
 
           {task.source && (
             <Row label="ソース">
