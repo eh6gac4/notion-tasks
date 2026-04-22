@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { auth } from "@/auth"
-import { updateTask, createTask } from "@/lib/notion"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks } from "@/lib/notion"
 import type { TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 async function requireAuth() {
@@ -46,4 +46,14 @@ export async function refreshTasksAction() {
   await requireAuth()
   revalidateTag("tasks", "default")
   revalidatePath("/")
+}
+
+export async function getTaskBlocksAction(id: string): Promise<string> {
+  await requireAuth()
+  return getTaskBlocks(id)
+}
+
+export async function updateTaskBlocksAction(id: string, markdown: string): Promise<void> {
+  await requireAuth()
+  await updateTaskBlocks(id, markdown)
 }

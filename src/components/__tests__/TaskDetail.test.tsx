@@ -5,6 +5,8 @@ import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
   updateTaskAction: vi.fn().mockResolvedValue(undefined),
+  getTaskBlocksAction: vi.fn().mockResolvedValue(""),
+  updateTaskBlocksAction: vi.fn().mockResolvedValue(undefined),
 }))
 
 // requestAnimationFrame を同期実行してアニメーション初期化を完了させる
