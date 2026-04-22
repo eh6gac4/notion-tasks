@@ -25,9 +25,97 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
   const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const touchStartYRef = useRef(0)
+  const dragYRef = useRef(0)
+  const isDraggingRef = useRef(false)
+  const rafIdRef = useRef(0)
+  const isEditingBlocksRef = useRef(isEditingBlocks)
+  useEffect(() => { isEditingBlocksRef.current = isEditingBlocks }, [isEditingBlocks])
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
+  }, [])
+
+  // 背景スクロール抑制
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  // パネルの open/close アニメーションを直接 DOM に適用
+  useEffect(() => {
+    const el = panelRef.current
+    if (!el) return
+    el.style.transition = "opacity 0.15s, transform 0.3s ease-out"
+    el.style.transform = visible ? "translateY(0)" : "translateY(100%)"
+  }, [visible])
+
+  // handleClose — レンダー中に ref へ同期代入することでレースコンディションを回避
+  const handleCloseRef = useRef<() => void>(() => {})
+  function handleClose() {
+    setVisible(false)
+    setTimeout(onClose, 280)
+  }
+  handleCloseRef.current = handleClose
+
+  // スワイプダウンで閉じる（rAF で描画を間引き、setState なしで直接 DOM 操作）
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    const el = panel
+
+    const THRESHOLD = 80
+
+    function onTouchStart(e: TouchEvent) {
+      touchStartYRef.current = e.touches[0].clientY
+      isDraggingRef.current = false
+      dragYRef.current = 0
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      const deltaY = e.touches[0].clientY - touchStartYRef.current
+      if (deltaY <= 0) return
+      if (el.scrollTop > 0) return
+      if (isEditingBlocksRef.current) return
+
+      isDraggingRef.current = true
+      dragYRef.current = deltaY
+      e.preventDefault()
+
+      cancelAnimationFrame(rafIdRef.current)
+      rafIdRef.current = requestAnimationFrame(() => {
+        el.style.transition = "opacity 0.15s"
+        el.style.transform = `translateY(${deltaY}px)`
+      })
+    }
+
+    function onTouchEnd() {
+      if (!isDraggingRef.current) return
+      cancelAnimationFrame(rafIdRef.current)
+      const delta = dragYRef.current
+      isDraggingRef.current = false
+      dragYRef.current = 0
+
+      if (delta >= THRESHOLD) {
+        handleCloseRef.current()
+      } else {
+        el.style.transition = "opacity 0.15s, transform 0.3s ease-out"
+        el.style.transform = "translateY(0)"
+      }
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true })
+    el.addEventListener("touchmove", onTouchMove, { passive: false })
+    el.addEventListener("touchend", onTouchEnd, { passive: true })
+
+    return () => {
+      cancelAnimationFrame(rafIdRef.current)
+      el.removeEventListener("touchstart", onTouchStart)
+      el.removeEventListener("touchmove", onTouchMove)
+      el.removeEventListener("touchend", onTouchEnd)
+    }
   }, [])
 
   useEffect(() => {
@@ -84,11 +172,6 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     }
   }
 
-  function handleClose() {
-    setVisible(false)
-    setTimeout(onClose, 280)
-  }
-
   function save(input: Parameters<typeof updateTaskAction>[1]) {
     startTransition(async () => {
       await updateTaskAction(task.id, input)
@@ -128,7 +211,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
       />
 
       <div
-        className={`relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto transition-transform duration-300 ease-out ${visible ? "translate-y-0" : "translate-y-full"}`}
+        ref={panelRef}
+        className="relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto"
         style={{
           backgroundColor: "#160022",
           borderTop: "1px solid rgba(255,0,204,0.5)",
