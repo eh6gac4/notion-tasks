@@ -64,6 +64,7 @@ export async function getTaskCommentsAction(id: string): Promise<TaskComment[]> 
 }
 
 export async function createTaskCommentAction(id: string, text: string): Promise<TaskComment> {
-  await requireAuth()
-  return createTaskComment(id, text)
+  const session = await auth()
+  if (!session?.user) throw new Error("Unauthorized")
+  return createTaskComment(id, text, session.user.name ?? "Unknown")
 }

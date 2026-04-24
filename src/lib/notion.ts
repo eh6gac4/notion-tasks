@@ -346,7 +346,7 @@ export async function getTaskComments(id: string): Promise<TaskComment[]> {
   }
 }
 
-export async function createTaskComment(id: string, text: string): Promise<TaskComment> {
+export async function createTaskComment(id: string, text: string, author = "Unknown"): Promise<TaskComment> {
   if (IS_DEV) return addMockTaskComment(id, text)
   const response = await notion.comments.create({
     parent: { page_id: id },
@@ -356,7 +356,7 @@ export async function createTaskComment(id: string, text: string): Promise<TaskC
   return {
     id: c.id,
     text: c.rich_text.map((r) => r.plain_text).join(""),
-    author: c.display_name.resolved_name ?? "Unknown",
+    author,
     createdTime: c.created_time,
   }
 }
