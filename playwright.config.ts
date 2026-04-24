@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test"
 import * as dotenv from "dotenv"
 import * as path from "path"
 
-dotenv.config({ path: path.resolve(__dirname, ".env.local") })
+dotenv.config({ path: path.resolve(__dirname, ".env.local"), override: true })
 
 export default defineConfig({
   testDir: "./e2e",

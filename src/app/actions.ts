@@ -6,7 +6,12 @@ import { auth } from "@/auth"
 import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment } from "@/lib/notion"
 import type { TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
+function isDevMode() {
+  return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
+}
+
 async function requireAuth() {
+  if (isDevMode()) return
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
 }
@@ -64,6 +69,7 @@ export async function getTaskCommentsAction(id: string): Promise<TaskComment[]> 
 }
 
 export async function createTaskCommentAction(id: string, text: string): Promise<TaskComment> {
+  if (isDevMode()) return createTaskComment(id, text, "dev-user")
   const session = await auth()
   if (!session?.user) throw new Error("Unauthorized")
   return createTaskComment(id, text, session.user.name ?? "Unknown")

@@ -1,6 +1,6 @@
 function requireEnv(key: string): string {
   const val = process.env[key]
-  if (!val && process.env.NODE_ENV !== "development") {
+  if (!val && process.env.NODE_ENV !== "development" && process.env.NEXTJS_ENV !== "development") {
     throw new Error(`Missing required environment variable: ${key}`)
   }
   return val ?? ""

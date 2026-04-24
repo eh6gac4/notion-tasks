@@ -6,7 +6,9 @@ import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
 import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment } from "@/lib/mock-tasks"
 
-const IS_DEV = process.env.NODE_ENV === "development"
+function isDevMode() {
+  return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
+}
 
 const notion = new Client({ auth: config.notion.token })
 
@@ -113,7 +115,7 @@ export function getTasks(options?: {
   includeCompleted?: boolean
 }): Promise<Task[]> {
   const statuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
-  if (IS_DEV) return Promise.resolve(getMockTasks(statuses))
+  if (isDevMode()) return Promise.resolve(getMockTasks(statuses))
   return unstable_cache(
     () => fetchTasks(statuses),
     ["tasks", statuses.join(",")],
@@ -122,7 +124,7 @@ export function getTasks(options?: {
 }
 
 export async function getTask(id: string): Promise<Task | null> {
-  if (IS_DEV) return getMockTask(id) ?? null
+  if (isDevMode()) return getMockTask(id) ?? null
   try {
     const page = await notion.pages.retrieve({ page_id: id })
     if (page.object !== "page" || !("properties" in page)) return null
@@ -133,7 +135,7 @@ export async function getTask(id: string): Promise<Task | null> {
 }
 
 export async function createTask(input: CreateTaskInput): Promise<Task> {
-  if (IS_DEV) return createMockTask(input)
+  if (isDevMode()) return createMockTask(input)
   const properties: Record<string, unknown> = {
     [NOTION_PROPS.TITLE]: { title: [{ text: { content: input.title } }] },
   }
@@ -155,7 +157,7 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
 }
 
 export async function updateTask(id: string, input: UpdateTaskInput): Promise<Task> {
-  if (IS_DEV) {
+  if (isDevMode()) {
     const task = updateMockTask(id, input)
     if (!task) throw new Error(`Mock task ${id} not found`)
     return task
@@ -296,7 +298,7 @@ function markdownToNotionBlocks(markdown: string): object[] {
 }
 
 export async function getTaskBlocks(id: string): Promise<string> {
-  if (IS_DEV) return getMockTaskBlocks(id)
+  if (isDevMode()) return getMockTaskBlocks(id)
   try {
     const allBlocks: BlockObjectResponse[] = []
     let cursor: string | undefined = undefined
@@ -319,7 +321,7 @@ export async function getTaskBlocks(id: string): Promise<string> {
 }
 
 export async function getTaskComments(id: string): Promise<TaskComment[]> {
-  if (IS_DEV) return getMockTaskComments(id)
+  if (isDevMode()) return getMockTaskComments(id)
   try {
     const allComments: CommentObjectResponse[] = []
     let cursor: string | undefined = undefined
@@ -347,7 +349,7 @@ export async function getTaskComments(id: string): Promise<TaskComment[]> {
 }
 
 export async function createTaskComment(id: string, text: string, author = "Unknown"): Promise<TaskComment> {
-  if (IS_DEV) return addMockTaskComment(id, text)
+  if (isDevMode()) return addMockTaskComment(id, text)
   const response = await notion.comments.create({
     parent: { page_id: id },
     rich_text: [{ type: "text", text: { content: text } }],
@@ -362,7 +364,7 @@ export async function createTaskComment(id: string, text: string, author = "Unkn
 }
 
 export async function updateTaskBlocks(id: string, markdown: string): Promise<void> {
-  if (IS_DEV) {
+  if (isDevMode()) {
     updateMockTaskBlocks(id, markdown)
     return
   }
