@@ -350,16 +350,21 @@ export async function getTaskComments(id: string): Promise<TaskComment[]> {
 
 export async function createTaskComment(id: string, text: string, author = "Unknown"): Promise<TaskComment> {
   if (isDevMode()) return addMockTaskComment(id, text)
-  const response = await notion.comments.create({
-    parent: { page_id: id },
-    rich_text: [{ type: "text", text: { content: text } }],
-  })
-  const c = response as CommentObjectResponse
-  return {
-    id: c.id,
-    text: c.rich_text.map((r) => r.plain_text).join(""),
-    author,
-    createdTime: c.created_time,
+  try {
+    const response = await notion.comments.create({
+      parent: { page_id: id },
+      rich_text: [{ type: "text", text: { content: text } }],
+    })
+    const c = response as CommentObjectResponse
+    return {
+      id: c.id,
+      text: c.rich_text.map((r) => r.plain_text).join(""),
+      author,
+      createdTime: c.created_time,
+    }
+  } catch (e) {
+    console.error("[createTaskComment] Notion error:", e)
+    throw e
   }
 }
 

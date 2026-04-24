@@ -192,8 +192,8 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
       const newComment = await createTaskCommentAction(task.id, text)
       setComments((prev) => [...prev, newComment])
       setCommentInput("")
-    } catch {
-      setCommentPostError("コメントの投稿に失敗しました。")
+    } catch (e) {
+      setCommentPostError(e instanceof Error ? e.message : "コメントの投稿に失敗しました。")
     } finally {
       setIsPostingComment(false)
     }
