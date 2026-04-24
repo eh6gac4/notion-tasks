@@ -1,8 +1,8 @@
 "use client"
 
 import { useTransition, useState, useEffect, useRef } from "react"
-import type { Task, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
-import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction } from "@/app/actions"
+import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
@@ -24,6 +24,13 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [isSavingBlocks, setIsSavingBlocks] = useState(false)
   const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
   const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
+
+  const [comments, setComments] = useState<TaskComment[]>([])
+  const [isLoadingComments, setIsLoadingComments] = useState(true)
+  const [commentsLoadError, setCommentsLoadError] = useState<string | null>(null)
+  const [commentInput, setCommentInput] = useState("")
+  const [isPostingComment, setIsPostingComment] = useState(false)
+  const [commentPostError, setCommentPostError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const touchStartYRef = useRef(0)
@@ -149,6 +156,48 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
       cancelled = true
     }
   }, [task.id])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadComments() {
+      setIsLoadingComments(true)
+      setCommentsLoadError(null)
+
+      try {
+        const data = await getTaskCommentsAction(task.id)
+        if (cancelled) return
+        setComments(data)
+      } catch {
+        if (cancelled) return
+        setCommentsLoadError("コメントの読み込みに失敗しました。")
+      } finally {
+        if (cancelled) return
+        setIsLoadingComments(false)
+      }
+    }
+
+    void loadComments()
+
+    return () => { cancelled = true }
+  }, [task.id])
+
+  async function handlePostComment() {
+    const text = commentInput.trim()
+    if (!text) return
+    setIsPostingComment(true)
+    setCommentPostError(null)
+
+    try {
+      const newComment = await createTaskCommentAction(task.id, text)
+      setComments((prev) => [...prev, newComment])
+      setCommentInput("")
+    } catch {
+      setCommentPostError("コメントの投稿に失敗しました。")
+    } finally {
+      setIsPostingComment(false)
+    }
+  }
 
   function startEditingBlocks() {
     setEditBlocksContent(blocks ?? "")
@@ -401,6 +450,75 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           ) : (
             <p className="text-xs text-[#553355] italic">本文なし</p>
           )}
+        </div>
+
+        {/* コメント */}
+        <div className="mt-6">
+          <p className="text-xs text-[#996688] mb-3 tracking-widest uppercase">
+            コメント{comments.length > 0 && <span className="ml-2 text-[#553355]">({comments.length})</span>}
+          </p>
+
+          {commentsLoadError && (
+            <p className="mb-2 text-xs text-[#ff77aa]">{commentsLoadError}</p>
+          )}
+
+          {isLoadingComments ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-[rgba(255,0,204,0.3)] border-t-[#ff00cc] animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-3 mb-4">
+              {comments.length === 0 && (
+                <p className="text-xs text-[#553355] italic">コメントなし</p>
+              )}
+              {comments.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-xl px-4 py-3"
+                  style={{ backgroundColor: "#0d0014", border: "1px solid rgba(255,0,204,0.15)" }}
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs text-[#ff00cc]">{c.author}</span>
+                    <span className="text-xs text-[#553355]">·</span>
+                    <span className="text-xs text-[#553355]">
+                      {new Date(c.createdTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#cc99bb] whitespace-pre-wrap">{c.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <textarea
+              value={commentInput}
+              onChange={(e) => {
+                setCommentInput(e.target.value)
+                const el = e.target
+                el.style.height = "auto"
+                el.style.height = `${el.scrollHeight}px`
+              }}
+              placeholder="コメントを追加…"
+              rows={2}
+              className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none focus:border-[#ff00cc] resize-none font-mono"
+              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                disabled={isPostingComment || !commentInput.trim()}
+                onClick={handlePostComment}
+                className="px-4 py-1.5 rounded-xl text-xs text-[#0d0014] transition-all disabled:opacity-40"
+                style={{ backgroundColor: "#ff00cc" }}
+              >
+                {isPostingComment ? "投稿中…" : "投稿"}
+              </button>
+            </div>
+            {commentPostError && (
+              <p className="mt-1 text-xs text-[#ff77aa]">{commentPostError}</p>
+            )}
+          </div>
         </div>
 
         {/* Notion link */}

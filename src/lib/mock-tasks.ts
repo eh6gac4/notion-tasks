@@ -1,4 +1,4 @@
-import type { Task, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 const now = new Date().toISOString()
 
@@ -157,6 +157,16 @@ const mockBlockStore = new Map<string, string>([
   ["mock-2", "## 構成\n\n- 導入\n- 本題\n- まとめ"],
 ])
 
+let mockCommentNextId = 1
+const mockCommentStore = new Map<string, TaskComment[]>([
+  ["mock-1", [
+    { id: "c-1", text: "ファームウェア 3.2.1 を確認。公式サイトに最新版あり。", author: "自分", createdTime: "2026-04-24T10:00:00.000Z" },
+  ]],
+  ["mock-4", [
+    { id: "c-2", text: "4月分の入力完了。残りは通信費の確認のみ。", author: "自分", createdTime: "2026-04-24T09:30:00.000Z" },
+  ]],
+])
+
 export function resetMockTasks() {
   store = INITIAL_TASKS.map((t) => ({ ...t }))
   nextId = 100
@@ -201,6 +211,22 @@ export function getMockTaskBlocks(id: string): string {
 
 export function updateMockTaskBlocks(id: string, content: string): void {
   mockBlockStore.set(id, content)
+}
+
+export function getMockTaskComments(id: string): TaskComment[] {
+  return mockCommentStore.get(id) ?? []
+}
+
+export function addMockTaskComment(id: string, text: string): TaskComment {
+  const comment: TaskComment = {
+    id: `c-${++mockCommentNextId}`,
+    text,
+    author: "自分",
+    createdTime: new Date().toISOString(),
+  }
+  const existing = mockCommentStore.get(id) ?? []
+  mockCommentStore.set(id, [...existing, comment])
+  return comment
 }
 
 export function updateMockTask(id: string, input: UpdateTaskInput): Task | null {

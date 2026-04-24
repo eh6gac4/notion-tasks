@@ -48,3 +48,10 @@ export type CreateTaskInput = {
 }
 
 export type UpdateTaskInput = Partial<Omit<CreateTaskInput, "title"> & { title: string }>
+
+export type TaskComment = {
+  id: string
+  text: string
+  author: string
+  createdTime: string
+}

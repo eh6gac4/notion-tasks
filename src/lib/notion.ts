@@ -1,10 +1,10 @@
 import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
-import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { Task, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse, CommentObjectResponse } from "@notionhq/client/build/src/api-endpoints"
+import type { Task, TaskComment, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
-import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks } from "@/lib/mock-tasks"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment } from "@/lib/mock-tasks"
 
 const IS_DEV = process.env.NODE_ENV === "development"
 
@@ -315,6 +315,49 @@ export async function getTaskBlocks(id: string): Promise<string> {
   } catch (e) {
     console.error("[getTaskBlocks] Notion error:", e)
     return ""
+  }
+}
+
+export async function getTaskComments(id: string): Promise<TaskComment[]> {
+  if (IS_DEV) return getMockTaskComments(id)
+  try {
+    const allComments: CommentObjectResponse[] = []
+    let cursor: string | undefined = undefined
+
+    do {
+      const response = await notion.comments.list({
+        block_id: id,
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+      allComments.push(...response.results)
+      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+    } while (cursor)
+
+    return allComments.map((c) => ({
+      id: c.id,
+      text: c.rich_text.map((r) => r.plain_text).join(""),
+      author: c.display_name.resolved_name ?? "Unknown",
+      createdTime: c.created_time,
+    }))
+  } catch (e) {
+    console.error("[getTaskComments] Notion error:", e)
+    return []
+  }
+}
+
+export async function createTaskComment(id: string, text: string): Promise<TaskComment> {
+  if (IS_DEV) return addMockTaskComment(id, text)
+  const response = await notion.comments.create({
+    parent: { page_id: id },
+    rich_text: [{ type: "text", text: { content: text } }],
+  })
+  const c = response as CommentObjectResponse
+  return {
+    id: c.id,
+    text: c.rich_text.map((r) => r.plain_text).join(""),
+    author: c.display_name.resolved_name ?? "Unknown",
+    createdTime: c.created_time,
   }
 }
 

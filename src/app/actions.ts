@@ -3,8 +3,8 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks } from "@/lib/notion"
-import type { TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment } from "@/lib/notion"
+import type { TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 async function requireAuth() {
   const session = await auth()
@@ -56,4 +56,14 @@ export async function getTaskBlocksAction(id: string): Promise<string> {
 export async function updateTaskBlocksAction(id: string, markdown: string): Promise<void> {
   await requireAuth()
   await updateTaskBlocks(id, markdown)
+}
+
+export async function getTaskCommentsAction(id: string): Promise<TaskComment[]> {
+  await requireAuth()
+  return getTaskComments(id)
+}
+
+export async function createTaskCommentAction(id: string, text: string): Promise<TaskComment> {
+  await requireAuth()
+  return createTaskComment(id, text)
 }
