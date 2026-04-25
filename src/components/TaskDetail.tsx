@@ -275,12 +275,14 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <div
+        data-testid="task-detail-backdrop"
         className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
         onClick={handleClose}
       />
 
       <div
         ref={panelRef}
+        data-testid="task-detail"
         className="relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto"
         style={{
           backgroundColor: "#160022",

@@ -32,6 +32,19 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: ["**/swipe.spec.ts"],
+    },
+    {
+      // スワイプは CDP が必要なため Chromium で実行
+      name: "Chromium Touch",
+      use: {
+        ...devices["iPhone 15"],
+        browserName: "chromium",
+        hasTouch: true,
+        storageState: "e2e/.auth/user.json",
+      },
+      dependencies: ["setup"],
+      testMatch: ["**/swipe.spec.ts"],
     },
     {
       name: "Desktop Chrome",
@@ -40,13 +53,13 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: ["**/tap.spec.ts", "**/snapshot.spec.ts", "**/pwa.spec.ts"],
+      testIgnore: ["**/swipe.spec.ts", "**/snapshot.spec.ts", "**/pwa.spec.ts"],
     },
   ],
   webServer: {
     command: "docker compose rm -sf dev && docker compose up --force-recreate dev",
     url: "http://localhost:3000",
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 })

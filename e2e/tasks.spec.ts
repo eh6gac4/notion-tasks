@@ -1,92 +1,66 @@
 import { test, expect } from "@playwright/test"
+import type { Page } from "@playwright/test"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
-// 中央パネル（現在フィルター）のみを対象にするヘルパー
 const CENTER = "[data-testid='panel-center']"
+const TASK_ITEM = "[data-testid='task-item']"
+
+async function resetAndWait(page: Page) {
+  // フィルタークッキーを active にリセットしてから /reset へ遷移
+  await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
+  await page.goto("/reset")
+  await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
+}
 
 test.describe("タスク一覧", () => {
   test.describe.configure({ mode: "serial" })
+
   test.beforeEach(async ({ page }) => {
-    // dev環境のモックデータをリセット（/reset がresetMockTasks()を呼んで"/"にリダイレクト）
-    await page.goto("/reset")
-    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 15_000 })
+    await resetAndWait(page)
   })
 
   test("タスクが表示される", async ({ page }) => {
-    const items = page.locator(`${CENTER} ul.divide-y li`)
-    await expect(items.first()).toBeVisible()
+    const items = page.locator(`${CENTER} ${TASK_ITEM}`)
     const count = await items.count()
     expect(count).toBeGreaterThan(0)
-    console.log(`  → ${count}件のタスクを表示`)
   })
 
   test("フィルター切り替えでリストが変わる", async ({ page }) => {
     const filterSelect = page.locator("[data-testid='filter-select']")
-    await expect(filterSelect).toBeVisible()
 
-    const beforeCount = await page.locator(`${CENTER} ul.divide-y li`).count()
-    console.log(`  → フィルター変更前: ${beforeCount}件`)
-
-    // 「すべて」に変更（ローディングバーが消えるのを待つ）
+    // active → all
     await filterSelect.selectOption("all")
-    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible" })
-    const allCount = await page.locator(`${CENTER} ul.divide-y li`).count()
-    console.log(`  → 「すべて」フィルター後: ${allCount}件`)
+    await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 10_000 })
+    const allCount = await page.locator(`${CENTER} ${TASK_ITEM}`).count()
+    expect(allCount).toBeGreaterThan(0)
 
-    // 「未着手」に変更
+    // all → todo（未着手のみ）
     await filterSelect.selectOption("todo")
-    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible" })
-    const todoCount = await page.locator(`${CENTER} ul.divide-y li`).count()
-    console.log(`  → 「未着手」フィルター後: ${todoCount}件 (表示中)`)
-
-    // デフォルト(active)と異なるはずか、少なくとも正常動作を確認
+    await expect(page.locator(`${CENTER}`)).toContainText(/TASKS/, { timeout: 10_000 })
+    const todoCount = await page.locator(`${CENTER} ${TASK_ITEM}`).count()
     expect(todoCount).toBeGreaterThanOrEqual(0)
+    expect(todoCount).toBeLessThanOrEqual(allCount)
   })
 
-  test("ステータス変更selectが各タスクに存在する", async ({ page }) => {
-    // タスクアイテムの中にステータスselectがあることを確認
-    const statusSelects = page.locator(`${CENTER} ul.divide-y li select`)
-    const count = await statusSelects.count()
-    expect(count).toBeGreaterThan(0)
-    console.log(`  → ステータスselect: ${count}個`)
-
-    // 最初のタスクの現在ステータスを取得
-    const firstSelect = statusSelects.first()
-    const currentStatus = await firstSelect.inputValue()
-    console.log(`  → 最初のタスクのステータス: "${currentStatus}"`)
-    expect(currentStatus).toBeTruthy()
+  test("各タスクにステータスselectが存在する", async ({ page }) => {
+    const firstItem = page.locator(`${CENTER} ${TASK_ITEM}`).first()
+    const statusSelect = firstItem.locator("select[aria-label='ステータスを変更']")
+    await expect(statusSelect).toBeVisible()
+    const value = await statusSelect.inputValue()
+    expect(value).toBeTruthy()
   })
 
-  test("ステータスボタンをクリックするとバッジが即時更新される", async ({ page }) => {
-    const firstItem = page.locator(`${CENTER} ul.divide-y li`).first()
+  test("ステータスボタンクリックでバッジが楽観的更新される", async ({ page }) => {
+    // mock-1 は「未着手」なので「→ 進行中」ボタンが表示される
+    const firstItem = page.locator(`${CENTER} ${TASK_ITEM}`).first()
+    const badge = firstItem.locator("[data-testid='task-status-badge']")
+    await expect(badge).toHaveText("未着手")
 
-    // ボタンラベルは "→ 進行中" のため部分一致で取得
     const nextBtn = firstItem.getByRole("button", { name: /進行中/ })
-    await expect(nextBtn).toBeVisible({ timeout: 5000 })
+    await expect(nextBtn).toBeVisible()
     await nextBtn.click()
 
-    // useOptimistic による楽観的更新でバッジが即時変わる（Notion API を待たない）
-    await expect(firstItem.locator("span.rounded-full").first()).toHaveText("進行中")
-  })
-})
-
-test.describe("ログイン", () => {
-  test.skip("未認証でアクセスするとログイン画面にリダイレクト", async ({ browser }) => {
-    // 新規コンテキスト（storageStateなし）でアクセス
-    const ctx = await browser.newContext()
-    const page = await ctx.newPage()
-    await page.goto("/")
-    await expect(page).toHaveURL(/\/login/)
-    await ctx.close()
-  })
-
-  test.skip("誤ったパスワードでエラーが表示される", async ({ page }) => {
-    await page.context().clearCookies()
-    await page.goto("/login")
-    await page.getByLabel("ユーザー名").fill("wrong")
-    await page.getByLabel("パスワード").fill("wrong")
-    await page.getByRole("button", { name: "ログイン" }).click()
-    await expect(page.getByText("ユーザー名またはパスワードが正しくありません")).toBeVisible()
+    await expect(badge).toHaveText("進行中", { timeout: 3_000 })
   })
 })
