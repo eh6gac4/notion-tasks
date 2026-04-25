@@ -19,14 +19,15 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
 
   return (
     <div
+      data-testid="task-item"
       className="px-4 py-4 active:bg-[#160022] transition-colors cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <p className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
+      <p data-testid="task-title" className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
-          <span className={`px-3 py-2 rounded-full text-xs ${statusStyle}`}>
+          <span data-testid="task-status-badge" className={`px-3 py-2 rounded-full text-xs ${statusStyle}`}>
             {status ?? "未着手"}
           </span>
           <select

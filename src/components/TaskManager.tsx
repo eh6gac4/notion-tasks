@@ -5,37 +5,159 @@ import type { Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
-import { setFilterAction, refreshTasksAction } from "@/app/actions"
+import { setFilterAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
 import { FILTERS } from "@/constants/filters"
 import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
 
-export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Task[]; currentFilter: string; initialTaskId?: string | null }) {
-  const [isPending, startTransition] = useTransition()
-  const [filterKey, setFilterKey] = useState(currentFilter)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
+// ─── TaskListPanel ─────────────────────────────────────────────────────────────
 
+function TaskSkeleton() {
+  return (
+    <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+      {[...Array(5)].map((_, i) => (
+        <li key={i} className="px-4 py-4">
+          <div
+            className="h-4 bg-[#1e002e] rounded animate-pulse mb-3"
+            style={{ width: `${60 + (i % 3) * 13}%` }}
+          />
+          <div className="flex gap-2">
+            <div className="h-5 w-14 bg-[#160022] rounded-full animate-pulse" />
+            <div className="h-5 w-10 bg-[#160022] rounded-full animate-pulse" />
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function TaskListPanel({
+  filterKey,
+  tasks,
+  onSelect,
+}: {
+  filterKey: string
+  tasks: Task[] | undefined
+  onSelect: (id: string) => void
+}) {
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
   const filtered = current.statuses
-    ? tasks.filter((t) => t.status && current.statuses!.includes(t.status))
-    : tasks
+    ? (tasks ?? []).filter((t) => t.status && current.statuses!.includes(t.status))
+    : (tasks ?? [])
 
   const isGrouped = !current.statuses || current.statuses.length > 1
   const groups = isGrouped ? groupAndSort(filtered) : null
   const sortedFlat = !isGrouped ? sortByPriorityAndDue(filtered) : null
 
+  if (tasks === undefined) return <TaskSkeleton />
+
+  if (filtered.length === 0) {
+    return (
+      <p className="text-center text-[#553355] text-xs py-20 tracking-widest">
+        — NO TASKS —
+      </p>
+    )
+  }
+
+  return (
+    <>
+      {isGrouped ? (
+        groups!.map(({ status, tasks: groupTasks }) => (
+          <section key={status}>
+            <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
+              <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
+              <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
+            </div>
+            <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+              {groupTasks.map((task) => (
+                <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
+              ))}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+          {sortedFlat!.map((task) => (
+            <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
+          ))}
+        </ul>
+      )}
+      <p className="text-center text-xs text-[#553355] py-4 pb-24 tracking-widest">
+        {filtered.length} TASKS
+      </p>
+    </>
+  )
+}
+
+// ─── TaskManager ───────────────────────────────────────────────────────────────
+
+const N = FILTERS.length
+
+function getPanelKeys(idx: number) {
+  return {
+    left:   FILTERS[(idx - 1 + N) % N].key,
+    center: FILTERS[idx].key,
+    right:  FILTERS[(idx + 1) % N].key,
+  }
+}
+
+export function TaskManager({
+  tasks,
+  currentFilter,
+  initialTaskId,
+}: {
+  tasks: Task[]
+  currentFilter: string
+  initialTaskId?: string | null
+}) {
+  const [isPending, startTransition] = useTransition()
+
+  const initialIndex = Math.max(0, FILTERS.findIndex((f) => f.key === currentFilter))
+  const initialKey = FILTERS[initialIndex].key
+  const [centerIndex, setCenterIndex] = useState(initialIndex)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
+
+  // Task cache: filterKey → Task[]
+  const [taskCache, setTaskCache] = useState<Map<string, Task[]>>(
+    () => new Map([[initialKey, tasks]])
+  )
+
+  // When server delivers fresh tasks, sync to the matching filter key
+  useEffect(() => {
+    const key = FILTERS.find((f) => f.key === currentFilter)?.key ?? FILTERS[0].key
+    setTaskCache((prev) => new Map(prev).set(key, tasks))
+  }, [tasks, currentFilter])
+
+  // Pre-fetch adjacent panels when centerIndex changes
+  const taskCacheRef = useRef(taskCache)
+  useEffect(() => { taskCacheRef.current = taskCache }, [taskCache])
+
+  useEffect(() => {
+    const { left, right } = getPanelKeys(centerIndex)
+    for (const key of [left, right]) {
+      if (!taskCacheRef.current.has(key)) {
+        fetchTasksByFilterAction(key).then((data) => {
+          setTaskCache((prev) => new Map(prev).set(key, data))
+        })
+      }
+    }
+  }, [centerIndex])
+
+  // Selected task: search across all cached tasks
+  const selectedTask = selectedTaskId
+    ? [...taskCache.values()].flat().find((t) => t.id === selectedTaskId) ?? null
+    : null
+
   // ─── Carousel refs ────────────────────────────────────────────────────────
   const mainRef = useRef<HTMLElement>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef(0)
   const isAnimatingRef = useRef(false)
 
-  // stale closure 対策
-  const filterKeyRef = useRef(filterKey)
+  const centerIndexRef = useRef(centerIndex)
   const selectedTaskIdRef = useRef<string | null>(selectedTaskId)
   const isPendingRef = useRef(false)
 
-  useEffect(() => { filterKeyRef.current = filterKey }, [filterKey])
+  useEffect(() => { centerIndexRef.current = centerIndex }, [centerIndex])
   useEffect(() => { selectedTaskIdRef.current = selectedTaskId }, [selectedTaskId])
   useEffect(() => { isPendingRef.current = isPending }, [isPending])
 
@@ -74,9 +196,9 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
       cancelAnimationFrame(rafRef.current)
       const capture = dx
       rafRef.current = requestAnimationFrame(() => {
-        if (contentRef.current) {
-          contentRef.current.style.transition = "none"
-          contentRef.current.style.transform = `translateX(${capture}px)`
+        if (wrapperRef.current) {
+          wrapperRef.current.style.transition = "none"
+          wrapperRef.current.style.transform = `translateX(calc(-33.333% + ${capture}px))`
         }
       })
     }
@@ -95,45 +217,39 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
         return
       }
 
-      const idx = FILTERS.findIndex((f) => f.key === filterKeyRef.current)
-      const cur = idx < 0 ? 0 : idx
-      const nextFilter = dx < 0
-        ? FILTERS[(cur + 1) % FILTERS.length]
-        : FILTERS[(cur - 1 + FILTERS.length) % FILTERS.length]
-      const exitX = dx < 0 ? -window.innerWidth : window.innerWidth
-      const entryX = -exitX
-
-      commitSwipe(nextFilter.key, exitX, entryX)
+      const cur = centerIndexRef.current
+      if (dx < 0) {
+        commitSwipe((cur + 1) % N, "left")
+      } else {
+        commitSwipe((cur - 1 + N) % N, "right")
+      }
     }
 
     function snapBack() {
-      if (!contentRef.current) return
-      contentRef.current.style.transition = "transform 200ms ease-out"
-      contentRef.current.style.transform = "translateX(0)"
+      if (!wrapperRef.current) return
+      wrapperRef.current.style.transition = "transform 200ms ease-out"
+      wrapperRef.current.style.transform = "translateX(-33.333%)"
     }
 
-    function commitSwipe(nextKey: string, exitX: number, entryX: number) {
-      const content = contentRef.current
-      if (!content) return
+    function commitSwipe(nextIndex: number, dir: "left" | "right") {
+      const wrapper = wrapperRef.current
+      if (!wrapper) return
       isAnimatingRef.current = true
 
-      content.style.transition = "transform 150ms ease-in"
-      content.style.transform = `translateX(${exitX}px)`
+      const exitX = dir === "left" ? "-66.666%" : "0%"
+      wrapper.style.transition = "transform 150ms ease-in"
+      wrapper.style.transform = `translateX(${exitX})`
 
       setTimeout(() => {
-        setFilterKey(nextKey)
+        const nextKey = FILTERS[nextIndex].key
+        setCenterIndex(nextIndex)
         startTransition(async () => { await setFilterAction(nextKey) })
 
         requestAnimationFrame(() => {
-          if (!contentRef.current) return
-          contentRef.current.style.transition = "none"
-          contentRef.current.style.transform = `translateX(${entryX}px)`
-          requestAnimationFrame(() => {
-            if (!contentRef.current) return
-            contentRef.current.style.transition = "transform 150ms ease-out"
-            contentRef.current.style.transform = "translateX(0)"
-            setTimeout(() => { isAnimatingRef.current = false }, 150)
-          })
+          if (!wrapperRef.current) return
+          wrapperRef.current.style.transition = "none"
+          wrapperRef.current.style.transform = "translateX(-33.333%)"
+          setTimeout(() => { isAnimatingRef.current = false }, 50)
         })
       }, 150)
     }
@@ -148,6 +264,8 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
       el.removeEventListener("touchend", onEnd)
     }
   }, [])
+
+  const { left, center, right } = getPanelKeys(centerIndex)
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -165,11 +283,14 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
         <div className="flex gap-2">
           <select
             data-testid="filter-select"
-            value={filterKey}
+            value={FILTERS[centerIndex].key}
             onChange={(e) => {
               const next = e.target.value
-              setFilterKey(next)
-              startTransition(async () => { await setFilterAction(next) })
+              const idx = FILTERS.findIndex((f) => f.key === next)
+              if (idx >= 0) {
+                setCenterIndex(idx)
+                startTransition(async () => { await setFilterAction(next) })
+              }
             }}
             className="w-full rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
             style={{ transition: "border-color 0.2s" }}
@@ -206,8 +327,8 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
 
         {/* ページネーションドット */}
         <div className="flex justify-center items-center gap-2 pb-1">
-          {FILTERS.map((f) => {
-            const active = f.key === filterKey
+          {FILTERS.map((f, i) => {
+            const active = i === centerIndex
             return (
               <button
                 key={f.key}
@@ -216,7 +337,7 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
                 aria-label={f.label}
                 onClick={() => {
                   if (isAnimatingRef.current) return
-                  setFilterKey(f.key)
+                  setCenterIndex(i)
                   startTransition(async () => { await setFilterAction(f.key) })
                 }}
                 className="transition-all duration-200"
@@ -236,57 +357,33 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
       <main
         ref={mainRef}
         data-testid="task-list-main"
-        className="flex-1 overflow-y-auto"
-        style={{ overflowX: "hidden" }}
+        className="flex-1 overflow-hidden"
       >
-        <div ref={contentRef} className="max-w-2xl mx-auto" style={{ willChange: "transform" }}>
-          {isPending ? (
-            <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
-              {[...Array(5)].map((_, i) => (
-                <li key={i} className="px-4 py-4">
-                  <div
-                    className="h-4 bg-[#1e002e] rounded animate-pulse mb-3"
-                    style={{ width: `${60 + (i % 3) * 13}%` }}
-                  />
-                  <div className="flex gap-2">
-                    <div className="h-5 w-14 bg-[#160022] rounded-full animate-pulse" />
-                    <div className="h-5 w-10 bg-[#160022] rounded-full animate-pulse" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-[#553355] text-xs py-20 tracking-widest">
-              — NO TASKS —
-            </p>
-          ) : isGrouped ? (
-            <>
-              {groups!.map(({ status, tasks: groupTasks }) => (
-                <section key={status}>
-                  <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
-                    <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
-                    <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
-                  </div>
-                  <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
-                    {groupTasks.map((task) => (
-                      <li key={task.id}><TaskItem task={task} onSelect={setSelectedTaskId} /></li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </>
-          ) : (
-            <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
-              {sortedFlat!.map((task) => (
-                <li key={task.id}><TaskItem task={task} onSelect={setSelectedTaskId} /></li>
-              ))}
-            </ul>
-          )}
-          {!isPending && (
-            <p className="text-center text-xs text-[#553355] py-4 pb-24 tracking-widest">
-              {filtered.length} TASKS
-            </p>
-          )}
+        <div
+          ref={wrapperRef}
+          className="flex h-full"
+          style={{ width: "300%", transform: "translateX(-33.333%)", willChange: "transform" }}
+        >
+          {/* 左パネル（前フィルター） */}
+          <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
+            <div className="max-w-2xl mx-auto">
+              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} onSelect={setSelectedTaskId} />
+            </div>
+          </div>
+
+          {/* 中央パネル（現在フィルター） */}
+          <div data-testid="panel-center" style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
+            <div className="max-w-2xl mx-auto">
+              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} onSelect={setSelectedTaskId} />
+            </div>
+          </div>
+
+          {/* 右パネル（次フィルター） */}
+          <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
+            <div className="max-w-2xl mx-auto">
+              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} onSelect={setSelectedTaskId} />
+            </div>
+          </div>
         </div>
       </main>
 
