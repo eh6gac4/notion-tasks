@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment } from "@/lib/notion"
-import type { TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks } from "@/lib/notion"
+import type { Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { getQueryStatuses } from "@/constants/filters"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -19,6 +20,11 @@ async function requireAuth() {
 export async function setFilterAction(filter: string) {
   ;(await cookies()).set("filter", filter, { maxAge: 86400, path: "/" })
   revalidatePath("/")
+}
+
+export async function fetchTasksByFilterAction(filterKey: string): Promise<Task[]> {
+  await requireAuth()
+  return getTasks({ statuses: getQueryStatuses(filterKey) })
 }
 
 export async function updateTaskStatus(id: string, status: TaskStatus) {
