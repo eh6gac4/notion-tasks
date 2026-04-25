@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { NextResponse } from "next/server"
 
 export default auth((req) => {
-  const isLoggedIn = !!req.auth && !req.auth.error
+  const isLoggedIn = !!req.auth
   const isLoginPage = req.nextUrl.pathname === "/login"
 
   if (!isLoggedIn && !isLoginPage) {

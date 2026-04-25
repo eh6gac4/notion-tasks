@@ -41,10 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (now < (token.refreshTokenExpires ?? 0)) {
         return { ...token, accessTokenExpires: now + ACCESS_TOKEN_TTL }
       }
-      return { ...token, error: "RefreshTokenExpired" as const }
-    },
-    session({ session, token }) {
-      return { ...session, error: token.error }
+      return null
     },
   },
   trustHost: true,
