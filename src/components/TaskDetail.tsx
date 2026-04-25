@@ -23,6 +23,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [editBlocksContent, setEditBlocksContent] = useState("")
   const [isSavingBlocks, setIsSavingBlocks] = useState(false)
   const [blocksLoadError, setBlocksLoadError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
 
   const [comments, setComments] = useState<TaskComment[]>([])
@@ -242,8 +243,13 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }
 
   function save(input: Parameters<typeof updateTaskAction>[1]) {
+    setSaveError(null)
     startTransition(async () => {
-      await updateTaskAction(task.id, input)
+      try {
+        await updateTaskAction(task.id, input)
+      } catch {
+        setSaveError("更新に失敗しました")
+      }
     })
   }
 
@@ -296,6 +302,10 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
         <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1">
           <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
         </button>
+
+        {saveError && (
+          <p className="text-xs text-[#ff3355] mb-4">{saveError}</p>
+        )}
 
         {/* Title — blur で保存 */}
         <input
