@@ -6,8 +6,7 @@ const CENTER = "[data-testid='panel-center']"
 
 test("スナップショット撮影", async ({ page }) => {
   await page.goto("/")
-  await page.waitForSelector("[data-testid='task-list-main']", { timeout: 10000 })
-  await page.waitForLoadState("networkidle")
+  await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 15_000 })
 
   const outDir = path.join("e2e/snapshots", DIR)
 
@@ -18,7 +17,7 @@ test("スナップショット撮影", async ({ page }) => {
 
   // フィルター変更（data-testid でフィルター専用 select を明示指定）
   await page.locator("[data-testid='filter-select']").selectOption("all")
-  await page.waitForLoadState("networkidle")
+  await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 10_000 })
   await page.screenshot({ path: `${outDir}/home-filter-all.png`, fullPage: true })
 
   // ボトムシート（中央パネルのボタンを対象にする）
