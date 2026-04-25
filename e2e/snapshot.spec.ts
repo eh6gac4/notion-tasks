@@ -2,10 +2,11 @@ import { test } from "@playwright/test"
 import path from "path"
 
 const DIR = process.env.SNAPSHOT_DIR ?? "before"
+const CENTER = "[data-testid='panel-center']"
 
 test("スナップショット撮影", async ({ page }) => {
   await page.goto("/")
-  await page.waitForSelector("[data-testid='task-list'], ul, main", { timeout: 10000 })
+  await page.waitForSelector("[data-testid='task-list-main']", { timeout: 10000 })
   await page.waitForLoadState("networkidle")
 
   const outDir = path.join("e2e/snapshots", DIR)
@@ -20,8 +21,8 @@ test("スナップショット撮影", async ({ page }) => {
   await page.waitForLoadState("networkidle")
   await page.screenshot({ path: `${outDir}/home-filter-all.png`, fullPage: true })
 
-  // ボトムシート（バックドロップクリックで閉じる）
-  const firstTask = page.locator("ul li button").first()
+  // ボトムシート（中央パネルのボタンを対象にする）
+  const firstTask = page.locator(`${CENTER} ul li button`).first()
   if (await firstTask.isVisible()) {
     await firstTask.click()
     await page.locator("div.rounded-t-2xl").first().waitFor({ state: "visible" })
