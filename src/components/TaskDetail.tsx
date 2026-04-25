@@ -554,6 +554,7 @@ function renderWithLinks(text: string): React.ReactNode {
     if (match.index > last) parts.push(text.slice(last, match.index))
     const rawUrl = match[0]
     let url = rawUrl.replace(/[.,;:!?)\]'"。、！？」』）〉》]+$/, "")
+    url = url.replace(/[　-〿＀-￯][　-〿぀-ヿ一-鿿豈-﫿＀-￯]*$/, "")
     url = url.replace(/((?:%[0-9A-Fa-f]{2})+)$/, (encoded) => {
       try {
         const decoded = decodeURIComponent(encoded)

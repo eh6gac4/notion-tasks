@@ -261,6 +261,7 @@ describe("TaskDetail 本文編集", () => {
     ["全角閉じ鉤括弧（」）", "「参照 https://example.com」"],
     ["ASCII ピリオド", "詳細は https://example.com. を参照"],
     ["全角閉じ括弧のパーセントエンコード", "詳細は https://example.com%EF%BC%89%E3%81%A7%E4%BA%8B%E6%A1%88%E3%81%AE%E8%A9%B3%E7%B4%B0%E3%82%92%E7%A2%BA%E8%AA%8D"],
+    ["全角閉じ括弧＋日本語テキスト（リテラル）", "詳細は https://example.com）で事案の詳細と対応を確認"],
   ])("URL 末尾の %s が URL に含まれない", async (_, bodyText) => {
     vi.mocked(getTaskBlocksAction).mockResolvedValueOnce(bodyText)
 
