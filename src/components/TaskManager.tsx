@@ -9,10 +9,10 @@ import { setFilterAction, refreshTasksAction } from "@/app/actions"
 import { FILTERS } from "@/constants/filters"
 import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
 
-export function TaskManager({ tasks, currentFilter }: { tasks: Task[]; currentFilter: string }) {
+export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Task[]; currentFilter: string; initialTaskId?: string | null }) {
   const [isPending, startTransition] = useTransition()
   const [filterKey, setFilterKey] = useState(currentFilter)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
   const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
 
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]

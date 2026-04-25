@@ -5,9 +5,15 @@ import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
 import { getQueryStatuses } from "@/constants/filters"
 
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const cookieStore = await cookies()
   const filter = cookieStore.get("filter")?.value ?? "active"
+  const { task: taskParam } = await searchParams
+  const initialTaskId = typeof taskParam === "string" ? taskParam : null
 
   const [session, tasks] = await Promise.all([
     auth(),
@@ -36,7 +42,7 @@ export default async function Page() {
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} currentFilter={filter} />
+      <TaskManager tasks={tasks} currentFilter={filter} initialTaskId={initialTaskId} />
     </div>
   )
 }
