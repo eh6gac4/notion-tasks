@@ -10,7 +10,7 @@ export default function Loading() {
 
       <div className="h-0.5 bg-[#ff00cc] animate-pulse w-2/3" style={{ boxShadow: "0 0 8px #ff00cc" }} />
 
-      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-2.5">
+      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 py-3">
         <div className="h-10 w-full bg-[#160022] rounded-xl animate-pulse" />
       </div>
 

@@ -308,9 +308,9 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
 
         {/* Status */}
         <div className="mb-4">
-          <p className="text-xs text-[#996688] mb-1.5 tracking-widest uppercase">Status</p>
+          <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
-            <span className={`px-3 py-1.5 rounded-full text-sm ${statusStyle}`}>
+            <span className={`px-3 py-2 rounded-full text-sm ${statusStyle}`}>
               {editStatus}
             </span>
             <select
@@ -359,7 +359,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                   key={tag}
                   type="button"
                   onClick={() => toggleTag(tag)}
-                  className="px-3 py-1.5 rounded-full text-xs transition-all"
+                  className="px-3 py-2 rounded-full text-xs transition-all"
                   style={
                     editTags.includes(tag)
                       ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
@@ -446,7 +446,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                     setBlocksSaveError(null)
                     setIsEditingBlocks(false)
                   }}
-                  className="px-4 py-1.5 rounded-xl text-xs text-[#996688] hover:text-[#ffbbee] transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs text-[#996688] hover:text-[#ffbbee] transition-colors"
                   style={{ border: "1px solid rgba(255,0,204,0.2)" }}
                 >
                   キャンセル
@@ -455,7 +455,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                   type="button"
                   disabled={isSavingBlocks}
                   onClick={handleSaveBlocks}
-                  className="px-4 py-1.5 rounded-xl text-xs text-[#0d0014] transition-all"
+                  className="px-4 py-2 rounded-xl text-xs text-[#0d0014] transition-all"
                   style={{ backgroundColor: isSavingBlocks ? "rgba(255,0,204,0.5)" : "#ff00cc" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
@@ -497,7 +497,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                   className="rounded-xl px-4 py-3"
                   style={{ backgroundColor: "#0d0014", border: "1px solid rgba(255,0,204,0.15)" }}
                 >
-                  <div className="flex items-center gap-2 mb-1.5">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs text-[#ff00cc]">{c.author}</span>
                     <span className="text-xs text-[#553355]">·</span>
                     <span className="text-xs text-[#553355]">
@@ -529,7 +529,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
                 onClick={handlePostComment}
-                className="px-4 py-1.5 rounded-xl text-xs text-[#0d0014] transition-all disabled:opacity-40"
+                className="px-4 py-2 rounded-xl text-xs text-[#0d0014] transition-all disabled:opacity-40"
                 style={{ backgroundColor: "#ff00cc" }}
               >
                 {isPostingComment ? "投稿中…" : "投稿"}
@@ -559,7 +559,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="text-xs text-[#553355] w-16 flex-shrink-0 pt-0.5 tracking-wide">{label}</span>
+      <span className="text-xs text-[#553355] w-16 flex-shrink-0 pt-1 tracking-wide">{label}</span>
       <div className="flex-1">{children}</div>
     </div>
   )
@@ -632,14 +632,14 @@ function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onTog
     if (line === "---") {
       elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
     } else if (line.startsWith("# ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-0.5">{renderWithLinks(line.slice(2))}</p>)
+      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-1">{renderWithLinks(line.slice(2))}</p>)
     } else if (line.startsWith("## ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-1.5 mb-0.5">{renderWithLinks(line.slice(3))}</p>)
+      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-2 mb-1">{renderWithLinks(line.slice(3))}</p>)
     } else if (line.startsWith("### ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-0.5">{renderWithLinks(line.slice(4))}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-1">{renderWithLinks(line.slice(4))}</p>)
     } else if (/^- \[x\] /i.test(line)) {
       elements.push(
-        <p key={i} className="text-[#996688] text-sm line-through flex items-baseline gap-1.5">
+        <p key={i} className="text-[#996688] text-sm line-through flex items-baseline gap-2">
           <button
             type="button"
             onClick={() => onToggleCheckbox?.(i)}
@@ -651,7 +651,7 @@ function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onTog
       )
     } else if (/^- \[ \] /.test(line)) {
       elements.push(
-        <p key={i} className="text-[#cc99bb] text-sm flex items-baseline gap-1.5">
+        <p key={i} className="text-[#cc99bb] text-sm flex items-baseline gap-2">
           <button
             type="button"
             onClick={() => onToggleCheckbox?.(i)}
@@ -662,10 +662,10 @@ function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onTog
         </p>
       )
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">・</span>{renderWithLinks(line.slice(2))}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">・</span>{renderWithLinks(line.slice(2))}</p>)
     } else if (/^\d+\. /.test(line)) {
       const match = line.match(/^(\d+)\. (.*)/)
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
     } else if (line.startsWith("> ")) {
       elements.push(
         <p key={i} className="text-[#996688] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(255,0,204,0.4)" }}>
@@ -681,5 +681,5 @@ function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onTog
 
   if (inCode && codeLines.length > 0) flushCode(lines.length)
 
-  return <div className="space-y-0.5">{elements}</div>
+  return <div className="space-y-1">{elements}</div>
 }

@@ -110,7 +110,7 @@ export function TaskCreate() {
                 placeholder="TASK NAME (required)"
                 required
                 autoFocus
-                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc]"
+                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc]"
                 style={{ transition: "border-color 0.2s" }}
               />
 
@@ -118,7 +118,7 @@ export function TaskCreate() {
                 <select
                   name="status"
                   defaultValue="未着手"
-                  className="rounded-xl px-3 py-3.5 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+                  className="rounded-xl px-3 py-4 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
                   style={{ border: "1px solid rgba(255,0,204,0.3)" }}
                 >
                   {(["未着手", "進行中", "確認中"] as TaskStatus[]).map((s) => (
@@ -128,7 +128,7 @@ export function TaskCreate() {
                 <select
                   name="priority"
                   defaultValue=""
-                  className="rounded-xl px-3 py-3.5 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
+                  className="rounded-xl px-3 py-4 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
                   style={{ border: "1px solid rgba(255,0,204,0.3)" }}
                 >
                   <option value="">Priority</option>
@@ -139,11 +139,11 @@ export function TaskCreate() {
               </div>
 
               <div>
-                <label className="block text-xs text-[#996688] mb-1.5 tracking-widest uppercase">期限</label>
+                <label className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">期限</label>
                 <input
                   name="due"
                   type="date"
-                  className="w-full rounded-xl px-4 py-3.5 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+                  className="w-full rounded-xl px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
                   style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
                 />
               </div>
@@ -156,7 +156,7 @@ export function TaskCreate() {
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className="px-3 py-1.5 rounded-full text-xs transition-all"
+                      className="px-3 py-2 rounded-full text-xs transition-all"
                       style={
                         selectedTags.includes(tag)
                           ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
