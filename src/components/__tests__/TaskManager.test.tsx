@@ -1,10 +1,12 @@
-import { describe, it, expect, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react"
 import { TaskManager } from "@/components/TaskManager"
+import { FILTERS } from "@/constants/filters"
 import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
   setFilterAction: vi.fn().mockResolvedValue(undefined),
+  refreshTasksAction: vi.fn().mockResolvedValue(undefined),
 }))
 
 // TaskItem / TaskCreate は描画内容ではなくフィルター論理をテストするため簡略化
@@ -19,6 +21,15 @@ vi.mock("@/components/TaskItem", () => ({
 vi.mock("@/components/TaskCreate", () => ({
   TaskCreate: () => null,
 }))
+
+beforeEach(() => {
+  vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { cb(0); return 0 })
+  vi.stubGlobal("cancelAnimationFrame", () => {})
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function makeTask(overrides: Partial<Task>): Task {
   return {
@@ -112,5 +123,101 @@ describe("TaskManager フィルター", () => {
     const nullStatusTasks = [makeTask({ id: "n1", title: "ステータス不明", status: null })]
     render(<TaskManager tasks={nullStatusTasks} currentFilter="active" />)
     expect(screen.queryByText("ステータス不明")).not.toBeInTheDocument()
+  })
+})
+
+// ─── スワイプテスト用ヘルパー ─────────────────────────────────────────────
+
+function swipe(el: HTMLElement, dx: number, dy = 0) {
+  fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }] })
+  fireEvent.touchMove(el, { touches: [{ clientX: dx / 2, clientY: dy / 2 }] })
+  fireEvent.touchEnd(el, { changedTouches: [{ clientX: dx, clientY: dy }] })
+}
+
+function getMain() {
+  return document.querySelector("[data-testid='task-list-main']") as HTMLElement
+}
+
+describe("スワイプフィルター切り替え", () => {
+  // commitSwipe 内の setTimeout(150) を制御するため fake timers を使用
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] })
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("左スワイプ 80px で active(0番) → todo(1番) に変わる", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    act(() => { swipe(getMain(), -80) })
+    await act(async () => { vi.runAllTimers() })
+    expect(screen.getByText("未着手タスク")).toBeInTheDocument()
+    expect(screen.queryByText("進行中タスク")).not.toBeInTheDocument()
+  })
+
+  it("右スワイプ 80px で todo(1番) → active(0番) に戻る", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="todo" />)
+    act(() => { swipe(getMain(), 80) })
+    await act(async () => { vi.runAllTimers() })
+    expect(screen.getByText("未着手タスク")).toBeInTheDocument()
+    expect(screen.getByText("進行中タスク")).toBeInTheDocument()
+  })
+
+  it("左スワイプ @ all(末尾) → active(先頭) に循環する", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    act(() => { swipe(getMain(), -80) })
+    await act(async () => { vi.runAllTimers() })
+    // active: 未着手・進行中のみ
+    expect(screen.getByText("未着手タスク")).toBeInTheDocument()
+    expect(screen.queryByText("確認中タスク")).not.toBeInTheDocument()
+  })
+
+  it("右スワイプ @ active(先頭) → all(末尾) に循環する", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    act(() => { swipe(getMain(), 80) })
+    await act(async () => { vi.runAllTimers() })
+    expect(screen.getAllByTestId("task-item")).toHaveLength(5)
+  })
+
+  it("50px スワイプ（閾値未満）ではフィルターが変わらない", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    act(() => { swipe(getMain(), -50) })
+    await act(async () => { vi.runAllTimers() })
+    // active のまま: 進行中が表示される
+    expect(screen.getByText("進行中タスク")).toBeInTheDocument()
+    expect(screen.queryByText("確認中タスク")).not.toBeInTheDocument()
+  })
+
+  it("縦スワイプ (dx=30, dy=200) ではフィルターが変わらない", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    act(() => { swipe(getMain(), 30, 200) })
+    await act(async () => { vi.runAllTimers() })
+    expect(screen.getByText("進行中タスク")).toBeInTheDocument()
+    expect(screen.queryByText("確認中タスク")).not.toBeInTheDocument()
+  })
+})
+
+describe("ページネーションドット", () => {
+  it("FILTERS の数だけドットが表示される", () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    expect(screen.getAllByRole("tab")).toHaveLength(FILTERS.length)
+  })
+
+  it("現在フィルターのドットが aria-selected=true、他は false", () => {
+    render(<TaskManager tasks={tasks} currentFilter="review" />)
+    const dots = screen.getAllByRole("tab")
+    const activeIdx = FILTERS.findIndex((f) => f.key === "review")
+    dots.forEach((dot, i) => {
+      expect(dot.getAttribute("aria-selected")).toBe(i === activeIdx ? "true" : "false")
+    })
+  })
+
+  it("ドットをクリックするとフィルターが変わる", async () => {
+    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    const allDot = screen.getByRole("tab", { name: "すべて" })
+    await act(async () => { fireEvent.click(allDot) })
+    await waitFor(() => {
+      expect(screen.getAllByTestId("task-item")).toHaveLength(5)
+    })
   })
 })
