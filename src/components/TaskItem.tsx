@@ -26,7 +26,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
-          <span className={`px-3 py-1 rounded-full text-xs ${statusStyle}`}>
+          <span className={`px-3 py-2 rounded-full text-xs ${statusStyle}`}>
             {status ?? "未着手"}
           </span>
           <select
@@ -71,7 +71,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
         )}
       </div>
 
-      <div className="flex gap-2 mt-2">
+      <div className="flex gap-2 mt-3">
         {(["進行中", "完了", "中止"] as TaskStatus[]).filter((s) => s !== status).map((s) => (
           <button
             key={s}
