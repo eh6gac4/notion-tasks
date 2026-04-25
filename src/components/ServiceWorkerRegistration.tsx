@@ -21,9 +21,9 @@ export default function ServiceWorkerRegistration() {
       .catch(() => {})
 
     // 新しい SW が制御を引き継いだらページをリロード（初回インストール除く）
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (hadController) window.location.reload()
-    })
+    const onControllerChange = () => { if (hadController) window.location.reload() }
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
+    return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange)
   }, [])
   return null
 }
