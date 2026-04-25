@@ -81,4 +81,67 @@ test.describe("タップ応答調査", () => {
       console.log(`  → FABとタスクが重なっている: ${overlap}`)
     }
   })
+
+  // WebKit / Chromium 共通: touches プロパティを手動付与した Event でスワイプをシミュレート
+  async function dispatchSwipe(page: import("@playwright/test").Page, selector: string, dx: number, dy = 0) {
+    const box = await page.locator(selector).boundingBox()
+    if (!box) return
+    const cx = box.x + box.width / 2
+    const cy = box.y + box.height / 2
+    await page.evaluate(([sel, startX, startY, deltaX, deltaY]) => {
+      const el = document.querySelector(sel as string)!
+      function makeTouch(x: number, y: number) {
+        return { clientX: x, clientY: y, identifier: 1, target: el }
+      }
+      function fire(type: string, touches: object[], changed = touches) {
+        const e = new Event(type, { bubbles: true, cancelable: true })
+        Object.defineProperty(e, "touches",        { value: touches })
+        Object.defineProperty(e, "targetTouches",  { value: touches })
+        Object.defineProperty(e, "changedTouches", { value: changed })
+        el.dispatchEvent(e)
+      }
+      fire("touchstart", [makeTouch(startX as number, startY as number)])
+      fire("touchmove",  [makeTouch((startX as number) + (deltaX as number) / 2, (startY as number) + (deltaY as number) / 2)])
+      fire("touchmove",  [makeTouch((startX as number) + (deltaX as number), (startY as number) + (deltaY as number))])
+      fire("touchend",   [], [makeTouch((startX as number) + (deltaX as number), (startY as number) + (deltaY as number))])
+    }, [selector, cx, cy, dx, dy])
+  }
+
+  test("左スワイプでフィルターが次に進む (active → todo)", async ({ page }) => {
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    expect(await filterSelect.inputValue()).toBe("active")
+
+    await dispatchSwipe(page, "[data-testid='task-list-main']", -80)
+    await expect(filterSelect).toHaveValue("todo", { timeout: 5_000 })
+  })
+
+  test("右スワイプでフィルターが前に戻る (todo → active)", async ({ page }) => {
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    await filterSelect.selectOption("todo")
+    // スケルトン（ul li のみ）ではなくリアルタスク（ul li p）が表示されるまで待つ
+    // これにより isPending=false（startTransition 完了）を確認できる
+    await page.locator("ul.divide-y li p").first().waitFor({ state: "visible", timeout: 10_000 })
+
+    await dispatchSwipe(page, "[data-testid='task-list-main']", 80)
+    await expect(filterSelect).toHaveValue("active", { timeout: 5_000 })
+  })
+
+  test("縦スワイプではフィルターが変わらない", async ({ page }) => {
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    const before = await filterSelect.inputValue()
+
+    await dispatchSwipe(page, "[data-testid='task-list-main']", 20, 200)
+    await page.waitForTimeout(400)
+    expect(await filterSelect.inputValue()).toBe(before)
+  })
+
+  test("ページネーションドットが 6 個表示され、クリックでフィルターが変わる", async ({ page }) => {
+    const dots = page.locator('[role="tab"]')
+    await expect(dots).toHaveCount(6)
+
+    const allDot = page.locator('[role="tab"][aria-label="すべて"]')
+    await allDot.click()
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    await expect(filterSelect).toHaveValue("all", { timeout: 5_000 })
+  })
 })
