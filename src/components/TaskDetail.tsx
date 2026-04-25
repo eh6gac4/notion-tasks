@@ -221,6 +221,26 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     }
   }
 
+  async function handleToggleCheckbox(lineIndex: number) {
+    if (!blocks) return
+    const lines = blocks.split("\n")
+    const line = lines[lineIndex]
+    if (/^- \[x\] /i.test(line)) {
+      lines[lineIndex] = "- [ ] " + line.slice(6)
+    } else if (/^- \[ \] /.test(line)) {
+      lines[lineIndex] = "- [x] " + line.slice(6)
+    } else {
+      return
+    }
+    const newBlocks = lines.join("\n")
+    setBlocks(newBlocks)
+    try {
+      await updateTaskBlocksAction(task.id, newBlocks)
+    } catch {
+      setBlocks(blocks)
+    }
+  }
+
   function save(input: Parameters<typeof updateTaskAction>[1]) {
     startTransition(async () => {
       await updateTaskAction(task.id, input)
@@ -446,7 +466,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
               )}
             </div>
           ) : blocks ? (
-            <MarkdownPreview content={blocks} />
+            <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
           ) : (
             <p className="text-xs text-[#553355] italic">本文なし</p>
           )}
@@ -575,7 +595,7 @@ function renderWithLinks(text: string): React.ReactNode {
   return parts.length === 0 ? text : parts
 }
 
-function MarkdownPreview({ content }: { content: string }) {
+function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onToggleCheckbox?: (lineIndex: number) => void }) {
   const lines = content.split("\n")
   let inCode = false
   const codeLines: string[] = []
@@ -619,14 +639,26 @@ function MarkdownPreview({ content }: { content: string }) {
       elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-0.5">{renderWithLinks(line.slice(4))}</p>)
     } else if (/^- \[x\] /i.test(line)) {
       elements.push(
-        <p key={i} className="text-[#996688] text-sm line-through">
-          <span className="mr-1.5 not-italic">☑</span>{renderWithLinks(line.slice(6))}
+        <p key={i} className="text-[#996688] text-sm line-through flex items-baseline gap-1.5">
+          <button
+            type="button"
+            onClick={() => onToggleCheckbox?.(i)}
+            className="not-italic flex-shrink-0 hover:opacity-70 transition-opacity active:scale-90"
+            aria-label="チェックを外す"
+          >☑</button>
+          <span>{renderWithLinks(line.slice(6))}</span>
         </p>
       )
     } else if (/^- \[ \] /.test(line)) {
       elements.push(
-        <p key={i} className="text-[#cc99bb] text-sm">
-          <span className="mr-1.5">☐</span>{renderWithLinks(line.slice(6))}
+        <p key={i} className="text-[#cc99bb] text-sm flex items-baseline gap-1.5">
+          <button
+            type="button"
+            onClick={() => onToggleCheckbox?.(i)}
+            className="flex-shrink-0 hover:opacity-70 transition-opacity active:scale-90"
+            aria-label="チェックする"
+          >☐</button>
+          <span>{renderWithLinks(line.slice(6))}</span>
         </p>
       )
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
