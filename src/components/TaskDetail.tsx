@@ -545,6 +545,25 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   )
 }
 
+function renderWithLinks(text: string): React.ReactNode {
+  const urlRegex = /https?:\/\/[^\s<>"']+/g
+  const parts: React.ReactNode[] = []
+  let last = 0
+  let match: RegExpExecArray | null
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index))
+    parts.push(
+      <a key={match.index} href={match[0]} target="_blank" rel="noopener noreferrer"
+         className="text-[#ff00cc] underline break-all">
+        {match[0]}
+      </a>
+    )
+    last = match.index + match[0].length
+  }
+  if (last < text.length) parts.push(text.slice(last))
+  return parts.length === 0 ? text : parts
+}
+
 function MarkdownPreview({ content }: { content: string }) {
   const lines = content.split("\n")
   let inCode = false
@@ -582,38 +601,38 @@ function MarkdownPreview({ content }: { content: string }) {
     if (line === "---") {
       elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
     } else if (line.startsWith("# ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-0.5">{line.slice(2)}</p>)
+      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-0.5">{renderWithLinks(line.slice(2))}</p>)
     } else if (line.startsWith("## ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-1.5 mb-0.5">{line.slice(3)}</p>)
+      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-1.5 mb-0.5">{renderWithLinks(line.slice(3))}</p>)
     } else if (line.startsWith("### ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-0.5">{line.slice(4)}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-0.5">{renderWithLinks(line.slice(4))}</p>)
     } else if (/^- \[x\] /i.test(line)) {
       elements.push(
         <p key={i} className="text-[#996688] text-sm line-through">
-          <span className="mr-1.5 not-italic">☑</span>{line.slice(6)}
+          <span className="mr-1.5 not-italic">☑</span>{renderWithLinks(line.slice(6))}
         </p>
       )
     } else if (/^- \[ \] /.test(line)) {
       elements.push(
         <p key={i} className="text-[#cc99bb] text-sm">
-          <span className="mr-1.5">☐</span>{line.slice(6)}
+          <span className="mr-1.5">☐</span>{renderWithLinks(line.slice(6))}
         </p>
       )
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">・</span>{line.slice(2)}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">・</span>{renderWithLinks(line.slice(2))}</p>)
     } else if (/^\d+\. /.test(line)) {
       const match = line.match(/^(\d+)\. (.*)/)
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">{match?.[1]}.</span>{match?.[2]}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-1.5 text-[#ff00cc]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
     } else if (line.startsWith("> ")) {
       elements.push(
         <p key={i} className="text-[#996688] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(255,0,204,0.4)" }}>
-          {line.slice(2)}
+          {renderWithLinks(line.slice(2))}
         </p>
       )
     } else if (line === "") {
       elements.push(<div key={i} className="h-2" />)
     } else {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm">{line}</p>)
+      elements.push(<p key={i} className="text-[#cc99bb] text-sm">{renderWithLinks(line)}</p>)
     }
   })
 

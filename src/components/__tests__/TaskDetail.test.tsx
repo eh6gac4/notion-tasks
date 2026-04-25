@@ -242,6 +242,16 @@ describe("TaskDetail 本文編集", () => {
     expect(await screen.findByText("更新後の本文")).toBeInTheDocument()
   })
 
+  it("本文中の URL がクリッカブルリンクになる", async () => {
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("詳細は https://example.com を参照")
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    const link = await screen.findByRole("link", { name: "https://example.com" })
+    expect(link).toHaveAttribute("href", "https://example.com")
+    expect(link).toHaveAttribute("target", "_blank")
+  })
+
   it("本文取得に失敗してもローディングから復帰する", async () => {
     vi.mocked(getTaskBlocksAction).mockRejectedValueOnce(new Error("load failed"))
 
