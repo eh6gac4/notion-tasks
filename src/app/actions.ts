@@ -15,7 +15,7 @@ function isDevMode() {
 async function requireAuth() {
   if (isDevMode()) return
   const session = await auth()
-  if (!session?.user || session.error === "RefreshTokenExpired") redirect("/login")
+  if (!session?.user) redirect("/login")
 }
 
 export async function setFilterAction(filter: string) {
@@ -78,6 +78,6 @@ export async function getTaskCommentsAction(id: string): Promise<TaskComment[]> 
 export async function createTaskCommentAction(id: string, text: string): Promise<TaskComment> {
   if (isDevMode()) return createTaskComment(id, text, "dev-user")
   const session = await auth()
-  if (!session?.user || session.error === "RefreshTokenExpired") redirect("/login")
+  if (!session?.user) redirect("/login")
   return createTaskComment(id, text, session.user.name ?? "Unknown")
 }
