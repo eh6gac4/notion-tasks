@@ -1,6 +1,6 @@
 "use client"
 
-import { useOptimistic, useTransition, useRef } from "react"
+import { useOptimistic, useTransition, useRef, useState } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
@@ -9,6 +9,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
+  const [updateError, setUpdateError] = useState<string | null>(null)
 
   const status = optimisticStatus
   const statusStyle = status ? (STATUS_STYLES[status] ?? STATUS_STYLES["未着手"]) : STATUS_STYLES["未着手"]
@@ -37,9 +38,15 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
             onChange={(e) => {
               const next = e.target.value as TaskStatus
               startTransition(async () => {
+                setUpdateError(null)
                 setOptimisticStatus(next)
                 if (selectRef.current) selectRef.current.value = next
-                await updateTaskStatus(task.id, next)
+                try {
+                  await updateTaskStatus(task.id, next)
+                } catch {
+                  setUpdateError("ステータスの更新に失敗しました")
+                  if (selectRef.current) selectRef.current.value = task.status ?? "未着手"
+                }
               })
             }}
             className="absolute inset-0 w-full h-full cursor-pointer"
@@ -79,8 +86,13 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
             onClick={(e) => {
               e.stopPropagation()
               startTransition(async () => {
+                setUpdateError(null)
                 setOptimisticStatus(s)
-                await updateTaskStatus(task.id, s)
+                try {
+                  await updateTaskStatus(task.id, s)
+                } catch {
+                  setUpdateError("ステータスの更新に失敗しました")
+                }
               })
             }}
             className={`text-xs px-3 py-1 rounded-md border min-h-[36px] active:opacity-70 hover:opacity-80 transition-opacity ${STATUS_STYLES[s]}`}
@@ -90,6 +102,9 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
         ))}
       </div>
 
+      {updateError && (
+        <p className="text-xs text-[#ff3355] mt-2">{updateError}</p>
+      )}
     </div>
   )
 }
