@@ -11,3 +11,4 @@
   docker compose down && source ~/.nvm/nvm.sh && npx playwright test && docker compose up -d --build --force-recreate
   ```
 - After code changes are verified, commit and push to the remote repository.
+- After the PR is merged, switch back to main (`git checkout main && git pull`) and delete the working branch (`git branch -d <branch-name>`).
