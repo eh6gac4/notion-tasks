@@ -553,7 +553,7 @@ function renderWithLinks(text: string): React.ReactNode {
   while ((match = urlRegex.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index))
     const rawUrl = match[0]
-    const url = rawUrl.replace(/[.,;:!?)\]'"]+$/, "")
+    const url = rawUrl.replace(/[.,;:!?)\]'"。、！？」』）〉》]+$/, "")
     parts.push(
       <a key={match.index} href={url} target="_blank" rel="noopener noreferrer"
          className="text-[#ff00cc] underline break-all">

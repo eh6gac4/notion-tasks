@@ -252,6 +252,23 @@ describe("TaskDetail 本文編集", () => {
     expect(link).toHaveAttribute("target", "_blank")
   })
 
+  it.each([
+    ["句点（。）", "詳細は https://example.com。"],
+    ["読点（、）", "詳細は https://example.com、 次の手順へ"],
+    ["全角感嘆符（！）", "見てください https://example.com！"],
+    ["全角疑問符（？）", "これは https://example.com？"],
+    ["全角閉じ括弧（）", "（参考: https://example.com）"],
+    ["全角閉じ鉤括弧（」）", "「参照 https://example.com」"],
+    ["ASCII ピリオド", "詳細は https://example.com. を参照"],
+  ])("URL 末尾の %s が URL に含まれない", async (_, bodyText) => {
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce(bodyText)
+
+    render(<TaskDetail task={makeTask()} onClose={() => {}} />)
+
+    const link = await screen.findByRole("link", { name: "https://example.com" })
+    expect(link).toHaveAttribute("href", "https://example.com")
+  })
+
   it("本文取得に失敗してもローディングから復帰する", async () => {
     vi.mocked(getTaskBlocksAction).mockRejectedValueOnce(new Error("load failed"))
 
