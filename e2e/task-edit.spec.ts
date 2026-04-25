@@ -2,14 +2,17 @@ import { test, expect } from "@playwright/test"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
+// 中央パネル（現在フィルター）のみを対象にするヘルパー
+const CENTER = "[data-testid='panel-center']"
+
 test.describe("タスク詳細編集", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/reset")
-    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
+    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("ボトムシートにタイトル入力欄が表示される", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
+    const firstItem = page.locator(`${CENTER} ul.divide-y li`).first()
     await firstItem.locator("p").first().click()
 
     const titleInput = page.locator('input[aria-label="タイトル"]')
@@ -19,7 +22,7 @@ test.describe("タスク詳細編集", () => {
   })
 
   test("Priority / 期限 / タグの編集UIが表示される", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
+    const firstItem = page.locator(`${CENTER} ul.divide-y li`).first()
     await firstItem.locator("p").first().click()
 
     await expect(page.locator('input[aria-label="タイトル"]')).toBeVisible({ timeout: 3_000 })
@@ -28,7 +31,7 @@ test.describe("タスク詳細編集", () => {
   })
 
   test("SAVE CHANGESボタンが存在しない（即時保存方式）", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
+    const firstItem = page.locator(`${CENTER} ul.divide-y li`).first()
     await firstItem.locator("p").first().click()
 
     await expect(page.locator('input[aria-label="タイトル"]')).toBeVisible({ timeout: 3_000 })

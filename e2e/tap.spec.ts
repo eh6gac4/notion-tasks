@@ -2,14 +2,17 @@ import { test, expect } from "@playwright/test"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
+// 中央パネル（現在フィルター）のみを対象にするヘルパー
+const CENTER = "[data-testid='panel-center']"
+
 test.describe("タップ応答調査", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/reset")
-    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
+    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("タスクタイトルをタップするとボトムシートが開く", async ({ page }) => {
-    const items = page.locator("ul.divide-y li")
+    const items = page.locator(`${CENTER} ul.divide-y li`)
     const count = await items.count()
     console.log(`  → タスク数: ${count}件`)
 
@@ -35,7 +38,7 @@ test.describe("タップ応答調査", () => {
   })
 
   test("ステータスselectとタイトルボタンの重なりチェック", async ({ page }) => {
-    const items = page.locator("ul.divide-y li")
+    const items = page.locator(`${CENTER} ul.divide-y li`)
     const firstItem = items.first()
 
     const titleEl = firstItem.locator("p").first()
@@ -65,7 +68,7 @@ test.describe("タップ応答調査", () => {
     const fabBox = await fab.boundingBox()
     console.log(`  → FAB位置: ${JSON.stringify(fabBox)}`)
 
-    const items = page.locator("ul.divide-y li")
+    const items = page.locator(`${CENTER} ul.divide-y li`)
     const count = await items.count()
     const lastItem = items.nth(count - 1)
     const lastBox = await lastItem.boundingBox()

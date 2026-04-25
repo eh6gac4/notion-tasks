@@ -2,16 +2,19 @@ import { test, expect } from "@playwright/test"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
+// 中央パネル（現在フィルター）のみを対象にするヘルパー
+const CENTER = "[data-testid='panel-center']"
+
 test.describe("タスク一覧", () => {
   test.describe.configure({ mode: "serial" })
   test.beforeEach(async ({ page }) => {
     // dev環境のモックデータをリセット（/reset がresetMockTasks()を呼んで"/"にリダイレクト）
     await page.goto("/reset")
-    await page.locator("ul.divide-y li").first().waitFor({ state: "visible", timeout: 15_000 })
+    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible", timeout: 15_000 })
   })
 
   test("タスクが表示される", async ({ page }) => {
-    const items = page.locator("ul.divide-y li")
+    const items = page.locator(`${CENTER} ul.divide-y li`)
     await expect(items.first()).toBeVisible()
     const count = await items.count()
     expect(count).toBeGreaterThan(0)
@@ -22,19 +25,19 @@ test.describe("タスク一覧", () => {
     const filterSelect = page.locator("[data-testid='filter-select']")
     await expect(filterSelect).toBeVisible()
 
-    const beforeCount = await page.locator("ul.divide-y li").count()
+    const beforeCount = await page.locator(`${CENTER} ul.divide-y li`).count()
     console.log(`  → フィルター変更前: ${beforeCount}件`)
 
     // 「すべて」に変更（ローディングバーが消えるのを待つ）
     await filterSelect.selectOption("all")
-    await page.locator("ul.divide-y li").first().waitFor({ state: "visible" })
-    const allCount = await page.locator("ul.divide-y li").count()
+    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible" })
+    const allCount = await page.locator(`${CENTER} ul.divide-y li`).count()
     console.log(`  → 「すべて」フィルター後: ${allCount}件`)
 
     // 「未着手」に変更
     await filterSelect.selectOption("todo")
-    await page.locator("ul.divide-y li").first().waitFor({ state: "visible" })
-    const todoCount = await page.locator("ul.divide-y li").count()
+    await page.locator(`${CENTER} ul.divide-y li`).first().waitFor({ state: "visible" })
+    const todoCount = await page.locator(`${CENTER} ul.divide-y li`).count()
     console.log(`  → 「未着手」フィルター後: ${todoCount}件 (表示中)`)
 
     // デフォルト(active)と異なるはずか、少なくとも正常動作を確認
@@ -43,7 +46,7 @@ test.describe("タスク一覧", () => {
 
   test("ステータス変更selectが各タスクに存在する", async ({ page }) => {
     // タスクアイテムの中にステータスselectがあることを確認
-    const statusSelects = page.locator("ul.divide-y li select")
+    const statusSelects = page.locator(`${CENTER} ul.divide-y li select`)
     const count = await statusSelects.count()
     expect(count).toBeGreaterThan(0)
     console.log(`  → ステータスselect: ${count}個`)
@@ -56,7 +59,7 @@ test.describe("タスク一覧", () => {
   })
 
   test("ステータスボタンをクリックするとバッジが即時更新される", async ({ page }) => {
-    const firstItem = page.locator("ul.divide-y li").first()
+    const firstItem = page.locator(`${CENTER} ul.divide-y li`).first()
 
     // ボタンラベルは "→ 進行中" のため部分一致で取得
     const nextBtn = firstItem.getByRole("button", { name: /進行中/ })
