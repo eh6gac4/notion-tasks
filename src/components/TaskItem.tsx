@@ -22,11 +22,11 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
       className="px-4 py-4 active:bg-[#160022] transition-colors cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <p className="block w-full text-left mb-2.5 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
+      <p className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
-          <span className={`px-2.5 py-1 rounded-full text-xs ${statusStyle}`}>
+          <span className={`px-3 py-1 rounded-full text-xs ${statusStyle}`}>
             {status ?? "未着手"}
           </span>
           <select
@@ -62,7 +62,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="text-xs text-[#996688] bg-[#160022] border border-[rgba(255,0,204,0.2)] px-2 py-0.5 rounded-full">
+          <span key={tag} className="text-xs text-[#996688] bg-[#160022] border border-[rgba(255,0,204,0.2)] px-2 py-1 rounded-full">
             {tag}
           </span>
         ))}

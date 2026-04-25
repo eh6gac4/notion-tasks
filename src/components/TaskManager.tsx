@@ -161,7 +161,7 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
         }}
       />
 
-      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 pt-2.5 pb-2 flex-shrink-0 flex flex-col gap-1.5">
+      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 pt-3 pb-2 flex-shrink-0 flex flex-col gap-2">
         <div className="flex gap-2">
           <select
             data-testid="filter-select"
@@ -205,7 +205,7 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
         </div>
 
         {/* ページネーションドット */}
-        <div className="flex justify-center items-center gap-1.5 pb-0.5">
+        <div className="flex justify-center items-center gap-2 pb-1">
           {FILTERS.map((f) => {
             const active = f.key === filterKey
             return (
@@ -221,9 +221,9 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
                 }}
                 className="transition-all duration-200"
                 style={{
-                  width: active ? "20px" : "6px",
-                  height: "6px",
-                  borderRadius: "3px",
+                  width: active ? "20px" : "8px",
+                  height: "8px",
+                  borderRadius: "4px",
                   backgroundColor: active ? "#ff00cc" : "rgba(153,102,136,0.4)",
                   boxShadow: active ? "0 0 6px rgba(255,0,204,0.7)" : "none",
                 }}
@@ -263,7 +263,7 @@ export function TaskManager({ tasks, currentFilter, initialTaskId }: { tasks: Ta
             <>
               {groups!.map(({ status, tasks: groupTasks }) => (
                 <section key={status}>
-                  <div className="px-4 py-1.5 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
+                  <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
                     <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
                     <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
                   </div>
