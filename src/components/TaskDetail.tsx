@@ -4,6 +4,7 @@ import { useTransition, useState, useEffect, useRef } from "react"
 import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
+import { MarkdownPreview } from "./MarkdownPreview"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
@@ -516,7 +517,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                       {new Date(c.createdTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <p className="text-sm text-[#cc99bb] whitespace-pre-wrap">{c.text}</p>
+                  <MarkdownPreview content={c.text} />
                 </div>
               ))}
             </div>
@@ -575,123 +576,4 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <div className="flex-1">{children}</div>
     </div>
   )
-}
-
-function renderWithLinks(text: string): React.ReactNode {
-  const urlRegex = /https?:\/\/[^\s<>"']+/g
-  const parts: React.ReactNode[] = []
-  let last = 0
-  let match: RegExpExecArray | null
-  while ((match = urlRegex.exec(text)) !== null) {
-    if (match.index > last) parts.push(text.slice(last, match.index))
-    const rawUrl = match[0]
-    let url = rawUrl.replace(/[.,;:!?)\]'"。、！？」』）〉》]+$/, "")
-    url = url.replace(/[　-〿＀-￯][　-〿぀-ヿ一-鿿豈-﫿＀-￯]*$/, "")
-    url = url.replace(/((?:%[0-9A-Fa-f]{2})+)$/, (encoded) => {
-      try {
-        const decoded = decodeURIComponent(encoded)
-        if (/^[　-〿＀-￯]/.test(decoded)) return ""
-      } catch {}
-      return encoded
-    })
-    parts.push(
-      <a key={match.index} href={url} target="_blank" rel="noopener noreferrer"
-         className="text-[#ff00cc] underline break-all">
-        {url}
-      </a>
-    )
-    if (url.length < rawUrl.length) parts.push(rawUrl.slice(url.length))
-    last = match.index + rawUrl.length
-  }
-  if (last < text.length) parts.push(text.slice(last))
-  return parts.length === 0 ? text : parts
-}
-
-function MarkdownPreview({ content, onToggleCheckbox }: { content: string; onToggleCheckbox?: (lineIndex: number) => void }) {
-  const lines = content.split("\n")
-  let inCode = false
-  const codeLines: string[] = []
-  const elements: React.ReactNode[] = []
-
-  const flushCode = (key: number) => {
-    elements.push(
-      <pre
-        key={key}
-        className="rounded-lg px-3 py-2 text-xs text-[#ffbbee] font-mono overflow-x-auto my-1"
-        style={{ backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,0,204,0.15)" }}
-      >
-        {codeLines.join("\n")}
-      </pre>
-    )
-    codeLines.length = 0
-  }
-
-  lines.forEach((line, i) => {
-    if (line.startsWith("```")) {
-      if (inCode) {
-        flushCode(i)
-        inCode = false
-      } else {
-        inCode = true
-      }
-      return
-    }
-    if (inCode) {
-      codeLines.push(line)
-      return
-    }
-
-    if (line === "---") {
-      elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
-    } else if (line.startsWith("# ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-1">{renderWithLinks(line.slice(2))}</p>)
-    } else if (line.startsWith("## ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-2 mb-1">{renderWithLinks(line.slice(3))}</p>)
-    } else if (line.startsWith("### ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-1">{renderWithLinks(line.slice(4))}</p>)
-    } else if (/^- \[x\] /i.test(line)) {
-      elements.push(
-        <p key={i} className="text-[#996688] text-sm line-through flex items-baseline gap-2">
-          <button
-            type="button"
-            onClick={() => onToggleCheckbox?.(i)}
-            className="not-italic flex-shrink-0 hover:opacity-70 transition-opacity active:scale-90"
-            aria-label="チェックを外す"
-          >☑</button>
-          <span>{renderWithLinks(line.slice(6))}</span>
-        </p>
-      )
-    } else if (/^- \[ \] /.test(line)) {
-      elements.push(
-        <p key={i} className="text-[#cc99bb] text-sm flex items-baseline gap-2">
-          <button
-            type="button"
-            onClick={() => onToggleCheckbox?.(i)}
-            className="flex-shrink-0 hover:opacity-70 transition-opacity active:scale-90"
-            aria-label="チェックする"
-          >☐</button>
-          <span>{renderWithLinks(line.slice(6))}</span>
-        </p>
-      )
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">・</span>{renderWithLinks(line.slice(2))}</p>)
-    } else if (/^\d+\. /.test(line)) {
-      const match = line.match(/^(\d+)\. (.*)/)
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
-    } else if (line.startsWith("> ")) {
-      elements.push(
-        <p key={i} className="text-[#996688] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(255,0,204,0.4)" }}>
-          {renderWithLinks(line.slice(2))}
-        </p>
-      )
-    } else if (line === "") {
-      elements.push(<div key={i} className="h-2" />)
-    } else {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm">{renderWithLinks(line)}</p>)
-    }
-  })
-
-  if (inCode && codeLines.length > 0) flushCode(lines.length)
-
-  return <div className="space-y-1">{elements}</div>
 }
