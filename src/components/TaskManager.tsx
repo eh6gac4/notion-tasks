@@ -271,10 +271,9 @@ export function TaskManager({
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ローディングバー */}
       <div
-        className={`h-0.5 transition-all duration-300 ${isPending ? "opacity-100" : "opacity-0"}`}
+        className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending ? "opacity-100" : "opacity-0"}`}
         style={{
           width: isPending ? "80%" : "0%",
-          backgroundColor: "#ff00cc",
           boxShadow: "0 0 8px #ff00cc",
         }}
       />
@@ -303,10 +302,10 @@ export function TaskManager({
             data-testid="refresh-button"
             disabled={isPending}
             onClick={() => startTransition(async () => { await refreshTasksAction() })}
-            className="flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] disabled:opacity-40 transition-colors"
+            className="flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 disabled:opacity-40 transition-colors"
           >
             <svg
-              className={isPending ? "animate-spin" : ""}
+              className={isPending ? "animate-spin-cyber" : ""}
               xmlns="http://www.w3.org/2000/svg"
               width="18"
               height="18"
@@ -340,13 +339,16 @@ export function TaskManager({
                   setCenterIndex(i)
                   startTransition(async () => { await setFilterAction(f.key) })
                 }}
-                className="transition-all duration-200"
+                className={active ? "animate-dot-pulse" : ""}
                 style={{
+                  transition: active
+                    ? "width 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease"
+                    : "width 250ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms ease, box-shadow 250ms ease",
                   width: active ? "20px" : "8px",
                   height: "8px",
                   borderRadius: "4px",
                   backgroundColor: active ? "#ff00cc" : "rgba(153,102,136,0.4)",
-                  boxShadow: active ? "0 0 6px rgba(255,0,204,0.7)" : "none",
+                  boxShadow: active ? undefined : "none",
                 }}
               />
             )
