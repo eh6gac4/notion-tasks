@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { LoginForm } from "./LoginForm"
 
 type SearchParams = {
   callbackUrl?: string
@@ -35,12 +34,65 @@ export default async function LoginPage({
         >
           ✦ SYSTEM LOGIN
         </h1>
-        <LoginForm
-          callbackUrl={callbackUrl}
-          initialError={error}
-          initialMins={mins}
-          initialRemaining={remaining}
-        />
+
+        <form method="POST" action="/api/login" className="space-y-5">
+          <input type="hidden" name="callbackUrl" value={callbackUrl ?? "/"} />
+          <div>
+            <label htmlFor="username" className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">
+              ユーザー名
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              required
+              autoComplete="username"
+              className="w-full rounded-xl px-4 py-3 text-sm bg-[#0d0014] text-[#ffbbee] placeholder:text-[#553355] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">
+              パスワード
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="w-full rounded-xl px-4 py-3 text-sm bg-[#0d0014] text-[#ffbbee] placeholder:text-[#553355] focus:outline-none"
+              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+            />
+          </div>
+
+          {error === "CredentialsSignin" && (
+            <>
+              <p className="text-xs text-[#ff3355]">認証に失敗しました</p>
+              {remaining && (
+                <p className="text-xs text-[#996688]">あと{remaining}回でロックされます</p>
+              )}
+            </>
+          )}
+          {error === "locked" && (
+            <p className="text-xs text-[#ff3355]">
+              試行回数超過。約{mins ?? 30}分後に再試行してください。
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={error === "locked"}
+            className="w-full rounded-xl py-3 text-sm tracking-widest uppercase disabled:opacity-40 transition-all mt-2"
+            style={{
+              backgroundColor: "#ff00cc",
+              color: "#0d0014",
+              boxShadow: "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+            }}
+          >
+            ACCESS
+          </button>
+        </form>
       </div>
     </div>
   )
