@@ -202,6 +202,7 @@ export function createMockTask(input: CreateTaskInput): Task {
     lastEditedTime: ts,
   }
   store.push(task)
+  if (input.body?.trim()) mockBlockStore.set(task.id, input.body)
   return task
 }
 

@@ -51,6 +51,7 @@ export function TaskCreate() {
   async function handleAction(formData: FormData) {
     const title = (formData.get("title") as string)?.trim()
     if (!title) return
+    const body = (formData.get("body") as string)?.trim() || undefined
 
     startTransition(async () => {
       await createTaskAction({
@@ -59,6 +60,7 @@ export function TaskCreate() {
         priority: (formData.get("priority") as TaskPriority) || undefined,
         due: (formData.get("due") as string) || undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
+        body,
       })
       handleClose()
     })
@@ -111,6 +113,14 @@ export function TaskCreate() {
                 required
                 autoFocus
                 className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc]"
+                style={{ transition: "border-color 0.2s" }}
+              />
+
+              <textarea
+                name="body"
+                placeholder="BODY (optional)"
+                rows={3}
+                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] resize-none"
                 style={{ transition: "border-color 0.2s" }}
               />
 

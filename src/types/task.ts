@@ -42,6 +42,7 @@ export type CreateTaskInput = {
   priority?: TaskPriority
   due?: string | null
   tags?: TaskTag[]
+  body?: string
   source?: string
   sourceUrl?: string
   parentTaskId?: string
