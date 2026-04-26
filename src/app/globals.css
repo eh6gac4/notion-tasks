@@ -62,6 +62,36 @@ body::before {
   }
 }
 
+@keyframes dot-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255,0,204,0.7); }
+  50%       { box-shadow: 0 0 16px #ff00cc, 0 0 32px rgba(255,0,204,0.4); }
+}
+
+@keyframes spin-cyber {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes shimmer-bar {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
+
+@layer utilities {
+  .animate-dot-pulse {
+    animation: dot-pulse 1.8s ease-in-out infinite;
+  }
+  .animate-spin-cyber {
+    animation: spin-cyber 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    filter: drop-shadow(0 0 4px #ff00cc);
+  }
+  .loading-bar-shimmer {
+    background: linear-gradient(90deg, #ff00cc 0%, #ff66ee 40%, #ffffff 50%, #ff66ee 60%, #ff00cc 100%);
+    background-size: 200% 100%;
+    animation: shimmer-bar 1.2s linear infinite;
+  }
+}
+
 /* スクロールバー */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: var(--cyber-bg); }
