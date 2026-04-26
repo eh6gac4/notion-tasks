@@ -326,7 +326,7 @@ export function TaskManager({
         </div>
 
         {/* ページネーションドット */}
-        <div className="flex justify-center items-center gap-2 pb-1">
+        <div className="flex justify-center items-center gap-2">
           {FILTERS.map((f, i) => {
             const active = i === centerIndex
             return (
