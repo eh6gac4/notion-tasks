@@ -110,6 +110,16 @@ export function TaskManager({
   initialTaskId?: string | null
 }) {
   const [isPending, startTransition] = useTransition()
+  const [completingBar, setCompletingBar] = useState(false)
+  const prevIsPendingRef = useRef(isPending)
+  useEffect(() => {
+    if (prevIsPendingRef.current && !isPending) {
+      setCompletingBar(true)
+      const timer = setTimeout(() => setCompletingBar(false), 400)
+      return () => clearTimeout(timer)
+    }
+    prevIsPendingRef.current = isPending
+  }, [isPending])
 
   const initialIndex = Math.max(0, FILTERS.findIndex((f) => f.key === currentFilter))
   const initialKey = FILTERS[initialIndex].key
@@ -271,9 +281,9 @@ export function TaskManager({
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ローディングバー */}
       <div
-        className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending ? "opacity-100" : "opacity-0"}`}
+        className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
         style={{
-          width: isPending ? "80%" : "0%",
+          width: completingBar ? "100%" : isPending ? "80%" : "0%",
           boxShadow: "0 0 8px #ff00cc",
         }}
       />
