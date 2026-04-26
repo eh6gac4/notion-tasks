@@ -15,7 +15,7 @@ export const STATUS_STYLES: Record<TaskStatus, string> = {
 }
 
 export const PRIORITY_STYLES: Record<TaskPriority, { label: string; color: string }> = {
-  high:   { label: "↑ High", color: "text-[#ff00cc] cyber-glow-text-sm" },
-  medium: { label: "→ Med",  color: "text-[#ffaa00]" },
-  low:    { label: "↓ Low",  color: "text-[#00ffcc]" },
+  high:   { label: "🚨 High", color: "text-[#ff00cc] cyber-glow-text-sm" },
+  medium: { label: "⚠️ Med",  color: "text-[#ffaa00]" },
+  low:    { label: "💤 Low",  color: "text-[#00ffcc]" },
 }

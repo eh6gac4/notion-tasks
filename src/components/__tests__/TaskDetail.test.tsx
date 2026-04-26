@@ -76,19 +76,19 @@ describe("TaskDetail レンダリング", () => {
     expect(screen.getAllByText("未着手").length).toBeGreaterThan(0)
   })
 
-  it("priority が high のとき「↑ High」を表示する", () => {
+  it("priority が high のとき「🚨 High」を表示する", () => {
     render(<TaskDetail task={makeTask({ priority: "high" })} onClose={() => {}} />)
-    expect(screen.getByText("↑ High")).toBeInTheDocument()
+    expect(screen.getByText("🚨 High")).toBeInTheDocument()
   })
 
-  it("priority が medium のとき「→ Med」を表示する", () => {
+  it("priority が medium のとき「⚠️ Med」を表示する", () => {
     render(<TaskDetail task={makeTask({ priority: "medium" })} onClose={() => {}} />)
-    expect(screen.getByText("→ Med")).toBeInTheDocument()
+    expect(screen.getByText("⚠️ Med")).toBeInTheDocument()
   })
 
-  it("priority が low のとき「↓ Low」を表示する", () => {
+  it("priority が low のとき「💤 Low」を表示する", () => {
     render(<TaskDetail task={makeTask({ priority: "low" })} onClose={() => {}} />)
-    expect(screen.getByText("↓ Low")).toBeInTheDocument()
+    expect(screen.getByText("💤 Low")).toBeInTheDocument()
   })
 
   it("priority が null のとき priority select が未設定になる", () => {
