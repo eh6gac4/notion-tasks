@@ -153,6 +153,16 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
     properties: properties as Parameters<typeof notion.pages.create>[0]["properties"],
   })
 
+  if (input.body?.trim()) {
+    const blocks = markdownToNotionBlocks(input.body)
+    if (blocks.length > 0) {
+      await notion.blocks.children.append({
+        block_id: page.id,
+        children: blocks as Parameters<typeof notion.blocks.children.append>[0]["children"],
+      })
+    }
+  }
+
   return pageToTask(page as PageObjectResponse)
 }
 
