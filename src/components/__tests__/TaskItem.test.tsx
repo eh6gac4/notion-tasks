@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { TaskItem } from "@/components/TaskItem"
+import { formatDueShort } from "@/lib/due-date"
 import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
@@ -73,10 +74,7 @@ describe("TaskItem レンダリング", () => {
     futureDate.setDate(futureDate.getDate() + 7)
     const due = futureDate.toISOString().split("T")[0]
     render(<TaskItem task={makeTask({ due })} onSelect={vi.fn()} />)
-    // 期限表示あり
-    const d = new Date(due)
-    const formatted = `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`
-    const dueDateEl = screen.getByText(formatted)
+    const dueDateEl = screen.getByText(formatDueShort(due))
     expect(dueDateEl).toBeInTheDocument()
     expect(dueDateEl.textContent).not.toContain("⚠")
   })

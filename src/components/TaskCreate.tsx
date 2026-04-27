@@ -3,7 +3,8 @@
 import { useState, useRef, useTransition } from "react"
 import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
-import { buildDue, snapTimeTo5Min } from "@/lib/due-date"
+import { buildDue } from "@/lib/due-date"
+import { DueDateTimeInput } from "./DueDateTimeInput"
 import type { TaskStatus, TaskPriority, TaskTag } from "@/types/task"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
@@ -155,29 +156,14 @@ export function TaskCreate() {
 
               <div>
                 <label className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">期限</label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => {
-                      const next = e.target.value
-                      setDueDate(next)
-                      if (!next) setDueTime("")
-                    }}
-                    className="rounded-xl px-3 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
-                    style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-                  />
-                  <input
-                    type="time"
-                    value={dueTime}
-                    onChange={(e) => setDueTime(snapTimeTo5Min(e.target.value))}
-                    disabled={!dueDate}
-                    step={300}
-                    aria-label="期限の時刻"
-                    className="rounded-xl px-3 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
-                    style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-                  />
-                </div>
+                <DueDateTimeInput
+                  date={dueDate}
+                  time={dueTime}
+                  onChange={(d, t) => {
+                    setDueDate(d)
+                    setDueTime(t)
+                  }}
+                />
               </div>
 
               <div>

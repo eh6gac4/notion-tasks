@@ -5,7 +5,8 @@ import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/typ
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
-import { parseDue, buildDue, snapTimeTo5Min } from "@/lib/due-date"
+import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
+import { DueDateTimeInput } from "./DueDateTimeInput"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
@@ -268,10 +269,9 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }
 
   function handleDueChange(date: string, time: string) {
-    const nextTime = date ? snapTimeTo5Min(time) : ""
     setEditDate(date)
-    setEditTime(nextTime)
-    save({ due: buildDue(date, nextTime) })
+    setEditTime(time)
+    save({ due: buildDue(date, time) })
   }
 
   function toggleTag(tag: TaskTag) {
@@ -361,25 +361,12 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           </Row>
 
           <Row label="期限">
-            <div className="flex gap-2 items-center">
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => handleDueChange(e.target.value, editTime)}
-                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
-                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-              />
-              <input
-                type="time"
-                value={editTime}
-                onChange={(e) => handleDueChange(editDate, e.target.value)}
-                disabled={!editDate}
-                step={300}
-                aria-label="期限の時刻"
-                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
-                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-              />
-            </div>
+            <DueDateTimeInput
+              date={editDate}
+              time={editTime}
+              onChange={handleDueChange}
+              size="compact"
+            />
           </Row>
 
           <Row label="タグ">
@@ -531,7 +518,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                     <span className="text-xs text-[#ff00cc]">{c.author}</span>
                     <span className="text-xs text-[#553355]">·</span>
                     <span className="text-xs text-[#553355]">
-                      {new Date(c.createdTime).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {formatDueShort(c.createdTime)}
                     </span>
                   </div>
                   <MarkdownPreview content={c.text} />

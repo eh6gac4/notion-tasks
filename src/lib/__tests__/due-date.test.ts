@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseDue, buildDue, formatDueShort, snapTimeTo5Min } from "@/lib/due-date"
+import { parseDue, buildDue, formatDueShort, snapTimeTo5Min, isOverdue } from "@/lib/due-date"
 
 describe("parseDue", () => {
   it("null は { date: '', time: '' }", () => {
@@ -103,5 +103,36 @@ describe("formatDueShort", () => {
 
   it("不正な文字列はそのまま返す", () => {
     expect(formatDueShort("not-a-date-T")).toBe("not-a-date-T")
+  })
+})
+
+describe("isOverdue", () => {
+  it("null は false", () => {
+    expect(isOverdue(null)).toBe(false)
+  })
+
+  it("不正な文字列は false", () => {
+    expect(isOverdue("not-a-date")).toBe(false)
+  })
+
+  it("過去日は true", () => {
+    expect(isOverdue("2020-01-01")).toBe(true)
+  })
+
+  it("未来日は false", () => {
+    const future = new Date()
+    future.setDate(future.getDate() + 7)
+    const yyyy = future.getFullYear()
+    const mm = String(future.getMonth() + 1).padStart(2, "0")
+    const dd = String(future.getDate()).padStart(2, "0")
+    expect(isOverdue(`${yyyy}-${mm}-${dd}`)).toBe(false)
+  })
+
+  it("当日（日付のみ）は false（その日が終わるまで overdue ではない）", () => {
+    const today = new Date()
+    const yyyy = today.getFullYear()
+    const mm = String(today.getMonth() + 1).padStart(2, "0")
+    const dd = String(today.getDate()).padStart(2, "0")
+    expect(isOverdue(`${yyyy}-${mm}-${dd}`)).toBe(false)
   })
 })

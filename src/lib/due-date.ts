@@ -54,3 +54,13 @@ export function formatDueShort(due: string): string {
   if (Number.isNaN(d.getTime())) return due
   return `${pad2(d.getMonth() + 1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`
 }
+
+// 期限切れ判定。null は false。日付のみの値は当日 0:00 と比較されるため、当日中は overdue にならない。
+export function isOverdue(due: string | null): boolean {
+  if (!due) return false
+  const d = new Date(due)
+  if (Number.isNaN(d.getTime())) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return d < today
+}
