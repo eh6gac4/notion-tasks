@@ -119,6 +119,11 @@ describe("TaskDetail レンダリング", () => {
     expect(screen.getByLabelText("期限の時刻")).toBeInTheDocument()
   })
 
+  it("時刻 input は 5 分刻み（step=300 秒）", () => {
+    render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
+    expect(screen.getByLabelText("期限の時刻")).toHaveAttribute("step", "300")
+  })
+
   it("date が null のとき時刻 input は disabled", () => {
     render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
     expect(screen.getByLabelText("期限の時刻")).toBeDisabled()

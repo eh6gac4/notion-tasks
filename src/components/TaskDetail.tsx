@@ -374,6 +374,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 value={editTime}
                 onChange={(e) => handleDueChange(editDate, e.target.value)}
                 disabled={!editDate}
+                step={300}
                 aria-label="期限の時刻"
                 className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
