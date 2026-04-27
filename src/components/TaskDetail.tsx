@@ -349,9 +349,9 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
               style={{ border: "1px solid rgba(255,0,204,0.3)" }}
             >
               <option value="">未設定</option>
-              <option value="high">↑ High</option>
-              <option value="medium">→ Med</option>
-              <option value="low">↓ Low</option>
+              <option value="high">🚨 High</option>
+              <option value="medium">⚠️ Med</option>
+              <option value="low">💤 Low</option>
             </select>
           </Row>
 

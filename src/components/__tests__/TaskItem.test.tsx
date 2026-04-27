@@ -46,26 +46,26 @@ describe("TaskItem レンダリング", () => {
     expect(screen.getAllByText("未着手").length).toBeGreaterThan(0)
   })
 
-  it("priority が high の場合「↑ High」を表示する", () => {
+  it("priority が high の場合「🚨 High」を表示する", () => {
     render(<TaskItem task={makeTask({ priority: "high" })} onSelect={vi.fn()} />)
-    expect(screen.getByText("↑ High")).toBeInTheDocument()
+    expect(screen.getByText("🚨 High")).toBeInTheDocument()
   })
 
-  it("priority が medium の場合「→ Med」を表示する", () => {
+  it("priority が medium の場合「⚠️ Med」を表示する", () => {
     render(<TaskItem task={makeTask({ priority: "medium" })} onSelect={vi.fn()} />)
-    expect(screen.getByText("→ Med")).toBeInTheDocument()
+    expect(screen.getByText("⚠️ Med")).toBeInTheDocument()
   })
 
-  it("priority が low の場合「↓ Low」を表示する", () => {
+  it("priority が low の場合「💤 Low」を表示する", () => {
     render(<TaskItem task={makeTask({ priority: "low" })} onSelect={vi.fn()} />)
-    expect(screen.getByText("↓ Low")).toBeInTheDocument()
+    expect(screen.getByText("💤 Low")).toBeInTheDocument()
   })
 
   it("priority が null の場合は優先度ラベルを表示しない", () => {
     render(<TaskItem task={makeTask({ priority: null })} onSelect={vi.fn()} />)
-    expect(screen.queryByText("↑ High")).not.toBeInTheDocument()
-    expect(screen.queryByText("→ Med")).not.toBeInTheDocument()
-    expect(screen.queryByText("↓ Low")).not.toBeInTheDocument()
+    expect(screen.queryByText("🚨 High")).not.toBeInTheDocument()
+    expect(screen.queryByText("⚠️ Med")).not.toBeInTheDocument()
+    expect(screen.queryByText("💤 Low")).not.toBeInTheDocument()
   })
 
   it("due date が未来の場合は日付のみを表示する（⚠ なし）", () => {
