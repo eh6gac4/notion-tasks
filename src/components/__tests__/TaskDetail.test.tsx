@@ -114,33 +114,40 @@ describe("TaskDetail レンダリング", () => {
     expect(screen.queryByText(/\d{4}年\d+月\d+日/)).not.toBeInTheDocument()
   })
 
-  it("時刻 input が描画される", () => {
+  it("時/分の select が描画される", () => {
     render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
-    expect(screen.getByLabelText("期限の時刻")).toBeInTheDocument()
+    expect(screen.getByLabelText("期限の時")).toBeInTheDocument()
+    expect(screen.getByLabelText("期限の分")).toBeInTheDocument()
   })
 
-  it("時刻 input は 5 分刻み（step=300 秒）", () => {
+  it("分 select は 5 分刻みの 12 オプションのみ", () => {
     render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
-    expect(screen.getByLabelText("期限の時刻")).toHaveAttribute("step", "300")
+    const minuteSelect = screen.getByLabelText("期限の分") as HTMLSelectElement
+    const values = Array.from(minuteSelect.options).map((o) => o.value)
+    expect(values).toEqual(["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"])
   })
 
-  it("date が null のとき時刻 input は disabled", () => {
+  it("date が null のとき時 select は disabled", () => {
     render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
-    expect(screen.getByLabelText("期限の時刻")).toBeDisabled()
+    expect(screen.getByLabelText("期限の時")).toBeDisabled()
+    expect(screen.getByLabelText("期限の分")).toBeDisabled()
   })
 
-  it("date が設定済みのとき時刻 input は活性", () => {
+  it("date が設定済みでも時刻未設定なら 分 select は disabled", () => {
     render(<TaskDetail task={makeTask({ due: "2026-04-30" })} onClose={() => {}} />)
-    expect(screen.getByLabelText("期限の時刻")).not.toBeDisabled()
+    expect(screen.getByLabelText("期限の時")).not.toBeDisabled()
+    expect(screen.getByLabelText("期限の分")).toBeDisabled()
   })
 
-  it("時刻付き due は date と time 両方の input に反映される", () => {
+  it("時刻付き due は時/分 select 両方に反映される", () => {
     render(<TaskDetail task={makeTask({ due: "2026-04-30T18:30:00.000+09:00" })} onClose={() => {}} />)
-    // date input は YYYY-MM-DD を value に持つ（ローカル TZ で再構築される可能性あり）
     const dateInput = document.querySelector("input[type='date']") as HTMLInputElement
     expect(dateInput.value).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-    const timeInput = screen.getByLabelText("期限の時刻") as HTMLInputElement
-    expect(timeInput.value).toMatch(/^\d{2}:\d{2}$/)
+    const hourSelect = screen.getByLabelText("期限の時") as HTMLSelectElement
+    const minuteSelect = screen.getByLabelText("期限の分") as HTMLSelectElement
+    expect(hourSelect.value).toMatch(/^\d{2}$/)
+    expect(minuteSelect.value).toMatch(/^\d{2}$/)
+    // ローカル TZ により ±数時間ずれる可能性があるので具体値ではなく形式のみ検証
   })
 
   it("タグを表示する", () => {
@@ -226,13 +233,12 @@ describe("TaskDetail フィールド変更", () => {
     })
   })
 
-  it("時刻入力で updateTaskAction に時刻入り due が渡る", async () => {
+  it("時 select 変更で updateTaskAction に HH:00 が渡る", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
     render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30" })} onClose={() => {}} />)
-    const timeInput = screen.getByLabelText("期限の時刻")
-    fireEvent.change(timeInput, { target: { value: "18:00" } })
+    fireEvent.change(screen.getByLabelText("期限の時"), { target: { value: "18" } })
 
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith(
@@ -244,23 +250,35 @@ describe("TaskDetail フィールド変更", () => {
     })
   })
 
-  it("5 分刻みでない時刻入力は最寄りの 5 分にスナップして保存される", async () => {
+  it("分 select 変更で updateTaskAction に同じ時+選択分が渡る", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
-    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30" })} onClose={() => {}} />)
-    const timeInput = screen.getByLabelText("期限の時刻") as HTMLInputElement
-    fireEvent.change(timeInput, { target: { value: "18:33" } })
+    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
+    fireEvent.change(screen.getByLabelText("期限の分"), { target: { value: "35" } })
 
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith(
         "t1",
         expect.objectContaining({
-          due: expect.stringMatching(/^2026-04-30T18:35:00\.000[+-]\d{2}:\d{2}$/),
+          due: expect.stringMatching(/T\d{2}:35:00\.000[+-]\d{2}:\d{2}$/),
         }),
       )
     })
-    expect(timeInput.value).toBe("18:35")
+  })
+
+  it("時 select を未設定にすると updateTaskAction の due は date 文字列のみ", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
+    fireEvent.change(screen.getByLabelText("期限の時"), { target: { value: "" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { due: "2026-04-30" })
+    })
+    expect((screen.getByLabelText("期限の分") as HTMLSelectElement).value).toBe("00")
+    expect(screen.getByLabelText("期限の分")).toBeDisabled()
   })
 
   it("日付クリアで時刻もクリアされ updateTaskAction の due は null", async () => {
@@ -274,7 +292,8 @@ describe("TaskDetail フィールド変更", () => {
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith("t1", { due: null })
     })
-    expect((screen.getByLabelText("期限の時刻") as HTMLInputElement).value).toBe("")
+    expect(screen.getByLabelText("期限の時")).toBeDisabled()
+    expect(screen.getByLabelText("期限の分")).toBeDisabled()
   })
 
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {

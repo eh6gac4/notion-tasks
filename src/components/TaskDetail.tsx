@@ -18,7 +18,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
   const initialDue = parseDue(task.due)
   const [editDate, setEditDate] = useState(initialDue.date)
-  const [editTime, setEditTime] = useState(initialDue.time)
+  const [editTime, setEditTime] = useState(snapTimeTo5Min(initialDue.time))
   const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
   const [blocks, setBlocks] = useState<string | null>(null)
@@ -369,16 +369,45 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
               />
-              <input
-                type="time"
-                value={editTime}
-                onChange={(e) => handleDueChange(editDate, e.target.value)}
+              <select
+                value={editTime ? editTime.split(":")[0] : ""}
+                onChange={(e) => {
+                  const h = e.target.value
+                  if (!h) {
+                    handleDueChange(editDate, "")
+                  } else {
+                    const m = editTime ? editTime.split(":")[1] : "00"
+                    handleDueChange(editDate, `${h}:${m}`)
+                  }
+                }}
                 disabled={!editDate}
-                step={300}
-                aria-label="期限の時刻"
+                aria-label="期限の時"
                 className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-              />
+              >
+                <option value="">--</option>
+                {Array.from({ length: 24 }, (_, i) => {
+                  const h = String(i).padStart(2, "0")
+                  return <option key={h} value={h}>{h}</option>
+                })}
+              </select>
+              <span className="text-[#996688] text-sm">:</span>
+              <select
+                value={editTime ? editTime.split(":")[1] : "00"}
+                onChange={(e) => {
+                  const h = editTime ? editTime.split(":")[0] : "00"
+                  handleDueChange(editDate, `${h}:${e.target.value}`)
+                }}
+                disabled={!editTime}
+                aria-label="期限の分"
+                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
+                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+              >
+                {Array.from({ length: 12 }, (_, i) => {
+                  const m = String(i * 5).padStart(2, "0")
+                  return <option key={m} value={m}>{m}</option>
+                })}
+              </select>
             </div>
           </Row>
 
