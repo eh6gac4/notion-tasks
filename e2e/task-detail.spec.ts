@@ -44,7 +44,7 @@ test.describe("タスク詳細ボトムシート", () => {
 
     await expect(page.locator('input[aria-label="タイトル"]')).toBeVisible({ timeout: 3_000 })
     await expect(page.locator('input[type="date"]')).toBeVisible()
-    await expect(page.locator('select[aria-label="期限の時刻"]')).toBeVisible()
+    await expect(page.locator('input[aria-label="期限の時刻"]')).toBeVisible()
     await expect(page.locator('select').first()).toBeVisible()
   })
 
