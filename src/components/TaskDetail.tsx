@@ -348,6 +348,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
         <div className="space-y-4">
           <Row label="Priority">
             <select
+              data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
               className="rounded-xl px-3 py-2 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"

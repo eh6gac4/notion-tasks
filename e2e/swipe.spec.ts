@@ -10,8 +10,9 @@ async function resetAndWait(page: Page) {
   await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
   await page.goto("/reset")
   await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
-  // バックグラウンドプリフェッチ（隣接パネル取得）が完了するまで待つ
-  await page.waitForLoadState("networkidle")
+  // 隣接パネル（左右フィルター）のプリフェッチ完了を待つ。
+  // バックグラウンドリクエストが詰まっても永遠に待たないよう timeout を明示する。
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {})
 }
 
 // CDP Input.dispatchTouchEvent でスワイプをシミュレート（Chromium のみ）

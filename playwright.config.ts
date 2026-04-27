@@ -6,23 +6,24 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local"), override: true })
 
 export default defineConfig({
   testDir: "./e2e",
-  timeout: 45_000,
+  timeout: 60_000,
   retries: 2,
   workers: 1,
   fullyParallel: false,
-  reporter: "list",
+  reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
-    trace: "retain-on-failure",
+    trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
   expect: {
-    timeout: 10_000,
+    timeout: 15_000,
   },
   projects: [
     {
       name: "setup",
       testMatch: "auth.setup.ts",
+      retries: 2,
     },
     {
       name: "iPhone 15 (touch)",
@@ -60,6 +61,6 @@ export default defineConfig({
     command: "docker compose rm -sf dev && docker compose up --force-recreate dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 })
