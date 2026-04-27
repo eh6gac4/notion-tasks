@@ -3,6 +3,7 @@
 import { useState, useRef, useTransition } from "react"
 import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
+import { buildDue, snapTimeTo5Min } from "@/lib/due-date"
 import type { TaskStatus, TaskPriority, TaskTag } from "@/types/task"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
@@ -28,6 +29,8 @@ function SubmitButton() {
 export function TaskCreate() {
   const [open, setOpen] = useState(false)
   const [selectedTags, setSelectedTags] = useState<TaskTag[]>([])
+  const [dueDate, setDueDate] = useState("")
+  const [dueTime, setDueTime] = useState("")
   const [, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -46,6 +49,8 @@ export function TaskCreate() {
     setOpen(false)
     formRef.current?.reset()
     setSelectedTags([])
+    setDueDate("")
+    setDueTime("")
   }
 
   async function handleAction(formData: FormData) {
@@ -58,7 +63,7 @@ export function TaskCreate() {
         title,
         status: (formData.get("status") as TaskStatus) || "未着手",
         priority: (formData.get("priority") as TaskPriority) || undefined,
-        due: (formData.get("due") as string) || undefined,
+        due: buildDue(dueDate, dueTime) ?? undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         body,
       })
@@ -142,20 +147,37 @@ export function TaskCreate() {
                   style={{ border: "1px solid rgba(255,0,204,0.3)" }}
                 >
                   <option value="">Priority</option>
-                  <option value="high">↑ High</option>
-                  <option value="medium">→ Med</option>
-                  <option value="low">↓ Low</option>
+                  <option value="high">🚨 High</option>
+                  <option value="medium">⚠️ Med</option>
+                  <option value="low">💤 Low</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">期限</label>
-                <input
-                  name="due"
-                  type="date"
-                  className="w-full rounded-xl px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
-                  style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-                />
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      setDueDate(next)
+                      if (!next) setDueTime("")
+                    }}
+                    className="rounded-xl px-3 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+                    style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+                  />
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(snapTimeTo5Min(e.target.value))}
+                    disabled={!dueDate}
+                    step={300}
+                    aria-label="期限の時刻"
+                    className="rounded-xl px-3 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
+                    style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+                  />
+                </div>
               </div>
 
               <div>
