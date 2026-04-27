@@ -5,7 +5,7 @@ import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/typ
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
-import { parseDue, buildDue } from "@/lib/due-date"
+import { parseDue, buildDue, snapTimeTo5Min } from "@/lib/due-date"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
@@ -18,7 +18,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
   const initialDue = parseDue(task.due)
   const [editDate, setEditDate] = useState(initialDue.date)
-  const [editTime, setEditTime] = useState(initialDue.time)
+  const [editTime, setEditTime] = useState(snapTimeTo5Min(initialDue.time))
   const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
   const [blocks, setBlocks] = useState<string | null>(null)
@@ -268,7 +268,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }
 
   function handleDueChange(date: string, time: string) {
-    const nextTime = date ? time : ""
+    const nextTime = date ? snapTimeTo5Min(time) : ""
     setEditDate(date)
     setEditTime(nextTime)
     save({ due: buildDue(date, nextTime) })
@@ -374,6 +374,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 value={editTime}
                 onChange={(e) => handleDueChange(editDate, e.target.value)}
                 disabled={!editDate}
+                step={300}
                 aria-label="期限の時刻"
                 className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
