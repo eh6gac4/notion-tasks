@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseDue, buildDue, formatDueShort } from "@/lib/due-date"
+import { parseDue, buildDue, formatDueShort, snapTimeTo5Min } from "@/lib/due-date"
 
 describe("parseDue", () => {
   it("null は { date: '', time: '' }", () => {
@@ -52,6 +52,41 @@ describe("parseDue ↔ buildDue ラウンドトリップ", () => {
     expect(built).not.toBeNull()
     const { date, time } = parseDue(built!)
     expect(buildDue(date, time)).toBe(built)
+  })
+})
+
+describe("snapTimeTo5Min", () => {
+  it("空文字はそのまま", () => {
+    expect(snapTimeTo5Min("")).toBe("")
+  })
+
+  it("既に 5 分刻みならそのまま", () => {
+    expect(snapTimeTo5Min("12:00")).toBe("12:00")
+    expect(snapTimeTo5Min("18:35")).toBe("18:35")
+  })
+
+  it("中間値は最寄りの 5 分に丸める", () => {
+    expect(snapTimeTo5Min("12:32")).toBe("12:30") // 32 → 30
+    expect(snapTimeTo5Min("12:33")).toBe("12:35") // 33 → 35
+    expect(snapTimeTo5Min("18:03")).toBe("18:05")
+    expect(snapTimeTo5Min("18:07")).toBe("18:05")
+    expect(snapTimeTo5Min("18:08")).toBe("18:10")
+  })
+
+  it("23:58 など丸めると 24:00 になるケースは 23:55 に頭打ち", () => {
+    expect(snapTimeTo5Min("23:58")).toBe("23:55")
+    expect(snapTimeTo5Min("23:59")).toBe("23:55")
+  })
+
+  it("0 時台も正しく丸まる", () => {
+    expect(snapTimeTo5Min("00:02")).toBe("00:00")
+    expect(snapTimeTo5Min("00:03")).toBe("00:05")
+  })
+
+  it("不正な入力は空に倒す", () => {
+    expect(snapTimeTo5Min("abc")).toBe("")
+    expect(snapTimeTo5Min("25:00")).toBe("")
+    expect(snapTimeTo5Min("12:99")).toBe("")
   })
 })
 

@@ -31,6 +31,18 @@ export function buildDue(date: string, time: string): string | null {
   return `${date}T${time}:00.000${localOffsetSuffix(local)}`
 }
 
+// "HH:mm" を最寄りの 5 分刻みに丸める（23:55 が上限。23:58 → 23:55）
+export function snapTimeTo5Min(time: string): string {
+  if (!time) return ""
+  const m = /^(\d{1,2}):(\d{2})/.exec(time)
+  if (!m) return ""
+  const hh = Number(m[1])
+  const mm = Number(m[2])
+  if (Number.isNaN(hh) || Number.isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return ""
+  const total = Math.min(23 * 60 + 55, Math.round((hh * 60 + mm) / 5) * 5)
+  return `${pad2(Math.floor(total / 60))}:${pad2(total % 60)}`
+}
+
 export function formatDueShort(due: string): string {
   if (!due.includes("T")) {
     // 日付のみは TZ 解釈なしで素直にパース

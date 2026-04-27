@@ -5,7 +5,7 @@ import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/typ
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
-import { parseDue, buildDue } from "@/lib/due-date"
+import { parseDue, buildDue, snapTimeTo5Min } from "@/lib/due-date"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
@@ -268,7 +268,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   }
 
   function handleDueChange(date: string, time: string) {
-    const nextTime = date ? time : ""
+    const nextTime = date ? snapTimeTo5Min(time) : ""
     setEditDate(date)
     setEditTime(nextTime)
     save({ due: buildDue(date, nextTime) })

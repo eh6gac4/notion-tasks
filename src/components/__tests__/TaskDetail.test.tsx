@@ -244,6 +244,25 @@ describe("TaskDetail フィールド変更", () => {
     })
   })
 
+  it("5 分刻みでない時刻入力は最寄りの 5 分にスナップして保存される", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30" })} onClose={() => {}} />)
+    const timeInput = screen.getByLabelText("期限の時刻") as HTMLInputElement
+    fireEvent.change(timeInput, { target: { value: "18:33" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith(
+        "t1",
+        expect.objectContaining({
+          due: expect.stringMatching(/^2026-04-30T18:35:00\.000[+-]\d{2}:\d{2}$/),
+        }),
+      )
+    })
+    expect(timeInput.value).toBe("18:35")
+  })
+
   it("日付クリアで時刻もクリアされ updateTaskAction の due は null", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
