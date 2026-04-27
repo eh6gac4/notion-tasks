@@ -370,42 +370,19 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
               />
               <select
-                value={editTime ? editTime.split(":")[0] : ""}
-                onChange={(e) => {
-                  const h = e.target.value
-                  if (!h) {
-                    handleDueChange(editDate, "")
-                  } else {
-                    const m = editTime ? editTime.split(":")[1] : "00"
-                    handleDueChange(editDate, `${h}:${m}`)
-                  }
-                }}
+                value={editTime}
+                onChange={(e) => handleDueChange(editDate, e.target.value)}
                 disabled={!editDate}
-                aria-label="期限の時"
+                aria-label="期限の時刻"
                 className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
                 style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
               >
                 <option value="">--</option>
-                {Array.from({ length: 24 }, (_, i) => {
-                  const h = String(i).padStart(2, "0")
-                  return <option key={h} value={h}>{h}</option>
-                })}
-              </select>
-              <span className="text-[#996688] text-sm">:</span>
-              <select
-                value={editTime ? editTime.split(":")[1] : "00"}
-                onChange={(e) => {
-                  const h = editTime ? editTime.split(":")[0] : "00"
-                  handleDueChange(editDate, `${h}:${e.target.value}`)
-                }}
-                disabled={!editTime}
-                aria-label="期限の分"
-                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
-                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-              >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const m = String(i * 5).padStart(2, "0")
-                  return <option key={m} value={m}>{m}</option>
+                {Array.from({ length: 24 * 12 }, (_, i) => {
+                  const h = String(Math.floor(i / 12)).padStart(2, "0")
+                  const m = String((i % 12) * 5).padStart(2, "0")
+                  const v = `${h}:${m}`
+                  return <option key={v} value={v}>{v}</option>
                 })}
               </select>
             </div>
