@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef } from "react"
+import { useState, useTransition, useEffect, useRef, useMemo } from "react"
 import type { Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskDetail } from "./TaskDetail"
@@ -33,16 +33,23 @@ function TaskSkeleton() {
 function TaskListPanel({
   filterKey,
   tasks,
+  searchQuery,
   onSelect,
 }: {
   filterKey: string
   tasks: Task[] | undefined
+  searchQuery: string
   onSelect: (id: string) => void
 }) {
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
-  const filtered = current.statuses
-    ? (tasks ?? []).filter((t) => t.status && current.statuses!.includes(t.status))
-    : (tasks ?? [])
+  const q = searchQuery.trim().toLowerCase()
+
+  const filtered = useMemo(() => {
+    const byStatus = current.statuses
+      ? (tasks ?? []).filter((t) => t.status && current.statuses!.includes(t.status))
+      : (tasks ?? [])
+    return q === "" ? byStatus : byStatus.filter((t) => t.title.toLowerCase().includes(q))
+  }, [tasks, current.statuses, q])
 
   const isGrouped = !current.statuses || current.statuses.length > 1
   const groups = isGrouped ? groupAndSort(filtered) : null
@@ -53,7 +60,7 @@ function TaskListPanel({
   if (filtered.length === 0) {
     return (
       <p className="text-center text-[#553355] text-xs py-20 tracking-widest">
-        — NO TASKS —
+        {q !== "" ? "— NO MATCH —" : "— NO TASKS —"}
       </p>
     )
   }
@@ -125,6 +132,7 @@ export function TaskManager({
   const initialKey = FILTERS[initialIndex].key
   const [centerIndex, setCenterIndex] = useState(initialIndex)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Task cache: filterKey → Task[]
   const [taskCache, setTaskCache] = useState<Map<string, Task[]>>(
@@ -334,6 +342,17 @@ export function TaskManager({
           </button>
         </div>
 
+        <input
+          data-testid="search-input"
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="検索..."
+          aria-label="タスクを検索"
+          className="w-full rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
+          style={{ transition: "border-color 0.2s" }}
+        />
+
         {/* ページネーションドット */}
         <div className="flex justify-center items-center gap-2">
           {FILTERS.map((f, i) => {
@@ -379,21 +398,21 @@ export function TaskManager({
           {/* 左パネル（前フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 中央パネル（現在フィルター） */}
           <div data-testid="panel-center" style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 右パネル（次フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
             </div>
           </div>
         </div>

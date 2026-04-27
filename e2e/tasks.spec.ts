@@ -51,6 +51,33 @@ test.describe("タスク一覧", () => {
     expect(value).toBeTruthy()
   })
 
+  test("検索入力でリストが絞り込まれる", async ({ page }) => {
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    await filterSelect.selectOption("all")
+    await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 10_000 })
+
+    const initial = await page.locator(`${CENTER} ${TASK_ITEM}`).count()
+    expect(initial).toBeGreaterThan(0)
+
+    const firstTitle = await page.locator(`${CENTER} ${TASK_ITEM}`).first().textContent()
+    const needle = (firstTitle ?? "").trim().slice(0, 2)
+    expect(needle.length).toBeGreaterThan(0)
+
+    const search = page.locator("[data-testid='search-input']")
+    await search.fill(needle)
+
+    await expect.poll(
+      async () => page.locator(`${CENTER} ${TASK_ITEM}`).count(),
+      { timeout: 5_000 },
+    ).toBeLessThanOrEqual(initial)
+
+    await search.fill("ZZZ_NO_MATCH_QUERY_ZZZ")
+    await expect(page.locator(`${CENTER}`)).toContainText("— NO MATCH —", { timeout: 5_000 })
+
+    await search.fill("")
+    await expect(page.locator(`${CENTER} ${TASK_ITEM}`)).toHaveCount(initial, { timeout: 5_000 })
+  })
+
   test("ステータスボタンクリックでバッジが楽観的更新される", async ({ page }) => {
     // mock-1 は「未着手」なので「→ 進行中」ボタンが表示される
     const firstItem = page.locator(`${CENTER} ${TASK_ITEM}`).first()
