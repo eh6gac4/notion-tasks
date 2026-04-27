@@ -4,6 +4,7 @@ import { useOptimistic, useTransition, useRef, useState } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, PRIORITY_STYLES } from "@/constants/styles"
+import { formatDueShort } from "@/lib/due-date"
 
 export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
   const [, startTransition] = useTransition()
@@ -64,9 +65,9 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
             {PRIORITY_STYLES[task.priority].label}
           </span>
         )}
-        {due && (
+        {due && task.due && (
           <span className={`text-xs ${isOverdue ? "text-[#ff3355]" : "text-[#996688]"}`}>
-            {isOverdue ? "⚠ " : ""}{String(due.getMonth() + 1).padStart(2, "0")}/{String(due.getDate()).padStart(2, "0")}
+            {isOverdue ? "⚠ " : ""}{formatDueShort(task.due)}
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (

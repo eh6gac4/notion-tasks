@@ -5,6 +5,7 @@ import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/typ
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
+import { parseDue, buildDue } from "@/lib/due-date"
 
 const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
 
@@ -15,7 +16,9 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [editTitle, setEditTitle] = useState(task.title)
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
   const [editPriority, setEditPriority] = useState<TaskPriority | "">(task.priority ?? "")
-  const [editDue, setEditDue] = useState(task.due ?? "")
+  const initialDue = parseDue(task.due)
+  const [editDate, setEditDate] = useState(initialDue.date)
+  const [editTime, setEditTime] = useState(initialDue.time)
   const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
 
   const [blocks, setBlocks] = useState<string | null>(null)
@@ -264,9 +267,11 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     save({ priority: next || undefined })
   }
 
-  function handleDueChange(next: string) {
-    setEditDue(next)
-    save({ due: next || null })
+  function handleDueChange(date: string, time: string) {
+    const nextTime = date ? time : ""
+    setEditDate(date)
+    setEditTime(nextTime)
+    save({ due: buildDue(date, nextTime) })
   }
 
   function toggleTag(tag: TaskTag) {
@@ -356,13 +361,24 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
           </Row>
 
           <Row label="期限">
-            <input
-              type="date"
-              value={editDue}
-              onChange={(e) => handleDueChange(e.target.value)}
-              className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
-              style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
-            />
+            <div className="flex gap-2 items-center">
+              <input
+                type="date"
+                value={editDate}
+                onChange={(e) => handleDueChange(e.target.value, editTime)}
+                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none"
+                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+              />
+              <input
+                type="time"
+                value={editTime}
+                onChange={(e) => handleDueChange(editDate, e.target.value)}
+                disabled={!editDate}
+                aria-label="期限の時刻"
+                className="rounded-xl px-3 py-2 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none disabled:opacity-40"
+                style={{ border: "1px solid rgba(255,0,204,0.3)", colorScheme: "dark" }}
+              />
+            </div>
           </Row>
 
           <Row label="タグ">

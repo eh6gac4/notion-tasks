@@ -114,6 +114,30 @@ describe("TaskDetail レンダリング", () => {
     expect(screen.queryByText(/\d{4}年\d+月\d+日/)).not.toBeInTheDocument()
   })
 
+  it("時刻 input が描画される", () => {
+    render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
+    expect(screen.getByLabelText("期限の時刻")).toBeInTheDocument()
+  })
+
+  it("date が null のとき時刻 input は disabled", () => {
+    render(<TaskDetail task={makeTask({ due: null })} onClose={() => {}} />)
+    expect(screen.getByLabelText("期限の時刻")).toBeDisabled()
+  })
+
+  it("date が設定済みのとき時刻 input は活性", () => {
+    render(<TaskDetail task={makeTask({ due: "2026-04-30" })} onClose={() => {}} />)
+    expect(screen.getByLabelText("期限の時刻")).not.toBeDisabled()
+  })
+
+  it("時刻付き due は date と time 両方の input に反映される", () => {
+    render(<TaskDetail task={makeTask({ due: "2026-04-30T18:30:00.000+09:00" })} onClose={() => {}} />)
+    // date input は YYYY-MM-DD を value に持つ（ローカル TZ で再構築される可能性あり）
+    const dateInput = document.querySelector("input[type='date']") as HTMLInputElement
+    expect(dateInput.value).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    const timeInput = screen.getByLabelText("期限の時刻") as HTMLInputElement
+    expect(timeInput.value).toMatch(/^\d{2}:\d{2}$/)
+  })
+
   it("タグを表示する", () => {
     render(<TaskDetail task={makeTask({ tags: ["Tech", "Blog"] })} onClose={() => {}} />)
     expect(screen.getByText("Tech")).toBeInTheDocument()
@@ -195,6 +219,38 @@ describe("TaskDetail フィールド変更", () => {
     await waitFor(() => {
       expect(mock).toHaveBeenCalledWith("t1", { tags: ["Tech"] })
     })
+  })
+
+  it("時刻入力で updateTaskAction に時刻入り due が渡る", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30" })} onClose={() => {}} />)
+    const timeInput = screen.getByLabelText("期限の時刻")
+    fireEvent.change(timeInput, { target: { value: "18:00" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith(
+        "t1",
+        expect.objectContaining({
+          due: expect.stringMatching(/^2026-04-30T18:00:00\.000[+-]\d{2}:\d{2}$/),
+        }),
+      )
+    })
+  })
+
+  it("日付クリアで時刻もクリアされ updateTaskAction の due は null", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
+    const dateInput = document.querySelector("input[type='date']") as HTMLInputElement
+    fireEvent.change(dateInput, { target: { value: "" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { due: null })
+    })
+    expect((screen.getByLabelText("期限の時刻") as HTMLInputElement).value).toBe("")
   })
 
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {

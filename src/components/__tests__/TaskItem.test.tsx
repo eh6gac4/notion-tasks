@@ -87,6 +87,19 @@ describe("TaskItem レンダリング", () => {
     expect(els.length).toBeGreaterThan(0)
   })
 
+  it("時刻付き due は MM/DD HH:mm を表示する", () => {
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + 7)
+    const yyyy = futureDate.getFullYear()
+    const mm = String(futureDate.getMonth() + 1).padStart(2, "0")
+    const dd = String(futureDate.getDate()).padStart(2, "0")
+    const due = `${yyyy}-${mm}-${dd}T18:30:00.000+09:00`
+    render(<TaskItem task={makeTask({ due })} onSelect={vi.fn()} />)
+    // ローカル TZ により表示時刻はずれうるが MM/DD HH:mm 形式であることだけ確認
+    const formatted = screen.getByText(/^\d{2}\/\d{2} \d{2}:\d{2}$/)
+    expect(formatted).toBeInTheDocument()
+  })
+
   it("due が null の場合は日付表示なし", () => {
     render(<TaskItem task={makeTask({ due: null })} onSelect={vi.fn()} />)
     // 日付っぽいテキストがないことを確認（月/日 形式）
