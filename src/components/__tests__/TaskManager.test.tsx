@@ -226,6 +226,77 @@ describe("スワイプフィルター切り替え", () => {
   })
 })
 
+function getSearchInput() {
+  return document.querySelector("[data-testid='search-input']") as HTMLInputElement
+}
+
+describe("インクリメンタルサーチ", () => {
+  it("タイトル部分一致で絞り込まれる", () => {
+    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
+    const panel = getCenterPanel()
+    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
+    expect(within(panel).queryByText("未着手タスク")).not.toBeInTheDocument()
+    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
+    expect(within(panel).getByText("1 TASKS")).toBeInTheDocument()
+  })
+
+  it("大文字小文字を無視して検索する", () => {
+    const englishTasks = [
+      makeTask({ id: "e1", title: "Refactor API", status: "進行中" }),
+      makeTask({ id: "e2", title: "Write Tests", status: "未着手" }),
+    ]
+    render(<TaskManager tasks={englishTasks} currentFilter="all" />)
+    fireEvent.change(getSearchInput(), { target: { value: "refactor" } })
+    const panel = getCenterPanel()
+    expect(within(panel).getByText("Refactor API")).toBeInTheDocument()
+    expect(within(panel).queryByText("Write Tests")).not.toBeInTheDocument()
+  })
+
+  it("空入力で全件に戻る", () => {
+    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    const input = getSearchInput()
+    fireEvent.change(input, { target: { value: "進行中" } })
+    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
+    fireEvent.change(input, { target: { value: "" } })
+    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
+  })
+
+  it("マッチが無いとき NO MATCH を表示する", () => {
+    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    fireEvent.change(getSearchInput(), { target: { value: "存在しない文字列" } })
+    const panel = getCenterPanel()
+    expect(within(panel).getByText("— NO MATCH —")).toBeInTheDocument()
+    expect(within(panel).queryByText("— NO TASKS —")).not.toBeInTheDocument()
+  })
+
+  it("status フィルターと AND で組み合わさる", () => {
+    render(<TaskManager tasks={tasks} currentFilter="todo" />)
+    fireEvent.change(getSearchInput(), { target: { value: "タスク" } })
+    const panel = getCenterPanel()
+    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
+    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
+  })
+
+  it("swipe してフィルターが変わってもクエリは保持される", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] })
+    try {
+      render(<TaskManager tasks={tasks} currentFilter="all" />)
+      fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
+      expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
+
+      // 右スワイプ: all(末尾) → paused(一時中断)。"進行中" は一時中断タスクにマッチせず NO MATCH。
+      act(() => { swipe(getMain(), 80) })
+      await act(async () => { vi.runAllTimers() })
+
+      expect(getSearchInput().value).toBe("進行中")
+      expect(within(getCenterPanel()).getByText("— NO MATCH —")).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 describe("ページネーションドット", () => {
   it("FILTERS の数だけドットが表示される", () => {
     render(<TaskManager tasks={tasks} currentFilter="active" />)
