@@ -63,7 +63,7 @@ const INITIAL_TASKS: Task[] = [
     title: "【DEV】家計簿の月次集計",
     status: "進行中",
     priority: "high",
-    due: "2026-04-30",
+    due: "2026-04-30T18:00:00.000+09:00",
     tags: ["Finance"],
     assignees: [],
     source: null,
