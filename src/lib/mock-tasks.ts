@@ -230,6 +230,10 @@ export function addMockTaskComment(id: string, text: string): TaskComment {
   return comment
 }
 
+export function getMockTagOptions(): string[] {
+  return ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
+}
+
 export function updateMockTask(id: string, input: UpdateTaskInput): Task | null {
   const idx = store.findIndex((t) => t.id === id)
   if (idx === -1) return null

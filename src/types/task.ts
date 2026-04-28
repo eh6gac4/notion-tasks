@@ -9,14 +9,6 @@ export type TaskStatus =
 
 export type TaskPriority = "high" | "medium" | "low"
 
-export type TaskTag =
-  | "Network"
-  | "Blog"
-  | "Operation"
-  | "Finance"
-  | "Tech"
-  | "買い物🛍️"
-
 export type Task = {
   id: string
   url: string
@@ -24,7 +16,7 @@ export type Task = {
   status: TaskStatus | null
   priority: TaskPriority | null
   due: string | null
-  tags: TaskTag[]
+  tags: string[]
   assignees: string[]
   source: string | null
   sourceUrl: string | null
@@ -41,7 +33,7 @@ export type CreateTaskInput = {
   status?: TaskStatus
   priority?: TaskPriority
   due?: string | null
-  tags?: TaskTag[]
+  tags?: string[]
   body?: string
   source?: string
   sourceUrl?: string

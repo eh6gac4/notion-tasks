@@ -1,10 +1,10 @@
 import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse, CommentObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { Task, TaskComment, TaskPriority, TaskStatus, TaskTag, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { Task, TaskComment, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
-import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment } from "@/lib/mock-tasks"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions } from "@/lib/mock-tasks"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -43,9 +43,9 @@ function extractDueDate(props: PageObjectResponse["properties"]): string | null 
   return p?.date?.start ?? null
 }
 
-function extractTags(props: PageObjectResponse["properties"]): TaskTag[] {
+function extractTags(props: PageObjectResponse["properties"]): string[] {
   const p = props[NOTION_PROPS.TAG] as { type: "multi_select"; multi_select: Array<{ name: string }> }
-  return (p?.multi_select?.map((t) => t.name) ?? []) as TaskTag[]
+  return p?.multi_select?.map((t) => t.name) ?? []
 }
 
 function extractAssignees(props: PageObjectResponse["properties"]): string[] {
@@ -121,6 +121,20 @@ export function getTasks(options?: {
     ["tasks", statuses.join(",")],
     { tags: ["tasks"] }
   )()
+}
+
+export async function getTagOptions(): Promise<string[]> {
+  if (isDevMode()) return getMockTagOptions()
+  try {
+    const ds = await notion.dataSources.retrieve({ data_source_id: DATA_SOURCE_ID })
+    const tagProp = (ds as { properties: Record<string, unknown> }).properties?.[NOTION_PROPS.TAG] as
+      | { type: "multi_select"; multi_select: { options: Array<{ name: string }> } }
+      | undefined
+    return tagProp?.multi_select?.options?.map((o) => o.name) ?? []
+  } catch (e) {
+    console.error("[getTagOptions] Notion error:", e)
+    return []
+  }
 }
 
 export async function getTask(id: string): Promise<Task | null> {

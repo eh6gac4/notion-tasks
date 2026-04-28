@@ -5,9 +5,7 @@ import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
 import { buildDue } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
-import type { TaskStatus, TaskPriority, TaskTag } from "@/types/task"
-
-const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
+import type { TaskStatus, TaskPriority } from "@/types/task"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -27,15 +25,15 @@ function SubmitButton() {
   )
 }
 
-export function TaskCreate() {
+export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
   const [open, setOpen] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<TaskTag[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [dueDate, setDueDate] = useState("")
   const [dueTime, setDueTime] = useState("")
   const [, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
 
-  function toggleTag(tag: TaskTag) {
+  function toggleTag(tag: string) {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     )
@@ -169,7 +167,7 @@ export function TaskCreate() {
               <div>
                 <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">タグ</p>
                 <div className="flex flex-wrap gap-2">
-                  {TAG_OPTIONS.map((tag) => (
+                  {tagOptions.map((tag) => (
                     <button
                       key={tag}
                       type="button"
