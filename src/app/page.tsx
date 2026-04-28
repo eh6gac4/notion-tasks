@@ -3,7 +3,7 @@ import { auth, signOut } from "@/auth"
 import { getTasks, getTagOptions } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
-import { getQueryStatuses } from "@/constants/filters"
+import { getQueryStatuses, parseAdvancedFilter } from "@/constants/filters"
 
 export default async function Page({
   searchParams,
@@ -12,6 +12,13 @@ export default async function Page({
 }) {
   const cookieStore = await cookies()
   const filter = cookieStore.get("filter")?.value ?? "active"
+  const advancedRaw = cookieStore.get("filter_advanced")?.value
+  let advancedFilter
+  try {
+    advancedFilter = parseAdvancedFilter(advancedRaw ? JSON.parse(advancedRaw) : null)
+  } catch {
+    advancedFilter = parseAdvancedFilter(null)
+  }
   const { task: taskParam } = await searchParams
   const initialTaskId = typeof taskParam === "string" ? taskParam : null
 
@@ -43,7 +50,7 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialTaskId={initialTaskId} />
+      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialAdvancedFilter={advancedFilter} initialTaskId={initialTaskId} />
     </div>
   )
 }

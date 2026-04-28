@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useTransition, useEffect, useRef, useMemo } from "react"
-import type { Task } from "@/types/task"
+import type { AdvancedFilter, Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
-import { setFilterAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
-import { FILTERS } from "@/constants/filters"
+import { TaskFilterSheet } from "./TaskFilterSheet"
+import { setFilterAction, setAdvancedFilterAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
+import { FILTERS, applyAdvancedFilter, isAdvancedFilterActive } from "@/constants/filters"
 import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
 
 // ─── TaskListPanel ─────────────────────────────────────────────────────────────
@@ -34,11 +35,13 @@ function TaskListPanel({
   filterKey,
   tasks,
   searchQuery,
+  advancedFilter,
   onSelect,
 }: {
   filterKey: string
   tasks: Task[] | undefined
   searchQuery: string
+  advancedFilter: AdvancedFilter
   onSelect: (id: string) => void
 }) {
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
@@ -48,8 +51,9 @@ function TaskListPanel({
     const byStatus = current.statuses
       ? (tasks ?? []).filter((t) => t.status && current.statuses!.includes(t.status))
       : (tasks ?? [])
-    return q === "" ? byStatus : byStatus.filter((t) => t.title.toLowerCase().includes(q))
-  }, [tasks, current.statuses, q])
+    const byAdvanced = applyAdvancedFilter(byStatus, advancedFilter)
+    return q === "" ? byAdvanced : byAdvanced.filter((t) => t.title.toLowerCase().includes(q))
+  }, [tasks, current.statuses, q, advancedFilter])
 
   const isGrouped = !current.statuses || current.statuses.length > 1
   const groups = isGrouped ? groupAndSort(filtered) : null
@@ -111,13 +115,18 @@ export function TaskManager({
   tasks,
   tagOptions,
   currentFilter,
+  initialAdvancedFilter,
   initialTaskId,
 }: {
   tasks: Task[]
   tagOptions: string[]
   currentFilter: string
+  initialAdvancedFilter: AdvancedFilter
   initialTaskId?: string | null
 }) {
+  const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const advancedActive = isAdvancedFilterActive(advancedFilter)
   const [isPending, startTransition] = useTransition()
   const [completingBar, setCompletingBar] = useState(false)
   const prevIsPendingRef = useRef(isPending)
@@ -344,16 +353,45 @@ export function TaskManager({
           </button>
         </div>
 
-        <input
-          data-testid="search-input"
-          type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="検索..."
-          aria-label="タスクを検索"
-          className="w-full rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
-          style={{ transition: "border-color 0.2s" }}
-        />
+        <div className="flex gap-2">
+          <input
+            data-testid="search-input"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="検索..."
+            aria-label="タスクを検索"
+            className="flex-1 rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
+            style={{ transition: "border-color 0.2s" }}
+          />
+          <button
+            data-testid="filter-button"
+            aria-label="フィルタを開く"
+            onClick={() => setFilterSheetOpen(true)}
+            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            {advancedActive && (
+              <span
+                data-testid="filter-active-dot"
+                className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: "#ff00cc", boxShadow: "0 0 6px rgba(255,0,204,0.7)" }}
+              />
+            )}
+          </button>
+        </div>
 
         {/* ページネーションドット */}
         <div className="flex justify-center items-center gap-2">
@@ -400,21 +438,21 @@ export function TaskManager({
           {/* 左パネル（前フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 中央パネル（現在フィルター） */}
           <div data-testid="panel-center" style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 右パネル（次フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
             </div>
           </div>
         </div>
@@ -424,6 +462,16 @@ export function TaskManager({
       {selectedTask && (
         <TaskDetail task={selectedTask} tagOptions={tagOptions} onClose={() => setSelectedTaskId(null)} />
       )}
+      <TaskFilterSheet
+        open={filterSheetOpen}
+        filter={advancedFilter}
+        tagOptions={tagOptions}
+        onApply={(next) => {
+          setAdvancedFilter(next)
+          startTransition(async () => { await setAdvancedFilterAction(next) })
+        }}
+        onClose={() => setFilterSheetOpen(false)}
+      />
     </div>
   )
 }
