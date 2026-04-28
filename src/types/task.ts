@@ -48,3 +48,11 @@ export type TaskComment = {
   author: string
   createdTime: string
 }
+
+export type DueDateMode = "any" | "with" | "overdue" | "without"
+
+export type AdvancedFilter = {
+  tags: string[]
+  dueDate: DueDateMode
+  priorities: TaskPriority[]
+}
