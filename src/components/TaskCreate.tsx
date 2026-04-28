@@ -175,7 +175,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                       className="px-3 py-2 rounded-full text-xs transition-all"
                       style={
                         selectedTags.includes(tag)
-                          ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
+                          ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
                           : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
                       }
                     >

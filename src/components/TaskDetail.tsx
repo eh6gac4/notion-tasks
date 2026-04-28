@@ -9,7 +9,7 @@ import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-da
 import { DueDateTimeInput } from "./DueDateTimeInput"
 
 export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptions: string[]; onClose: () => void }) {
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
 
   const [editTitle, setEditTitle] = useState(task.title)
@@ -298,8 +298,6 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           backgroundColor: "#160022",
           borderTop: "1px solid rgba(255,0,204,0.5)",
           boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
-          opacity: isPending ? 0.85 : 1,
-          transition: "opacity 0.15s",
         }}
       >
         {/* Handle */}
@@ -378,7 +376,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   className="px-3 py-2 rounded-full text-xs transition-all"
                   style={
                     editTags.includes(tag)
-                      ? { backgroundColor: "#ff00cc", color: "#0d0014", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
+                      ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
                       : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
                   }
                 >
