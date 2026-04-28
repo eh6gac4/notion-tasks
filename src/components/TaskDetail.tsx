@@ -1,16 +1,14 @@
 "use client"
 
 import { useTransition, useState, useEffect, useRef } from "react"
-import type { Task, TaskComment, TaskStatus, TaskPriority, TaskTag } from "@/types/task"
+import type { Task, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
 
-const TAG_OPTIONS: TaskTag[] = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
-
-export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
+export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptions: string[]; onClose: () => void }) {
   const [isPending, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
 
@@ -20,7 +18,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const initialDue = parseDue(task.due)
   const [editDate, setEditDate] = useState(initialDue.date)
   const [editTime, setEditTime] = useState(snapTimeTo5Min(initialDue.time))
-  const [editTags, setEditTags] = useState<TaskTag[]>(task.tags)
+  const [editTags, setEditTags] = useState<string[]>(task.tags)
 
   const [blocks, setBlocks] = useState<string | null>(null)
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true)
@@ -274,7 +272,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
     save({ due: buildDue(date, time) })
   }
 
-  function toggleTag(tag: TaskTag) {
+  function toggleTag(tag: string) {
     const next = editTags.includes(tag)
       ? editTags.filter((t) => t !== tag)
       : [...editTags, tag]
@@ -372,7 +370,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
 
           <Row label="タグ">
             <div className="flex flex-wrap gap-2">
-              {TAG_OPTIONS.map((tag) => (
+              {tagOptions.map((tag) => (
                 <button
                   key={tag}
                   type="button"

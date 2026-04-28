@@ -81,7 +81,7 @@ afterEach(() => {
 
 describe("TaskManager フィルター", () => {
   it("active フィルターは進行中・未着手のみを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     const panel = getCenterPanel()
     expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
     expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
@@ -91,40 +91,40 @@ describe("TaskManager フィルター", () => {
   })
 
   it("todo フィルターは未着手のみを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="todo" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="todo" />)
     const panel = getCenterPanel()
     expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
     expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
   })
 
   it("doing フィルターは進行中のみを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="doing" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="doing" />)
     const panel = getCenterPanel()
     expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
     expect(within(panel).queryByText("未着手タスク")).not.toBeInTheDocument()
   })
 
   it("review フィルターは確認中のみを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="review" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="review" />)
     const panel = getCenterPanel()
     expect(within(panel).getByText("確認中タスク")).toBeInTheDocument()
     expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
   })
 
   it("paused フィルターは一時中断のみを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="paused" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="paused" />)
     const panel = getCenterPanel()
     expect(within(panel).getByText("一時中断タスク")).toBeInTheDocument()
     expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
   })
 
   it("all フィルターはすべてのタスクを表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
   })
 
   it("不明なフィルターキーは active にフォールバックする", () => {
-    render(<TaskManager tasks={tasks} currentFilter="unknown-key" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="unknown-key" />)
     const panel = getCenterPanel()
     // active = 進行中・未着手
     expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
@@ -133,19 +133,19 @@ describe("TaskManager フィルター", () => {
   })
 
   it("タスク数を表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     expect(within(getCenterPanel()).getByText("5 TASKS")).toBeInTheDocument()
   })
 
   it("フィルターに一致するタスクがない場合「タスクがありません」を表示する", () => {
     const noTasks = [makeTask({ status: "完了" })]
-    render(<TaskManager tasks={noTasks} currentFilter="todo" />)
+    render(<TaskManager tagOptions={[]} tasks={noTasks} currentFilter="todo" />)
     expect(within(getCenterPanel()).getByText("— NO TASKS —")).toBeInTheDocument()
   })
 
   it("status が null のタスクは any ステータスフィルターにマッチしない", () => {
     const nullStatusTasks = [makeTask({ id: "n1", title: "ステータス不明", status: null })]
-    render(<TaskManager tasks={nullStatusTasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={nullStatusTasks} currentFilter="active" />)
     expect(within(getCenterPanel()).queryByText("ステータス不明")).not.toBeInTheDocument()
   })
 })
@@ -172,7 +172,7 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("左スワイプ 80px で active(0番) → todo(1番) に変わる", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     act(() => { swipe(getMain(), -80) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
@@ -181,7 +181,7 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("右スワイプ 80px で todo(1番) → active(0番) に戻る", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="todo" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="todo" />)
     act(() => { swipe(getMain(), 80) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
@@ -190,7 +190,7 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("左スワイプ @ all(末尾) → active(先頭) に循環する", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     act(() => { swipe(getMain(), -80) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
@@ -200,14 +200,14 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("右スワイプ @ active(先頭) → all(末尾) に循環する", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     act(() => { swipe(getMain(), 80) })
     await act(async () => { vi.runAllTimers() })
     expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
   })
 
   it("50px スワイプ（閾値未満）ではフィルターが変わらない", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     act(() => { swipe(getMain(), -50) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
@@ -217,7 +217,7 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("縦スワイプ (dx=30, dy=200) ではフィルターが変わらない", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     act(() => { swipe(getMain(), 30, 200) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
@@ -232,7 +232,7 @@ function getSearchInput() {
 
 describe("インクリメンタルサーチ", () => {
   it("タイトル部分一致で絞り込まれる", () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
     const panel = getCenterPanel()
     expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
@@ -246,7 +246,7 @@ describe("インクリメンタルサーチ", () => {
       makeTask({ id: "e1", title: "Refactor API", status: "進行中" }),
       makeTask({ id: "e2", title: "Write Tests", status: "未着手" }),
     ]
-    render(<TaskManager tasks={englishTasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={englishTasks} currentFilter="all" />)
     fireEvent.change(getSearchInput(), { target: { value: "refactor" } })
     const panel = getCenterPanel()
     expect(within(panel).getByText("Refactor API")).toBeInTheDocument()
@@ -254,7 +254,7 @@ describe("インクリメンタルサーチ", () => {
   })
 
   it("空入力で全件に戻る", () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     const input = getSearchInput()
     fireEvent.change(input, { target: { value: "進行中" } })
     expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
@@ -263,7 +263,7 @@ describe("インクリメンタルサーチ", () => {
   })
 
   it("マッチが無いとき NO MATCH を表示する", () => {
-    render(<TaskManager tasks={tasks} currentFilter="all" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
     fireEvent.change(getSearchInput(), { target: { value: "存在しない文字列" } })
     const panel = getCenterPanel()
     expect(within(panel).getByText("— NO MATCH —")).toBeInTheDocument()
@@ -271,7 +271,7 @@ describe("インクリメンタルサーチ", () => {
   })
 
   it("status フィルターと AND で組み合わさる", () => {
-    render(<TaskManager tasks={tasks} currentFilter="todo" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="todo" />)
     fireEvent.change(getSearchInput(), { target: { value: "タスク" } })
     const panel = getCenterPanel()
     expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
@@ -281,7 +281,7 @@ describe("インクリメンタルサーチ", () => {
   it("swipe してフィルターが変わってもクエリは保持される", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout"] })
     try {
-      render(<TaskManager tasks={tasks} currentFilter="all" />)
+      render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="all" />)
       fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
       expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
 
@@ -299,12 +299,12 @@ describe("インクリメンタルサーチ", () => {
 
 describe("ページネーションドット", () => {
   it("FILTERS の数だけドットが表示される", () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     expect(screen.getAllByRole("tab")).toHaveLength(FILTERS.length)
   })
 
   it("現在フィルターのドットが aria-selected=true、他は false", () => {
-    render(<TaskManager tasks={tasks} currentFilter="review" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="review" />)
     const dots = screen.getAllByRole("tab")
     const activeIdx = FILTERS.findIndex((f) => f.key === "review")
     dots.forEach((dot, i) => {
@@ -313,7 +313,7 @@ describe("ページネーションドット", () => {
   })
 
   it("ドットをクリックするとフィルターが変わる", async () => {
-    render(<TaskManager tasks={tasks} currentFilter="active" />)
+    render(<TaskManager tagOptions={[]} tasks={tasks} currentFilter="active" />)
     const allDot = screen.getByRole("tab", { name: "すべて" })
     await act(async () => { fireEvent.click(allDot) })
     await waitFor(() => {

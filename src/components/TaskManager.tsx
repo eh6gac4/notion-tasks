@@ -109,10 +109,12 @@ function getPanelKeys(idx: number) {
 
 export function TaskManager({
   tasks,
+  tagOptions,
   currentFilter,
   initialTaskId,
 }: {
   tasks: Task[]
+  tagOptions: string[]
   currentFilter: string
   initialTaskId?: string | null
 }) {
@@ -418,9 +420,9 @@ export function TaskManager({
         </div>
       </main>
 
-      <TaskCreate />
+      <TaskCreate tagOptions={tagOptions} />
       {selectedTask && (
-        <TaskDetail task={selectedTask} onClose={() => setSelectedTaskId(null)} />
+        <TaskDetail task={selectedTask} tagOptions={tagOptions} onClose={() => setSelectedTaskId(null)} />
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { auth, signOut } from "@/auth"
-import { getTasks } from "@/lib/notion"
+import { getTasks, getTagOptions } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
 import { getQueryStatuses } from "@/constants/filters"
@@ -15,9 +15,10 @@ export default async function Page({
   const { task: taskParam } = await searchParams
   const initialTaskId = typeof taskParam === "string" ? taskParam : null
 
-  const [session, tasks] = await Promise.all([
+  const [session, tasks, tagOptions] = await Promise.all([
     auth(),
     getTasks({ statuses: getQueryStatuses(filter) }),
+    getTagOptions(),
   ])
 
   return (
@@ -42,7 +43,7 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} currentFilter={filter} initialTaskId={initialTaskId} />
+      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialTaskId={initialTaskId} />
     </div>
   )
 }
