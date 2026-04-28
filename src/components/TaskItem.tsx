@@ -72,6 +72,11 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
             {tag}
           </span>
         ))}
+        {task.tags.length > 2 && (
+          <span className="text-xs text-[#553355] bg-[#160022] border border-[rgba(255,0,204,0.15)] px-2 py-1 rounded-full">
+            +{task.tags.length - 2}
+          </span>
+        )}
         {task.childTaskIds.length > 0 && (
           <span className="text-xs text-[#553355]">子{task.childTaskIds.length}件</span>
         )}

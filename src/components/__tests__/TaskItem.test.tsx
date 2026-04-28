@@ -104,13 +104,22 @@ describe("TaskItem レンダリング", () => {
     expect(screen.queryByText(/\d+月\d+日/)).not.toBeInTheDocument()
   })
 
-  it("タグを最大2件まで表示する", () => {
+  it("タグを最大2件まで表示し、3件目以降は +N バッジで示す", () => {
     render(
-      <TaskItem task={makeTask({ tags: ["Tech", "Blog", "Finance"] })} onSelect={vi.fn()} />
+      <TaskItem task={makeTask({ tags: ["Tech", "Blog", "Finance", "Network"] })} onSelect={vi.fn()} />
     )
     expect(screen.getByText("Tech")).toBeInTheDocument()
     expect(screen.getByText("Blog")).toBeInTheDocument()
     expect(screen.queryByText("Finance")).not.toBeInTheDocument()
+    expect(screen.queryByText("Network")).not.toBeInTheDocument()
+    expect(screen.getByText("+2")).toBeInTheDocument()
+  })
+
+  it("タグが 2 件以下のときは +N バッジを表示しない", () => {
+    render(
+      <TaskItem task={makeTask({ tags: ["Tech", "Blog"] })} onSelect={vi.fn()} />
+    )
+    expect(screen.queryByText(/^\+\d+$/)).not.toBeInTheDocument()
   })
 
   it("子タスク数を表示する", () => {
