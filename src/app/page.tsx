@@ -4,6 +4,7 @@ import { getTasks, getTagOptions } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
 import { getQueryStatuses, parseAdvancedFilter } from "@/constants/filters"
+import { parseSortConfig } from "@/lib/task-sort"
 
 export default async function Page({
   searchParams,
@@ -18,6 +19,13 @@ export default async function Page({
     advancedFilter = parseAdvancedFilter(advancedRaw ? JSON.parse(advancedRaw) : null)
   } catch {
     advancedFilter = parseAdvancedFilter(null)
+  }
+  const sortRaw = cookieStore.get("sort")?.value
+  let initialSort
+  try {
+    initialSort = parseSortConfig(sortRaw ? JSON.parse(sortRaw) : null)
+  } catch {
+    initialSort = parseSortConfig(null)
   }
   const { task: taskParam } = await searchParams
   const initialTaskId = typeof taskParam === "string" ? taskParam : null
@@ -50,7 +58,7 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialAdvancedFilter={advancedFilter} initialTaskId={initialTaskId} />
+      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
     </div>
   )
 }

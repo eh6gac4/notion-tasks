@@ -7,8 +7,11 @@ const CENTER = "[data-testid='panel-center']"
 const TASK_ITEM = "[data-testid='task-item']"
 
 async function resetAndWait(page: Page) {
-  // フィルタークッキーを active にリセットしてから /reset へ遷移
-  await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
+  // フィルタ／ソート Cookie をデフォルトにリセットしてから /reset へ遷移
+  await page.context().addCookies([
+    { name: "filter", value: "active", domain: "localhost", path: "/" },
+    { name: "sort",   value: JSON.stringify({ key: "default", direction: "asc" }), domain: "localhost", path: "/" },
+  ])
   await page.goto("/reset")
   await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
 }
@@ -76,6 +79,38 @@ test.describe("タスク一覧", () => {
 
     await search.fill("")
     await expect(page.locator(`${CENTER} ${TASK_ITEM}`)).toHaveCount(initial, { timeout: 5_000 })
+  })
+
+  test("ソートシートで期限・降順を適用するとリストが並び替えられる", async ({ page }) => {
+    const filterSelect = page.locator("[data-testid='filter-select']")
+    await filterSelect.selectOption("all")
+    await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 10_000 })
+
+    // ソートボタンがビューポート内に収まっていること（スマホで見切れ回帰の検出）
+    const sortBtnBox = await page.locator("[data-testid='sort-button']").boundingBox()
+    const viewport = page.viewportSize()
+    expect(sortBtnBox).not.toBeNull()
+    expect(viewport).not.toBeNull()
+    expect(sortBtnBox!.x + sortBtnBox!.width).toBeLessThanOrEqual(viewport!.width)
+
+    const beforeTitles = await page.locator(`${CENTER} [data-testid='task-title']`).allInnerTexts()
+    expect(beforeTitles.length).toBeGreaterThan(1)
+
+    await page.locator("[data-testid='sort-button']").click()
+    await expect(page.locator("[data-testid='task-sort-sheet']")).toBeVisible()
+    await page.locator("[data-testid='sort-key-due']").click()
+    await page.locator("[data-testid='sort-dir-desc']").click()
+    await page.getByRole("button", { name: "適用" }).click()
+
+    await expect(page.locator("[data-testid='sort-active-dot']")).toBeVisible()
+    const afterTitles = await page.locator(`${CENTER} [data-testid='task-title']`).allInnerTexts()
+    expect(afterTitles).not.toEqual(beforeTitles)
+
+    // リセットして元の挙動に戻る
+    await page.locator("[data-testid='sort-button']").click()
+    await page.getByRole("button", { name: "リセット" }).click()
+    await page.getByRole("button", { name: "適用" }).click()
+    await expect(page.locator("[data-testid='sort-active-dot']")).toHaveCount(0)
   })
 
   test("ステータスボタンクリックでバッジが楽観的更新される", async ({ page }) => {
