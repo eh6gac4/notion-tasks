@@ -216,7 +216,10 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
     try {
       await updateTaskBlocksAction(task.id, editBlocksContent)
-      setBlocks(editBlocksContent)
+      // Re-fetch: saved markdown drops image lines, but Notion still has the
+      // image blocks. Re-read so the preview reflects the real state.
+      const refreshed = await getTaskBlocksAction(task.id)
+      setBlocks(refreshed)
       setIsEditingBlocks(false)
     } catch {
       setBlocksSaveError("本文の保存に失敗しました。")

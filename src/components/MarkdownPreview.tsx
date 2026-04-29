@@ -64,6 +64,22 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
       return
     }
 
+    const imgMatch = line.match(/^!\[([^\]]*)\]\((.+)\)$/)
+    if (imgMatch) {
+      const [, alt, src] = imgMatch
+      elements.push(
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={i}
+          src={src}
+          alt={alt}
+          className="my-2 max-w-full rounded-lg"
+          style={{ border: "1px solid rgba(255,0,204,0.2)" }}
+        />
+      )
+      return
+    }
+
     if (line === "---") {
       elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
     } else if (line.startsWith("# ")) {
