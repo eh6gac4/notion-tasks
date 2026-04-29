@@ -147,6 +147,24 @@ const INITIAL_TASKS: Task[] = [
     createdTime: now,
     lastEditedTime: now,
   },
+  {
+    id: "mock-9",
+    url: "https://notion.so/mock-9",
+    title: "【DEV】画像付きサンプル（ambient agent 経由想定）",
+    status: "進行中",
+    priority: "medium",
+    due: null,
+    tags: ["Tech"],
+    assignees: [],
+    source: null,
+    sourceUrl: null,
+    parentTaskIds: [],
+    childTaskIds: [],
+    prevTaskIds: [],
+    nextTaskIds: [],
+    createdTime: now,
+    lastEditedTime: now,
+  },
 ]
 
 let store: Task[] = INITIAL_TASKS.map((t) => ({ ...t }))
@@ -155,6 +173,7 @@ let nextId = 100
 const mockBlockStore = new Map<string, string>([
   ["mock-1", "## 作業メモ\n\n- ファームウェアバージョン確認\n- バックアップ取得後に適用"],
   ["mock-2", "## 構成\n\n- 導入\n- 本題\n- まとめ"],
+  ["mock-9", "## 概要\n\nambient agent から画像付きで投げられた想定のサンプル。\n\n![参考スクリーンショット](https://picsum.photos/seed/notion-tasks-1/600/400)\n\n## 補足\n\n複数枚も表示できる。\n\n![図解](https://picsum.photos/seed/notion-tasks-2/600/300)\n\n- 編集して保存しても画像は保持される\n- 画像は ![alt](url) の markdown としてレンダリングされる"],
 ])
 
 let mockCommentNextId = 1
