@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useTransition } from "react"
+import { useEffect, useState, useRef, useTransition } from "react"
 import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
 import { buildDue } from "@/lib/due-date"
@@ -32,6 +32,13 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
   const [dueTime, setDueTime] = useState("")
   const [, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [open])
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
@@ -95,7 +102,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
           <div className="absolute inset-0 bg-black/70" onClick={handleClose} />
 
           <div
-            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
+            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain"
             style={{
               backgroundColor: "#160022",
               borderTop: "1px solid rgba(255,0,204,0.5)",
