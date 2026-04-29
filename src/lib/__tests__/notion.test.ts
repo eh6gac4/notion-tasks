@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 
 // vi.hoisted でモジュール読み込み前にモックを定義
-const { mockPages, mockDataSources } = vi.hoisted(() => ({
+const { mockPages, mockDataSources, mockBlocks } = vi.hoisted(() => ({
   mockPages: {
     retrieve: vi.fn(),
     create: vi.fn(),
@@ -10,6 +10,10 @@ const { mockPages, mockDataSources } = vi.hoisted(() => ({
   },
   mockDataSources: {
     query: vi.fn(),
+  },
+  mockBlocks: {
+    children: { list: vi.fn(), append: vi.fn() },
+    delete: vi.fn(),
   },
 }))
 
@@ -21,11 +25,11 @@ vi.mock("next/cache", () => ({
 vi.mock("@notionhq/client", () => ({
   // new Client() が呼び出されるため通常の function が必要
   Client: vi.fn(function () {
-    return { pages: mockPages, dataSources: mockDataSources }
+    return { pages: mockPages, dataSources: mockDataSources, blocks: mockBlocks }
   }),
 }))
 
-import { getTask, getTasks, createTask, updateTask } from "@/lib/notion"
+import { getTask, getTasks, createTask, updateTask, getTaskBlocks, updateTaskBlocks } from "@/lib/notion"
 
 // テスト用の Notion ページレスポンスを組み立てるヘルパー
 function makePage(overrides: {
@@ -452,5 +456,145 @@ describe("updateTask", () => {
     const props = mockPages.update.mock.calls[0][0].properties
     expect(props["タイトル"]).toBeUndefined()
     expect(props["Priority"]).toBeUndefined()
+  })
+})
+
+// -------------------------------------------------------------------
+// getTaskBlocks のテスト（blocksToMarkdown を間接的に検証）
+// -------------------------------------------------------------------
+describe("getTaskBlocks", () => {
+  beforeEach(() => {
+    mockBlocks.children.list.mockReset()
+  })
+
+  it("file 型の image ブロックを ![caption](url) に変換する", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        {
+          type: "image",
+          image: {
+            type: "file",
+            file: { url: "https://prod-files-secure.s3.us-west-2.amazonaws.com/abc?X-Amz=1" },
+            caption: [{ plain_text: "スクリーンショット" }],
+          },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+    const md = await getTaskBlocks("page-1")
+    expect(md).toBe("![スクリーンショット](https://prod-files-secure.s3.us-west-2.amazonaws.com/abc?X-Amz=1)")
+  })
+
+  it("external 型の image ブロックを ![](url) に変換する（caption なし）", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        {
+          type: "image",
+          image: {
+            type: "external",
+            external: { url: "https://example.com/img.png" },
+            caption: [],
+          },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+    const md = await getTaskBlocks("page-1")
+    expect(md).toBe("![](https://example.com/img.png)")
+  })
+
+  it("image とテキストブロックが混在しても順序を保つ", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        {
+          type: "paragraph",
+          paragraph: { rich_text: [{ plain_text: "前文" }] },
+        },
+        {
+          type: "image",
+          image: {
+            type: "external",
+            external: { url: "https://example.com/i.png" },
+            caption: [],
+          },
+        },
+        {
+          type: "paragraph",
+          paragraph: { rich_text: [{ plain_text: "後文" }] },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+    const md = await getTaskBlocks("page-1")
+    expect(md).toBe("前文\n![](https://example.com/i.png)\n後文")
+  })
+})
+
+// -------------------------------------------------------------------
+// updateTaskBlocks のテスト（編集時の画像保全を検証）
+// -------------------------------------------------------------------
+describe("updateTaskBlocks", () => {
+  beforeEach(() => {
+    mockBlocks.children.list.mockReset()
+    mockBlocks.children.append.mockReset()
+    mockBlocks.delete.mockReset()
+    mockBlocks.children.append.mockResolvedValue({})
+    mockBlocks.delete.mockResolvedValue({})
+  })
+
+  it("image ブロックは delete されず、それ以外は delete される", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "古い本文" }] } },
+        { id: "img1", type: "image", image: { type: "file", file: { url: "https://x.com/a.png" }, caption: [] } },
+        { id: "p2", type: "paragraph", paragraph: { rich_text: [{ plain_text: "別段落" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "新しい本文")
+
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    expect(deletedIds).toEqual(["p1", "p2"])
+    expect(deletedIds).not.toContain("img1")
+  })
+
+  it("markdown 中の画像行は append されない（既存画像と二重にならない）", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "img1", type: "image", image: { type: "file", file: { url: "https://x.com/a.png" }, caption: [] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "本文行A\n![](https://x.com/a.png)\n本文行B")
+
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    const types = appendCall.children.map((b: { type: string }) => b.type)
+    expect(types).toEqual(["paragraph", "paragraph"])
+    const texts = appendCall.children.map(
+      (b: { paragraph?: { rich_text: Array<{ text: { content: string } }> } }) =>
+        b.paragraph?.rich_text[0].text.content
+    )
+    expect(texts).toEqual(["本文行A", "本文行B"])
+  })
+
+  it("テキストのみの markdown は通常通り append される", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "# 見出し\n本文")
+
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    const types = appendCall.children.map((b: { type: string }) => b.type)
+    expect(types).toEqual(["heading_1", "paragraph"])
   })
 })

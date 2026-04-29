@@ -252,6 +252,18 @@ function blocksToMarkdown(blocks: BlockObjectResponse[]): string {
       lines.push("```")
     } else if (type === "divider") {
       lines.push("---")
+    } else if (type === "image") {
+      const img = b["image"] as {
+        type: "external" | "file"
+        external?: { url: string }
+        file?: { url: string }
+        caption?: Array<{ plain_text: string }>
+      }
+      const url = img.type === "external" ? img.external?.url : img.file?.url
+      if (url) {
+        const caption = img.caption ? extractPlainText(img.caption) : ""
+        lines.push(`![${caption}](${url})`)
+      }
     } else if (type === "paragraph") {
       const rt = (b["paragraph"] as { rich_text: Array<{ plain_text: string }> }).rich_text
       lines.push(extractPlainText(rt))
@@ -392,13 +404,17 @@ export async function createTaskComment(id: string, text: string, author = "Unkn
   }
 }
 
+const IMAGE_MARKDOWN_LINE = /^!\[[^\]]*\]\(.+\)$/
+
 export async function updateTaskBlocks(id: string, markdown: string): Promise<void> {
   if (isDevMode()) {
     updateMockTaskBlocks(id, markdown)
     return
   }
   try {
-    // Fetch and delete existing blocks
+    // Fetch existing blocks; delete only non-image blocks so user-attached
+    // images survive a body edit (file-type Notion images use signed URLs
+    // that can't be safely re-created).
     let cursor: string | undefined = undefined
     do {
       const response = await notion.blocks.children.list({
@@ -407,13 +423,21 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
         ...(cursor ? { start_cursor: cursor } : {}),
       })
       for (const block of response.results) {
+        if (isFullBlockObjectResponse(block) && (block as { type: string }).type === "image") continue
         await notion.blocks.delete({ block_id: block.id })
       }
       cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
     } while (cursor)
 
-    // Append new blocks from markdown
-    const newBlocks = markdownToNotionBlocks(markdown)
+    // Strip image markdown lines: existing image blocks were preserved above,
+    // so re-creating them would duplicate (and create dead links for
+    // Notion-hosted file URLs that have since expired).
+    const textOnly = markdown
+      .split("\n")
+      .filter((line) => !IMAGE_MARKDOWN_LINE.test(line))
+      .join("\n")
+
+    const newBlocks = markdownToNotionBlocks(textOnly)
     if (newBlocks.length > 0) {
       await notion.blocks.children.append({
         block_id: id,

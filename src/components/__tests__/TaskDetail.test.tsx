@@ -321,7 +321,9 @@ describe("TaskDetail 本文編集", () => {
 
   it("編集して保存すると updateTaskBlocksAction が呼ばれる", async () => {
     const updateBlocksMock = vi.mocked(updateTaskBlocksAction)
-    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("元の本文")
+    vi.mocked(getTaskBlocksAction)
+      .mockResolvedValueOnce("元の本文")
+      .mockResolvedValueOnce("更新後の本文")
 
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
 
@@ -337,6 +339,26 @@ describe("TaskDetail 本文編集", () => {
     })
 
     expect(await screen.findByText("更新後の本文")).toBeInTheDocument()
+  })
+
+  it("画像付き本文を編集・保存しても画像が再フェッチで戻る", async () => {
+    vi.mocked(getTaskBlocksAction)
+      .mockResolvedValueOnce("元の本文\n![プレビュー](https://example.com/img.png)")
+      // 保存後の再フェッチ：Notion 側に画像は残ったまま、テキストだけ更新された状態を返す
+      .mockResolvedValueOnce("更新後の本文\n![プレビュー](https://example.com/img.png)")
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+
+    expect(await screen.findByRole("img", { name: "プレビュー" })).toHaveAttribute("src", "https://example.com/img.png")
+
+    fireEvent.click(screen.getByRole("button", { name: "編集" }))
+    fireEvent.change(screen.getByPlaceholderText("Markdownで入力（# 見出し、- リスト など）"), {
+      target: { value: "更新後の本文\n![プレビュー](https://example.com/img.png)" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "保存" }))
+
+    expect(await screen.findByText("更新後の本文")).toBeInTheDocument()
+    expect(await screen.findByRole("img", { name: "プレビュー" })).toHaveAttribute("src", "https://example.com/img.png")
   })
 
   it("本文中の URL がクリッカブルリンクになる", async () => {
@@ -366,6 +388,15 @@ describe("TaskDetail 本文編集", () => {
 
     const link = await screen.findByRole("link", { name: "https://example.com" })
     expect(link).toHaveAttribute("href", "https://example.com")
+  })
+
+  it("本文中の画像 markdown を img として描画する", async () => {
+    vi.mocked(getTaskBlocksAction).mockResolvedValueOnce("![スクショ](https://example.com/img.png)")
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+
+    const img = await screen.findByRole("img", { name: "スクショ" })
+    expect(img).toHaveAttribute("src", "https://example.com/img.png")
   })
 
   it("本文取得に失敗してもローディングから復帰する", async () => {
