@@ -370,7 +370,7 @@ export function TaskManager({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="検索..."
             aria-label="タスクを検索"
-            className="flex-1 rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
+            className="flex-1 min-w-0 rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
             style={{ transition: "border-color 0.2s" }}
           />
           <button

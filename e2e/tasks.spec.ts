@@ -86,6 +86,13 @@ test.describe("タスク一覧", () => {
     await filterSelect.selectOption("all")
     await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 10_000 })
 
+    // ソートボタンがビューポート内に収まっていること（スマホで見切れ回帰の検出）
+    const sortBtnBox = await page.locator("[data-testid='sort-button']").boundingBox()
+    const viewport = page.viewportSize()
+    expect(sortBtnBox).not.toBeNull()
+    expect(viewport).not.toBeNull()
+    expect(sortBtnBox!.x + sortBtnBox!.width).toBeLessThanOrEqual(viewport!.width)
+
     const beforeTitles = await page.locator(`${CENTER} [data-testid='task-title']`).allInnerTexts()
     expect(beforeTitles.length).toBeGreaterThan(1)
 
