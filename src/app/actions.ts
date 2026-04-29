@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks } from "@/lib/notion"
-import type { AdvancedFilter, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { getQueryStatuses } from "@/constants/filters"
 
 function isDevMode() {
@@ -25,6 +25,10 @@ export async function setFilterAction(filter: string) {
 
 export async function setAdvancedFilterAction(filter: AdvancedFilter) {
   ;(await cookies()).set("filter_advanced", JSON.stringify(filter), { maxAge: 86400, path: "/" })
+}
+
+export async function setSortAction(sort: SortConfig) {
+  ;(await cookies()).set("sort", JSON.stringify(sort), { maxAge: 86400, path: "/" })
 }
 
 export async function fetchTasksByFilterAction(filterKey: string): Promise<Task[]> {

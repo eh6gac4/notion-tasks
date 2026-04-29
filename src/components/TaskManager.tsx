@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useTransition, useEffect, useRef, useMemo } from "react"
-import type { AdvancedFilter, Task } from "@/types/task"
+import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
 import { TaskFilterSheet } from "./TaskFilterSheet"
-import { setFilterAction, setAdvancedFilterAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
+import { TaskSortSheet } from "./TaskSortSheet"
+import { setFilterAction, setAdvancedFilterAction, setSortAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
 import { FILTERS, applyAdvancedFilter, isAdvancedFilterActive } from "@/constants/filters"
-import { sortByPriorityAndDue, groupAndSort } from "@/lib/task-sort"
+import { groupAndSort, applySort, isSortActive } from "@/lib/task-sort"
 
 // ─── TaskListPanel ─────────────────────────────────────────────────────────────
 
@@ -36,12 +37,14 @@ function TaskListPanel({
   tasks,
   searchQuery,
   advancedFilter,
+  sort,
   onSelect,
 }: {
   filterKey: string
   tasks: Task[] | undefined
   searchQuery: string
   advancedFilter: AdvancedFilter
+  sort: SortConfig
   onSelect: (id: string) => void
 }) {
   const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
@@ -55,9 +58,10 @@ function TaskListPanel({
     return q === "" ? byAdvanced : byAdvanced.filter((t) => t.title.toLowerCase().includes(q))
   }, [tasks, current.statuses, q, advancedFilter])
 
-  const isGrouped = !current.statuses || current.statuses.length > 1
+  const sortActive = isSortActive(sort)
+  const isGrouped = !sortActive && (!current.statuses || current.statuses.length > 1)
   const groups = isGrouped ? groupAndSort(filtered) : null
-  const sortedFlat = !isGrouped ? sortByPriorityAndDue(filtered) : null
+  const sortedFlat = !isGrouped ? applySort(filtered, sort) : null
 
   if (tasks === undefined) return <TaskSkeleton />
 
@@ -116,17 +120,22 @@ export function TaskManager({
   tagOptions,
   currentFilter,
   initialAdvancedFilter,
+  initialSort,
   initialTaskId,
 }: {
   tasks: Task[]
   tagOptions: string[]
   currentFilter: string
   initialAdvancedFilter: AdvancedFilter
+  initialSort: SortConfig
   initialTaskId?: string | null
 }) {
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
+  const [sort, setSort] = useState<SortConfig>(initialSort)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
+  const [sortSheetOpen, setSortSheetOpen] = useState(false)
   const advancedActive = isAdvancedFilterActive(advancedFilter)
+  const sortActive = isSortActive(sort)
   const [isPending, startTransition] = useTransition()
   const [completingBar, setCompletingBar] = useState(false)
   const prevIsPendingRef = useRef(isPending)
@@ -391,6 +400,35 @@ export function TaskManager({
               />
             )}
           </button>
+          <button
+            data-testid="sort-button"
+            aria-label="並び替えを開く"
+            onClick={() => setSortSheetOpen(true)}
+            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M6 12h12" />
+              <path d="M10 18h4" />
+            </svg>
+            {sortActive && (
+              <span
+                data-testid="sort-active-dot"
+                className="absolute top-1 right-1 w-2 h-2 rounded-full"
+                style={{ backgroundColor: "#ff00cc", boxShadow: "0 0 6px rgba(255,0,204,0.7)" }}
+              />
+            )}
+          </button>
         </div>
 
         {/* ページネーションドット */}
@@ -438,21 +476,21 @@ export function TaskManager({
           {/* 左パネル（前フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 中央パネル（現在フィルター） */}
           <div data-testid="panel-center" style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
             </div>
           </div>
 
           {/* 右パネル（次フィルター） */}
           <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
             <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} advancedFilter={advancedFilter} onSelect={setSelectedTaskId} />
+              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
             </div>
           </div>
         </div>
@@ -471,6 +509,15 @@ export function TaskManager({
           startTransition(async () => { await setAdvancedFilterAction(next) })
         }}
         onClose={() => setFilterSheetOpen(false)}
+      />
+      <TaskSortSheet
+        open={sortSheetOpen}
+        sort={sort}
+        onApply={(next) => {
+          setSort(next)
+          startTransition(async () => { await setSortAction(next) })
+        }}
+        onClose={() => setSortSheetOpen(false)}
       />
     </div>
   )

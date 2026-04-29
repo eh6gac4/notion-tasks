@@ -56,3 +56,7 @@ export type AdvancedFilter = {
   dueDate: DueDateMode
   priorities: TaskPriority[]
 }
+
+export type SortKey = "default" | "due" | "priority"
+export type SortDirection = "asc" | "desc"
+export type SortConfig = { key: SortKey; direction: SortDirection }
