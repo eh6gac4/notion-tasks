@@ -74,6 +74,12 @@ test.describe("スワイプナビゲーション", () => {
     const filterSelect = page.locator("[data-testid='filter-select']")
     await expect(filterSelect).toHaveValue("active")
 
+    // 中央パネルをスクロール下方向に動かして pull-to-refresh が発動しない条件にする
+    await page.evaluate(() => {
+      const panel = document.querySelector("[data-testid='panel-center']") as HTMLElement
+      panel.scrollTop = 100
+    })
+
     const cdp = await context.newCDPSession(page)
     const { sx, sy } = await getSwipeOrigin(page)
     await swipe(cdp, sx, sy, 20, 200)

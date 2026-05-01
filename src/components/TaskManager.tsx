@@ -143,6 +143,13 @@ export function TaskManager({
     if (prevIsPendingRef.current && !isPending) {
       setCompletingBar(true)
       const timer = setTimeout(() => setCompletingBar(false), 400)
+      const ind = pullIndicatorRef.current
+      if (ind) {
+        ind.style.transition = "transform 250ms ease-out, opacity 250ms ease-out"
+        ind.style.transform = "translate(-50%, 0)"
+        ind.style.opacity = "0"
+        ind.dataset.ready = "false"
+      }
       return () => clearTimeout(timer)
     }
     prevIsPendingRef.current = isPending
@@ -195,6 +202,13 @@ export function TaskManager({
   const selectedTaskIdRef = useRef<string | null>(selectedTaskId)
   const isPendingRef = useRef(false)
 
+  // ─── Pull-to-refresh refs ─────────────────────────────────────────────────
+  const centerPanelRef = useRef<HTMLDivElement>(null)
+  const pullIndicatorRef = useRef<HTMLDivElement>(null)
+  const pullDistanceRef = useRef(0)
+  const isPullingRef = useRef(false)
+  const startScrollTopRef = useRef(0)
+
   useEffect(() => { centerIndexRef.current = centerIndex }, [centerIndex])
   useEffect(() => { selectedTaskIdRef.current = selectedTaskId }, [selectedTaskId])
   useEffect(() => { isPendingRef.current = isPending }, [isPending])
@@ -205,12 +219,18 @@ export function TaskManager({
     if (!el) return
     const THRESHOLD = 60
     const LOCK_DIST = 8
+    const PULL_THRESHOLD = 64
+    const PULL_LOCK_POSITION = 48
+    const PULL_DAMPING = 0.5
 
     const touchStartXRef = { current: 0 }
     const touchStartYRef = { current: 0 }
-    const directionRef = { current: null as "horiz" | "vert" | null }
+    const directionRef = { current: null as "horiz" | "vert" | "pull" | null }
 
     function onStart(e: TouchEvent) {
+      isPullingRef.current = false
+      pullDistanceRef.current = 0
+      startScrollTopRef.current = centerPanelRef.current?.scrollTop ?? 0
       if (e.touches.length > 1) { directionRef.current = "vert"; return }
       if (isAnimatingRef.current) return
       touchStartXRef.current = e.touches[0].clientX
@@ -227,6 +247,40 @@ export function TaskManager({
         if (Math.hypot(dx, dy) < LOCK_DIST) return
         directionRef.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert"
       }
+
+      // vert 確定後、最上部から下方向にドラッグなら pull に昇格
+      if (directionRef.current === "vert") {
+        if (
+          e.touches.length === 1 &&
+          dy > 0 &&
+          startScrollTopRef.current === 0 &&
+          !isPendingRef.current &&
+          selectedTaskIdRef.current === null
+        ) {
+          directionRef.current = "pull"
+        } else {
+          return  // 通常の縦スクロールに任せる
+        }
+      }
+
+      if (directionRef.current === "pull") {
+        e.preventDefault()
+        const damped = Math.max(0, dy) * PULL_DAMPING
+        pullDistanceRef.current = damped
+        isPullingRef.current = true
+
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(() => {
+          const ind = pullIndicatorRef.current
+          if (!ind) return
+          ind.style.transition = "none"
+          ind.style.transform = `translate(-50%, ${damped}px)`
+          ind.style.opacity = String(Math.min(1, damped / 30))
+          ind.dataset.ready = damped >= PULL_THRESHOLD ? "true" : "false"
+        })
+        return
+      }
+
       if (directionRef.current !== "horiz") return
 
       e.preventDefault()
@@ -241,8 +295,30 @@ export function TaskManager({
       })
     }
 
+    function animatePullIndicator(targetY: number) {
+      const ind = pullIndicatorRef.current
+      if (!ind) return
+      ind.style.transition = "transform 200ms ease-out, opacity 200ms ease-out"
+      ind.style.transform = `translate(-50%, ${targetY}px)`
+      ind.style.opacity = targetY > 0 ? "1" : "0"
+    }
+
     function onEnd(e: TouchEvent) {
       cancelAnimationFrame(rafRef.current)
+
+      if (directionRef.current === "pull") {
+        const damped = pullDistanceRef.current
+        isPullingRef.current = false
+        pullDistanceRef.current = 0
+        if (damped >= PULL_THRESHOLD) {
+          animatePullIndicator(PULL_LOCK_POSITION)
+          startTransition(async () => { await refreshTasksAction() })
+        } else {
+          animatePullIndicator(0)
+        }
+        return
+      }
+
       if (directionRef.current !== "horiz") return
       if (selectedTaskIdRef.current !== null) return
       if (isPendingRef.current) return
@@ -466,8 +542,48 @@ export function TaskManager({
       <main
         ref={mainRef}
         data-testid="task-list-main"
-        className="flex-1 overflow-hidden"
+        className="relative flex-1 overflow-hidden"
       >
+        {/* プルインジケーター */}
+        <div
+          ref={pullIndicatorRef}
+          data-testid="pull-indicator"
+          aria-hidden="true"
+          className="absolute pointer-events-none flex items-center justify-center"
+          style={{
+            top: -32,
+            left: "50%",
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: "#160022",
+            border: "1px solid rgba(255,0,204,0.4)",
+            boxShadow: "0 0 8px rgba(255,0,204,0.4)",
+            transform: "translate(-50%, 0)",
+            opacity: 0,
+            zIndex: 20,
+            transition: "transform 200ms ease-out, opacity 200ms ease-out",
+          }}
+        >
+          <svg
+            className={isPending ? "animate-spin-cyber" : ""}
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#ff00cc"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+        </div>
+
         <div
           ref={wrapperRef}
           className="flex h-full"
@@ -481,7 +597,11 @@ export function TaskManager({
           </div>
 
           {/* 中央パネル（現在フィルター） */}
-          <div data-testid="panel-center" style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
+          <div
+            ref={centerPanelRef}
+            data-testid="panel-center"
+            style={{ width: "33.333%", height: "100%", overflowY: "auto", overscrollBehaviorY: "contain" }}
+          >
             <div className="max-w-2xl mx-auto">
               <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
             </div>
