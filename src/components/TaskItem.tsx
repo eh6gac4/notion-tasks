@@ -19,10 +19,10 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
   return (
     <div
       data-testid="task-item"
-      className="px-4 py-4 active:bg-[#160022] transition-colors cursor-pointer"
+      className="px-4 py-4 active:bg-[#1a0011] transition-colors cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <p data-testid="task-title" className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbee] leading-snug">{task.title}</p>
+      <p data-testid="task-title" className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbcc] leading-snug">{task.title}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
@@ -63,22 +63,22 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
           </span>
         )}
         {task.due && (
-          <span className={`text-xs ${overdue ? "text-[#ff3355]" : "text-[#996688]"}`}>
+          <span className={`text-xs ${overdue ? "text-[#ff3355]" : "text-[#996677]"}`}>
             {overdue ? "⚠ " : ""}{formatDueShort(task.due)}
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="text-xs text-[#996688] bg-[#160022] border border-[rgba(255,0,204,0.2)] px-2 py-1 rounded-full">
+          <span key={tag} className="text-xs text-[#996677] bg-[#1a0011] border border-[rgba(220,20,60,0.2)] px-2 py-1 rounded-full">
             {tag}
           </span>
         ))}
         {task.tags.length > 2 && (
-          <span className="text-xs text-[#553355] bg-[#160022] border border-[rgba(255,0,204,0.15)] px-2 py-1 rounded-full">
+          <span className="text-xs text-[#553344] bg-[#1a0011] border border-[rgba(220,20,60,0.15)] px-2 py-1 rounded-full">
             +{task.tags.length - 2}
           </span>
         )}
         {task.childTaskIds.length > 0 && (
-          <span className="text-xs text-[#553355]">子{task.childTaskIds.length}件</span>
+          <span className="text-xs text-[#553344]">子{task.childTaskIds.length}件</span>
         )}
       </div>
 

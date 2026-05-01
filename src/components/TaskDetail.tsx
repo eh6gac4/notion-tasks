@@ -298,14 +298,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         data-testid="task-detail"
         className="relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto"
         style={{
-          backgroundColor: "#160022",
-          borderTop: "1px solid rgba(255,0,204,0.5)",
-          boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+          backgroundColor: "#1a0011",
+          borderTop: "1px solid rgba(220,20,60,0.5)",
+          boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
         }}
       >
         {/* Handle */}
         <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
         </button>
 
         {saveError && (
@@ -318,14 +318,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] mb-4"
+          className="w-full rounded-xl border border-[rgba(220,20,60,0.3)] px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c] mb-4"
           style={{ transition: "border-color 0.2s" }}
           aria-label="タイトル"
         />
 
         {/* Status */}
         <div className="mb-4">
-          <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">Status</p>
+          <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
             <span className={`px-3 py-2 rounded-full text-sm ${statusStyle}`}>
               {editStatus}
@@ -350,8 +350,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
-              className="rounded-xl px-3 py-2 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
-              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+              className="rounded-xl px-3 py-2 text-sm bg-[#10000a] text-[#ffbbcc] focus:outline-none"
+              style={{ border: "1px solid rgba(220,20,60,0.3)" }}
             >
               <option value="">未設定</option>
               <option value="high">🚨 High</option>
@@ -379,8 +379,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   className="px-3 py-2 rounded-full text-xs transition-all"
                   style={
                     editTags.includes(tag)
-                      ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
-                      : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                      ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+                      : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
                   }
                 >
                   {tag}
@@ -391,14 +391,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {task.source && (
             <Row label="ソース">
-              <span className="text-sm text-[#ffbbee]">{task.source}</span>
+              <span className="text-sm text-[#ffbbcc]">{task.source}</span>
             </Row>
           )}
 
           {task.sourceUrl && (
             <Row label="URL">
               <a href={task.sourceUrl} target="_blank" rel="noopener noreferrer"
-                className="text-sm text-[#ff00cc] underline break-all hover:text-[#ffaaee]">
+                className="text-sm text-[#dc143c] underline break-all hover:text-[#ffaabb]">
                 {task.sourceUrl}
               </a>
             </Row>
@@ -406,13 +406,13 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {task.childTaskIds.length > 0 && (
             <Row label="子タスク">
-              <span className="text-sm text-[#ffbbee]">{task.childTaskIds.length}件</span>
+              <span className="text-sm text-[#ffbbcc]">{task.childTaskIds.length}件</span>
             </Row>
           )}
 
           {task.parentTaskIds.length > 0 && (
             <Row label="親タスク">
-              <span className="text-sm text-[#ffbbee]">{task.parentTaskIds.length}件</span>
+              <span className="text-sm text-[#ffbbcc]">{task.parentTaskIds.length}件</span>
             </Row>
           )}
         </div>
@@ -420,12 +420,12 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         {/* 本文 */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[#996688] tracking-widest uppercase">本文</p>
+            <p className="text-xs text-[#996677] tracking-widest uppercase">本文</p>
             {!isLoadingBlocks && !isEditingBlocks && (
               <button
                 type="button"
                 onClick={startEditingBlocks}
-                className="text-xs text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
+                className="text-xs text-[#996677] hover:text-[#dc143c] transition-colors tracking-widest uppercase"
               >
                 編集
               </button>
@@ -438,7 +438,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {isLoadingBlocks ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[rgba(255,0,204,0.3)] border-t-[#ff00cc] animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-[rgba(220,20,60,0.3)] border-t-[#dc143c] animate-spin" />
             </div>
           ) : isEditingBlocks ? (
             <div>
@@ -452,8 +452,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   el.style.height = "auto"
                   el.style.height = `${el.scrollHeight}px`
                 }}
-                className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none focus:border-[#ff00cc] resize-none min-h-[120px] font-mono"
-                style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+                className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] focus:outline-none focus:border-[#dc143c] resize-none min-h-[120px] font-mono"
+                style={{ border: "1px solid rgba(220,20,60,0.3)" }}
                 placeholder="Markdownで入力（# 見出し、- リスト など）"
               />
               <div className="flex gap-2 mt-2 justify-end">
@@ -463,8 +463,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                     setBlocksSaveError(null)
                     setIsEditingBlocks(false)
                   }}
-                  className="px-4 py-2 rounded-xl text-xs text-[#996688] hover:text-[#ffbbee] transition-colors"
-                  style={{ border: "1px solid rgba(255,0,204,0.2)" }}
+                  className="px-4 py-2 rounded-xl text-xs text-[#996677] hover:text-[#ffbbcc] transition-colors"
+                  style={{ border: "1px solid rgba(220,20,60,0.2)" }}
                 >
                   キャンセル
                 </button>
@@ -472,8 +472,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   type="button"
                   disabled={isSavingBlocks}
                   onClick={handleSaveBlocks}
-                  className="px-4 py-2 rounded-xl text-xs text-[#0d0014] transition-all"
-                  style={{ backgroundColor: isSavingBlocks ? "rgba(255,0,204,0.5)" : "#ff00cc" }}
+                  className="px-4 py-2 rounded-xl text-xs text-[#10000a] transition-all"
+                  style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "#dc143c" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
                 </button>
@@ -485,14 +485,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           ) : blocks ? (
             <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
           ) : (
-            <p className="text-xs text-[#553355] italic">本文なし</p>
+            <p className="text-xs text-[#553344] italic">本文なし</p>
           )}
         </div>
 
         {/* コメント */}
         <div className="mt-6">
-          <p className="text-xs text-[#996688] mb-3 tracking-widest uppercase">
-            コメント{comments.length > 0 && <span className="ml-2 text-[#553355]">({comments.length})</span>}
+          <p className="text-xs text-[#996677] mb-3 tracking-widest uppercase">
+            コメント{comments.length > 0 && <span className="ml-2 text-[#553344]">({comments.length})</span>}
           </p>
 
           {commentsLoadError && (
@@ -501,23 +501,23 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {isLoadingComments ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[rgba(255,0,204,0.3)] border-t-[#ff00cc] animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-[rgba(220,20,60,0.3)] border-t-[#dc143c] animate-spin" />
             </div>
           ) : (
             <div className="space-y-3 mb-4">
               {comments.length === 0 && (
-                <p className="text-xs text-[#553355] italic">コメントなし</p>
+                <p className="text-xs text-[#553344] italic">コメントなし</p>
               )}
               {comments.map((c) => (
                 <div
                   key={c.id}
                   className="rounded-xl px-4 py-3"
-                  style={{ backgroundColor: "#0d0014", border: "1px solid rgba(255,0,204,0.15)" }}
+                  style={{ backgroundColor: "#10000a", border: "1px solid rgba(220,20,60,0.15)" }}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-[#ff00cc]">{c.author}</span>
-                    <span className="text-xs text-[#553355]">·</span>
-                    <span className="text-xs text-[#553355]">
+                    <span className="text-xs text-[#dc143c]">{c.author}</span>
+                    <span className="text-xs text-[#553344]">·</span>
+                    <span className="text-xs text-[#553344]">
                       {formatDueShort(c.createdTime)}
                     </span>
                   </div>
@@ -538,16 +538,16 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               }}
               placeholder="コメントを追加…"
               rows={2}
-              className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbee] bg-[#0d0014] focus:outline-none focus:border-[#ff00cc] resize-none font-mono"
-              style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+              className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] focus:outline-none focus:border-[#dc143c] resize-none font-mono"
+              style={{ border: "1px solid rgba(220,20,60,0.3)" }}
             />
             <div className="flex justify-end mt-2">
               <button
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
                 onClick={handlePostComment}
-                className="px-4 py-2 rounded-xl text-xs text-[#0d0014] transition-all disabled:opacity-40"
-                style={{ backgroundColor: "#ff00cc" }}
+                className="px-4 py-2 rounded-xl text-xs text-[#10000a] transition-all disabled:opacity-40"
+                style={{ backgroundColor: "#dc143c" }}
               >
                 {isPostingComment ? "投稿中…" : "投稿"}
               </button>
@@ -563,8 +563,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996688] hover:text-[#ff00cc] transition-colors tracking-widest uppercase"
-          style={{ border: "1px solid rgba(255,0,204,0.25)" }}
+          className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996677] hover:text-[#dc143c] transition-colors tracking-widest uppercase"
+          style={{ border: "1px solid rgba(220,20,60,0.25)" }}
         >
           Open in Notion →
         </a>
@@ -576,7 +576,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="text-xs text-[#553355] w-16 flex-shrink-0 pt-1 tracking-wide">{label}</span>
+      <span className="text-xs text-[#553344] w-16 flex-shrink-0 pt-1 tracking-wide">{label}</span>
       <div className="flex-1">{children}</div>
     </div>
   )

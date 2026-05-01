@@ -74,22 +74,22 @@ describe("TaskCreate タグトグル", () => {
   it("タグをクリックすると選択される", () => {
     const techBtn = screen.getByRole("button", { name: "Tech" })
     fireEvent.click(techBtn)
-    // 選択済みスタイル（backgroundColor が #ff00cc）になる
-    expect(techBtn).toHaveStyle({ backgroundColor: "#ff00cc" })
+    // 選択済みスタイル（backgroundColor が #dc143c）になる
+    expect(techBtn).toHaveStyle({ backgroundColor: "#dc143c" })
   })
 
   it("選択済みタグを再クリックすると解除される", () => {
     const techBtn = screen.getByRole("button", { name: "Tech" })
     fireEvent.click(techBtn)
     fireEvent.click(techBtn)
-    expect(techBtn).not.toHaveStyle({ backgroundColor: "#ff00cc" })
+    expect(techBtn).not.toHaveStyle({ backgroundColor: "#dc143c" })
   })
 
   it("複数タグを同時に選択できる", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tech" }))
     fireEvent.click(screen.getByRole("button", { name: "Blog" }))
-    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "#ff00cc" })
-    expect(screen.getByRole("button", { name: "Blog" })).toHaveStyle({ backgroundColor: "#ff00cc" })
+    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "#dc143c" })
+    expect(screen.getByRole("button", { name: "Blog" })).toHaveStyle({ backgroundColor: "#dc143c" })
   })
 })
 

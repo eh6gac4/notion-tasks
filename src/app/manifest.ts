@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Notion タスク管理",
     start_url: "/",
     display: "standalone",
-    background_color: "#0d0014",
-    theme_color: "#ff00cc",
+    background_color: "#10000a",
+    theme_color: "#dc143c",
     icons: [
       {
         src: "/icon.svg",
