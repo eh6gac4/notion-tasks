@@ -220,12 +220,84 @@ describe("スワイプフィルター切り替え", () => {
   })
 
   it("縦スワイプ (dx=30, dy=200) ではフィルターが変わらない", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    vi.mocked(refreshTasksAction).mockClear()
     render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    // 中央パネルがスクロール中（scrollTop>0）の状態でテスト：プルも発動せず、フィルター変更も起きない
+    setCenterPanelScrollTop(100)
     act(() => { swipe(getMain(), 30, 200) })
     await act(async () => { vi.runAllTimers() })
     const panel = getCenterPanel()
     expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
     expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
+    expect(refreshTasksAction).not.toHaveBeenCalled()
+  })
+})
+
+function setCenterPanelScrollTop(value: number) {
+  Object.defineProperty(getCenterPanel(), "scrollTop", { value, configurable: true, writable: true })
+}
+
+// プル・トゥ・リフレッシュ用：touchMove で full dy を送る（共通 swipe ヘルパーは中間値のみ送るため）
+function pullGesture(el: HTMLElement, dx: number, dy: number) {
+  fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }] })
+  fireEvent.touchMove(el, { touches: [{ clientX: dx, clientY: dy }] })
+  fireEvent.touchEnd(el, { changedTouches: [{ clientX: dx, clientY: dy }] })
+}
+
+describe("プル・トゥ・リフレッシュ", () => {
+  beforeEach(async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    vi.mocked(refreshTasksAction).mockClear()
+  })
+
+  it("中央パネル最上部から下方向 200px ドラッグで refreshTasksAction が呼ばれる", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    setCenterPanelScrollTop(0)
+    act(() => { pullGesture(getMain(), 0, 200) })
+    await waitFor(() => expect(refreshTasksAction).toHaveBeenCalledTimes(1))
+  })
+
+  it("中央パネルがスクロール済み（scrollTop>0）の場合は呼ばれない", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    setCenterPanelScrollTop(100)
+    act(() => { pullGesture(getMain(), 0, 200) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(refreshTasksAction).not.toHaveBeenCalled()
+  })
+
+  it("閾値未満（dy=120、damped=60 < 64）では呼ばれない", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    setCenterPanelScrollTop(0)
+    act(() => { pullGesture(getMain(), 0, 120) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(refreshTasksAction).not.toHaveBeenCalled()
+  })
+
+  it("水平方向が支配的（dx=200, dy=20）なら pull は発動しない", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    setCenterPanelScrollTop(0)
+    act(() => { pullGesture(getMain(), 200, 20) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(refreshTasksAction).not.toHaveBeenCalled()
+  })
+
+  it("詳細ビューが開いている時は呼ばれない", async () => {
+    const { refreshTasksAction } = await import("@/app/actions")
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" initialTaskId="1" />)
+    setCenterPanelScrollTop(0)
+    act(() => { pullGesture(getMain(), 0, 200) })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(refreshTasksAction).not.toHaveBeenCalled()
+  })
+
+  it("プルインジケーターが DOM に存在する", () => {
+    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
+    expect(document.querySelector("[data-testid='pull-indicator']")).toBeInTheDocument()
   })
 })
 

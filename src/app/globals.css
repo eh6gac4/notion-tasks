@@ -109,3 +109,9 @@ option {
 .task-list[data-filter="doing"]  li:not([data-status="進行中"])  { display: none; }
 .task-list[data-filter="review"] li:not([data-status="確認中"])  { display: none; }
 .task-list[data-filter="paused"] li:not([data-status="一時中断"]) { display: none; }
+
+/* プル・トゥ・リフレッシュ閾値到達時の視覚フィードバック */
+[data-testid="pull-indicator"][data-ready="true"] {
+  border-color: #ff00cc !important;
+  box-shadow: 0 0 12px rgba(255, 0, 204, 0.8) !important;
+}

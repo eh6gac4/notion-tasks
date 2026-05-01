@@ -33,10 +33,10 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: ["**/swipe.spec.ts"],
+      testIgnore: ["**/swipe.spec.ts", "**/pull-refresh.spec.ts"],
     },
     {
-      // スワイプは CDP が必要なため Chromium で実行
+      // スワイプ／プルリフレッシュは CDP が必要なため Chromium で実行
       name: "Chromium Touch",
       use: {
         ...devices["iPhone 15"],
@@ -45,7 +45,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testMatch: ["**/swipe.spec.ts"],
+      testMatch: ["**/swipe.spec.ts", "**/pull-refresh.spec.ts"],
     },
     {
       name: "Desktop Chrome",
@@ -54,7 +54,7 @@ export default defineConfig({
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: ["**/swipe.spec.ts", "**/snapshot.spec.ts", "**/pwa.spec.ts"],
+      testIgnore: ["**/swipe.spec.ts", "**/pull-refresh.spec.ts", "**/snapshot.spec.ts", "**/pwa.spec.ts"],
     },
   ],
   webServer: {
