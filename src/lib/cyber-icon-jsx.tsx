@@ -10,8 +10,8 @@ export function cyberIconJsx(size: number) {
       style={{
         width: "100%",
         height: "100%",
-        background: "#0d0014",
-        backgroundImage: `radial-gradient(circle, rgba(255,0,204,0.25) ${dotRadius}px, transparent ${dotRadius}px)`,
+        background: "#10000a",
+        backgroundImage: `radial-gradient(circle, rgba(220,20,60,0.25) ${dotRadius}px, transparent ${dotRadius}px)`,
         backgroundSize: `${dotSpacing}px ${dotSpacing}px`,
         display: "flex",
         alignItems: "center",
@@ -28,7 +28,7 @@ export function cyberIconJsx(size: number) {
           <polyline
             points="3,10 8,15 17,5"
             fill="none"
-            stroke="#ff00cc"
+            stroke="#dc143c"
             strokeWidth={strokeWidth * 3}
             strokeLinecap="square"
             strokeLinejoin="miter"
@@ -38,7 +38,7 @@ export function cyberIconJsx(size: number) {
         <polyline
           points="3,10 8,15 17,5"
           fill="none"
-          stroke="#ff00cc"
+          stroke="#dc143c"
           strokeWidth={strokeWidth}
           strokeLinecap="square"
           strokeLinejoin="miter"

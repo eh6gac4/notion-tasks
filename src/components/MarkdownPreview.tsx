@@ -19,7 +19,7 @@ function renderWithLinks(text: string): React.ReactNode {
     })
     parts.push(
       <a key={match.index} href={url} target="_blank" rel="noopener noreferrer"
-         className="text-[#ff00cc] underline break-all">
+         className="text-[#dc143c] underline break-all">
         {url}
       </a>
     )
@@ -40,8 +40,8 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
     elements.push(
       <pre
         key={key}
-        className="rounded-lg px-3 py-2 text-xs text-[#ffbbee] font-mono overflow-x-auto my-1"
-        style={{ backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,0,204,0.15)" }}
+        className="rounded-lg px-3 py-2 text-xs text-[#ffbbcc] font-mono overflow-x-auto my-1"
+        style={{ backgroundColor: "rgba(0,0,0,0.4)", border: "1px solid rgba(220,20,60,0.15)" }}
       >
         {codeLines.join("\n")}
       </pre>
@@ -74,23 +74,23 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
           src={src}
           alt={alt}
           className="my-2 max-w-full rounded-lg"
-          style={{ border: "1px solid rgba(255,0,204,0.2)" }}
+          style={{ border: "1px solid rgba(220,20,60,0.2)" }}
         />
       )
       return
     }
 
     if (line === "---") {
-      elements.push(<hr key={i} className="my-2 border-[rgba(255,0,204,0.2)]" />)
+      elements.push(<hr key={i} className="my-2 border-[rgba(220,20,60,0.2)]" />)
     } else if (line.startsWith("# ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-base font-bold mt-2 mb-1">{renderWithLinks(line.slice(2))}</p>)
+      elements.push(<p key={i} className="text-[#ffbbcc] text-base font-bold mt-2 mb-1">{renderWithLinks(line.slice(2))}</p>)
     } else if (line.startsWith("## ")) {
-      elements.push(<p key={i} className="text-[#ffbbee] text-sm font-semibold mt-2 mb-1">{renderWithLinks(line.slice(3))}</p>)
+      elements.push(<p key={i} className="text-[#ffbbcc] text-sm font-semibold mt-2 mb-1">{renderWithLinks(line.slice(3))}</p>)
     } else if (line.startsWith("### ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm font-medium mt-1 mb-1">{renderWithLinks(line.slice(4))}</p>)
+      elements.push(<p key={i} className="text-[#cc99aa] text-sm font-medium mt-1 mb-1">{renderWithLinks(line.slice(4))}</p>)
     } else if (/^- \[x\] /i.test(line)) {
       elements.push(
-        <p key={i} className="text-[#996688] text-sm line-through flex items-baseline gap-2">
+        <p key={i} className="text-[#996677] text-sm line-through flex items-baseline gap-2">
           <button
             type="button"
             onClick={() => onToggleCheckbox?.(i)}
@@ -102,7 +102,7 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
       )
     } else if (/^- \[ \] /.test(line)) {
       elements.push(
-        <p key={i} className="text-[#cc99bb] text-sm flex items-baseline gap-2">
+        <p key={i} className="text-[#cc99aa] text-sm flex items-baseline gap-2">
           <button
             type="button"
             onClick={() => onToggleCheckbox?.(i)}
@@ -113,20 +113,20 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
         </p>
       )
     } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">・</span>{renderWithLinks(line.slice(2))}</p>)
+      elements.push(<p key={i} className="text-[#cc99aa] text-sm"><span className="mr-2 text-[#dc143c]">・</span>{renderWithLinks(line.slice(2))}</p>)
     } else if (/^\d+\. /.test(line)) {
       const match = line.match(/^(\d+)\. (.*)/)
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm"><span className="mr-2 text-[#ff00cc]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
+      elements.push(<p key={i} className="text-[#cc99aa] text-sm"><span className="mr-2 text-[#dc143c]">{match?.[1]}.</span>{renderWithLinks(match?.[2] ?? "")}</p>)
     } else if (line.startsWith("> ")) {
       elements.push(
-        <p key={i} className="text-[#996688] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(255,0,204,0.4)" }}>
+        <p key={i} className="text-[#996677] text-sm pl-3 italic" style={{ borderLeft: "2px solid rgba(220,20,60,0.4)" }}>
           {renderWithLinks(line.slice(2))}
         </p>
       )
     } else if (line === "") {
       elements.push(<div key={i} className="h-2" />)
     } else {
-      elements.push(<p key={i} className="text-[#cc99bb] text-sm">{renderWithLinks(line)}</p>)
+      elements.push(<p key={i} className="text-[#cc99aa] text-sm">{renderWithLinks(line)}</p>)
     }
   })
 

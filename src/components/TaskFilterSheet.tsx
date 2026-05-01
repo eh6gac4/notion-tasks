@@ -70,25 +70,25 @@ export function TaskFilterSheet({
       <div
         className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
         style={{
-          backgroundColor: "#160022",
-          borderTop: "1px solid rgba(255,0,204,0.5)",
-          boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+          backgroundColor: "#1a0011",
+          borderTop: "1px solid rgba(220,20,60,0.5)",
+          boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
         }}
       >
         <button onClick={onClose} className="w-full flex justify-center pb-2 -mt-1" aria-label="閉じる">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
         </button>
 
-        <h2 className="text-sm text-[#ff00cc] tracking-widest uppercase mb-5 cyber-glow-text-sm">
+        <h2 className="text-sm text-[#dc143c] tracking-widest uppercase mb-5 cyber-glow-text-sm">
           ✦ Filters
         </h2>
 
         <div className="flex flex-col gap-5">
           {/* タグ */}
           <div>
-            <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">タグ</p>
+            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">タグ</p>
             {tagOptions.length === 0 ? (
-              <p className="text-xs text-[#553355] italic">タグがありません</p>
+              <p className="text-xs text-[#553344] italic">タグがありません</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {tagOptions.map((tag) => (
@@ -99,8 +99,8 @@ export function TaskFilterSheet({
                     className="px-3 py-2 rounded-full text-xs transition-all"
                     style={
                       draft.tags.includes(tag)
-                        ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
-                        : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
                     }
                   >
                     {tag}
@@ -112,7 +112,7 @@ export function TaskFilterSheet({
 
           {/* 期限 */}
           <div>
-            <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">期限</p>
+            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">期限</p>
             <div className="flex flex-wrap gap-2">
               {DUE_OPTIONS.map((opt) => {
                 const active = draft.dueDate === opt.value
@@ -126,8 +126,8 @@ export function TaskFilterSheet({
                     className="px-3 py-2 rounded-full text-xs transition-all"
                     style={
                       active
-                        ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
-                        : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
                     }
                   >
                     {opt.label}
@@ -139,7 +139,7 @@ export function TaskFilterSheet({
 
           {/* 優先度 */}
           <div>
-            <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">優先度</p>
+            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">優先度</p>
             <div className="flex flex-wrap gap-2">
               {PRIORITY_OPTIONS.map((p) => {
                 const active = draft.priorities.includes(p)
@@ -152,8 +152,8 @@ export function TaskFilterSheet({
                     className="px-3 py-2 rounded-full text-xs transition-all"
                     style={
                       active
-                        ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
-                        : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
                     }
                   >
                     {PRIORITY_STYLES[p].label}
@@ -168,8 +168,8 @@ export function TaskFilterSheet({
           <button
             type="button"
             onClick={handleReset}
-            className="flex-1 rounded-xl py-3 text-xs text-[#996688] hover:text-[#ffbbee] transition-colors tracking-widest uppercase"
-            style={{ border: "1px solid rgba(255,0,204,0.25)" }}
+            className="flex-1 rounded-xl py-3 text-xs text-[#996677] hover:text-[#ffbbcc] transition-colors tracking-widest uppercase"
+            style={{ border: "1px solid rgba(220,20,60,0.25)" }}
           >
             リセット
           </button>
@@ -178,9 +178,9 @@ export function TaskFilterSheet({
             onClick={handleApply}
             className="flex-[2] rounded-xl py-3 text-sm tracking-widest uppercase"
             style={{
-              backgroundColor: "#ff00cc",
-              color: "#0d0014",
-              boxShadow: "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+              backgroundColor: "#dc143c",
+              color: "#10000a",
+              boxShadow: "0 0 12px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.2)",
             }}
           >
             適用

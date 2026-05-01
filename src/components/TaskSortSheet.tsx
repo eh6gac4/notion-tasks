@@ -16,22 +16,22 @@ const DIR_OPTIONS: { value: SortDirection; label: string }[] = [
 ]
 
 const ACTIVE_STYLE = {
-  backgroundColor: "#ff00cc",
-  color: "#0d0014",
+  backgroundColor: "#dc143c",
+  color: "#10000a",
   border: "1px solid transparent",
-  boxShadow: "0 0 8px rgba(255,0,204,0.5)",
+  boxShadow: "0 0 8px rgba(220,20,60,0.5)",
 }
 
 const INACTIVE_STYLE = {
-  backgroundColor: "#0d0014",
-  color: "#996688",
-  border: "1px solid rgba(255,0,204,0.2)",
+  backgroundColor: "#10000a",
+  color: "#996677",
+  border: "1px solid rgba(220,20,60,0.2)",
 }
 
 const DISABLED_STYLE = {
-  backgroundColor: "#0d0014",
-  color: "#553355",
-  border: "1px solid rgba(255,0,204,0.1)",
+  backgroundColor: "#10000a",
+  color: "#553344",
+  border: "1px solid rgba(220,20,60,0.1)",
   opacity: 0.5,
 }
 
@@ -80,22 +80,22 @@ export function TaskSortSheet({
       <div
         className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
         style={{
-          backgroundColor: "#160022",
-          borderTop: "1px solid rgba(255,0,204,0.5)",
-          boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+          backgroundColor: "#1a0011",
+          borderTop: "1px solid rgba(220,20,60,0.5)",
+          boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
         }}
       >
         <button onClick={onClose} className="w-full flex justify-center pb-2 -mt-1" aria-label="閉じる">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
         </button>
 
-        <h2 className="text-sm text-[#ff00cc] tracking-widest uppercase mb-5 cyber-glow-text-sm">
+        <h2 className="text-sm text-[#dc143c] tracking-widest uppercase mb-5 cyber-glow-text-sm">
           ✦ Sort By
         </h2>
 
         <div className="flex flex-col gap-5">
           <div>
-            <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">並び替え</p>
+            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">並び替え</p>
             <div className="flex flex-wrap gap-2">
               {KEY_OPTIONS.map((opt) => {
                 const active = draft.key === opt.value
@@ -117,7 +117,7 @@ export function TaskSortSheet({
           </div>
 
           <div>
-            <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">方向</p>
+            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">方向</p>
             <div className="flex flex-wrap gap-2">
               {DIR_OPTIONS.map((opt) => {
                 const active = !directionDisabled && draft.direction === opt.value
@@ -149,8 +149,8 @@ export function TaskSortSheet({
           <button
             type="button"
             onClick={handleReset}
-            className="flex-1 rounded-xl py-3 text-xs text-[#996688] hover:text-[#ffbbee] transition-colors tracking-widest uppercase"
-            style={{ border: "1px solid rgba(255,0,204,0.25)" }}
+            className="flex-1 rounded-xl py-3 text-xs text-[#996677] hover:text-[#ffbbcc] transition-colors tracking-widest uppercase"
+            style={{ border: "1px solid rgba(220,20,60,0.25)" }}
           >
             リセット
           </button>
@@ -159,9 +159,9 @@ export function TaskSortSheet({
             onClick={handleApply}
             className="flex-[2] rounded-xl py-3 text-sm tracking-widest uppercase"
             style={{
-              backgroundColor: "#ff00cc",
-              color: "#0d0014",
-              boxShadow: "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+              backgroundColor: "#dc143c",
+              color: "#10000a",
+              boxShadow: "0 0 12px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.2)",
             }}
           >
             適用

@@ -15,16 +15,16 @@ import { groupAndSort, applySort, isSortActive } from "@/lib/task-sort"
 
 function TaskSkeleton() {
   return (
-    <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+    <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
       {[...Array(5)].map((_, i) => (
         <li key={i} className="px-4 py-4">
           <div
-            className="h-4 bg-[#1e002e] rounded animate-pulse mb-3"
+            className="h-4 bg-[#2e0010] rounded animate-pulse mb-3"
             style={{ width: `${60 + (i % 3) * 13}%` }}
           />
           <div className="flex gap-2">
-            <div className="h-5 w-14 bg-[#160022] rounded-full animate-pulse" />
-            <div className="h-5 w-10 bg-[#160022] rounded-full animate-pulse" />
+            <div className="h-5 w-14 bg-[#1a0011] rounded-full animate-pulse" />
+            <div className="h-5 w-10 bg-[#1a0011] rounded-full animate-pulse" />
           </div>
         </li>
       ))}
@@ -67,7 +67,7 @@ function TaskListPanel({
 
   if (filtered.length === 0) {
     return (
-      <p className="text-center text-[#553355] text-xs py-20 tracking-widest">
+      <p className="text-center text-[#553344] text-xs py-20 tracking-widest">
         {q !== "" ? "— NO MATCH —" : "— NO TASKS —"}
       </p>
     )
@@ -78,11 +78,11 @@ function TaskListPanel({
       {isGrouped ? (
         groups!.map(({ status, tasks: groupTasks }) => (
           <section key={status}>
-            <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(255,0,204,0.15)] sticky top-0 bg-[#0d0014] z-10">
-              <span className="text-[10px] tracking-[0.2em] text-[#aa66aa]">{status}</span>
-              <span className="text-[10px] text-[#553355]">{groupTasks.length}</span>
+            <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(220,20,60,0.15)] sticky top-0 bg-[#10000a] z-10">
+              <span className="text-[10px] tracking-[0.2em] text-[#aa6677]">{status}</span>
+              <span className="text-[10px] text-[#553344]">{groupTasks.length}</span>
             </div>
-            <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+            <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
               {groupTasks.map((task) => (
                 <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
               ))}
@@ -90,13 +90,13 @@ function TaskListPanel({
           </section>
         ))
       ) : (
-        <ul className="divide-y divide-[rgba(255,0,204,0.1)]">
+        <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
           {sortedFlat!.map((task) => (
             <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
           ))}
         </ul>
       )}
-      <p className="text-center text-xs text-[#553355] py-4 pb-24 tracking-widest">
+      <p className="text-center text-xs text-[#553344] py-4 pb-24 tracking-widest">
         {filtered.length} TASKS
       </p>
     </>
@@ -388,11 +388,11 @@ export function TaskManager({
         className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
         style={{
           width: completingBar ? "100%" : isPending ? "80%" : "0%",
-          boxShadow: "0 0 8px #ff00cc",
+          boxShadow: "0 0 8px #dc143c",
         }}
       />
 
-      <div className="bg-[#0d0014] border-b border-[rgba(255,0,204,0.3)] px-4 pt-3 pb-2 flex-shrink-0 flex flex-col gap-2">
+      <div className="bg-[#10000a] border-b border-[rgba(220,20,60,0.3)] px-4 pt-3 pb-2 flex-shrink-0 flex flex-col gap-2">
         <div className="flex gap-2">
           <select
             data-testid="filter-select"
@@ -405,7 +405,7 @@ export function TaskManager({
                 startTransition(async () => { await setFilterAction(next) })
               }
             }}
-            className="w-full rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
+            className="w-full rounded-xl px-4 py-3 text-sm bg-[#1a0011] text-[#ffbbcc] border border-[rgba(220,20,60,0.3)] focus:outline-none focus:border-[#dc143c]"
             style={{ transition: "border-color 0.2s" }}
           >
             {FILTERS.map((f) => (
@@ -416,7 +416,7 @@ export function TaskManager({
             data-testid="refresh-button"
             disabled={isPending}
             onClick={() => startTransition(async () => { await refreshTasksAction() })}
-            className="flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 disabled:opacity-40 transition-colors"
+            className="flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 disabled:opacity-40 transition-colors"
           >
             <svg
               className={isPending ? "animate-spin-cyber" : ""}
@@ -446,14 +446,14 @@ export function TaskManager({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="検索..."
             aria-label="タスクを検索"
-            className="flex-1 min-w-0 rounded-xl px-4 py-3 text-sm bg-[#160022] text-[#ffbbee] placeholder:text-[#553355] border border-[rgba(255,0,204,0.3)] focus:outline-none focus:border-[#ff00cc]"
+            className="flex-1 min-w-0 rounded-xl px-4 py-3 text-sm bg-[#1a0011] text-[#ffbbcc] placeholder:text-[#553344] border border-[rgba(220,20,60,0.3)] focus:outline-none focus:border-[#dc143c]"
             style={{ transition: "border-color 0.2s" }}
           />
           <button
             data-testid="filter-button"
             aria-label="フィルタを開く"
             onClick={() => setFilterSheetOpen(true)}
-            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 transition-colors"
+            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -472,7 +472,7 @@ export function TaskManager({
               <span
                 data-testid="filter-active-dot"
                 className="absolute top-1 right-1 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#ff00cc", boxShadow: "0 0 6px rgba(255,0,204,0.7)" }}
+                style={{ backgroundColor: "#dc143c", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
               />
             )}
           </button>
@@ -480,7 +480,7 @@ export function TaskManager({
             data-testid="sort-button"
             aria-label="並び替えを開く"
             onClick={() => setSortSheetOpen(true)}
-            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(255,0,204,0.3)] bg-[#160022] text-[#ff00cc] flex items-center justify-center hover:border-[#ff00cc] active:scale-95 transition-colors"
+            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -501,7 +501,7 @@ export function TaskManager({
               <span
                 data-testid="sort-active-dot"
                 className="absolute top-1 right-1 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#ff00cc", boxShadow: "0 0 6px rgba(255,0,204,0.7)" }}
+                style={{ backgroundColor: "#dc143c", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
               />
             )}
           </button>
@@ -530,7 +530,7 @@ export function TaskManager({
                   width: active ? "20px" : "8px",
                   height: "8px",
                   borderRadius: "4px",
-                  backgroundColor: active ? "#ff00cc" : "rgba(153,102,136,0.4)",
+                  backgroundColor: active ? "#dc143c" : "rgba(153,102,119,0.4)",
                   boxShadow: active ? undefined : "none",
                 }}
               />
@@ -556,9 +556,9 @@ export function TaskManager({
             width: 32,
             height: 32,
             borderRadius: 16,
-            backgroundColor: "#160022",
-            border: "1px solid rgba(255,0,204,0.4)",
-            boxShadow: "0 0 8px rgba(255,0,204,0.4)",
+            backgroundColor: "#1a0011",
+            border: "1px solid rgba(220,20,60,0.4)",
+            boxShadow: "0 0 8px rgba(220,20,60,0.4)",
             transform: "translate(-50%, 0)",
             opacity: 0,
             zIndex: 20,
@@ -572,7 +572,7 @@ export function TaskManager({
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#ff00cc"
+            stroke="#dc143c"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"

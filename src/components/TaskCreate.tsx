@@ -15,9 +15,9 @@ function SubmitButton() {
       disabled={pending}
       className="w-full rounded-xl py-4 text-sm tracking-widest uppercase disabled:opacity-40 transition-all"
       style={{
-        backgroundColor: "#ff00cc",
-        color: "#0d0014",
-        boxShadow: pending ? "none" : "0 0 12px rgba(255,0,204,0.5), 0 0 30px rgba(255,0,204,0.2)",
+        backgroundColor: "#dc143c",
+        color: "#10000a",
+        boxShadow: pending ? "none" : "0 0 12px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.2)",
       }}
     >
       {pending ? "CREATING..." : "CREATE TASK"}
@@ -84,9 +84,9 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
         onClick={handleOpen}
         className="fixed bottom-8 right-6 z-10 w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-all active:scale-95"
         style={{
-          backgroundColor: "#ff00cc",
-          color: "#0d0014",
-          boxShadow: "0 0 15px rgba(255,0,204,0.6), 0 0 40px rgba(255,0,204,0.3)",
+          backgroundColor: "#dc143c",
+          color: "#10000a",
+          boxShadow: "0 0 15px rgba(220,20,60,0.6), 0 0 40px rgba(220,20,60,0.3)",
         }}
         aria-label="タスクを追加"
       >
@@ -104,15 +104,15 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
           <div
             className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain"
             style={{
-              backgroundColor: "#160022",
-              borderTop: "1px solid rgba(255,0,204,0.5)",
-              boxShadow: "0 -4px 30px rgba(255,0,204,0.2)",
+              backgroundColor: "#1a0011",
+              borderTop: "1px solid rgba(220,20,60,0.5)",
+              boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
             }}
           >
             {/* Handle */}
-            <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: "rgba(255,0,204,0.4)" }} />
+            <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
 
-            <h2 className="text-sm text-[#ff00cc] tracking-widest uppercase mb-5 cyber-glow-text-sm">
+            <h2 className="text-sm text-[#dc143c] tracking-widest uppercase mb-5 cyber-glow-text-sm">
               ✦ New Task
             </h2>
 
@@ -123,7 +123,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 placeholder="TASK NAME (required)"
                 required
                 autoFocus
-                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc]"
+                className="w-full rounded-xl border border-[rgba(220,20,60,0.3)] px-4 py-4 text-sm text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c]"
                 style={{ transition: "border-color 0.2s" }}
               />
 
@@ -131,7 +131,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 name="body"
                 placeholder="BODY (optional)"
                 rows={3}
-                className="w-full rounded-xl border border-[rgba(255,0,204,0.3)] px-4 py-4 text-sm text-[#ffbbee] bg-[#0d0014] placeholder:text-[#553355] focus:outline-none focus:border-[#ff00cc] resize-none"
+                className="w-full rounded-xl border border-[rgba(220,20,60,0.3)] px-4 py-4 text-sm text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c] resize-none"
                 style={{ transition: "border-color 0.2s" }}
               />
 
@@ -139,8 +139,8 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 <select
                   name="status"
                   defaultValue="未着手"
-                  className="rounded-xl px-3 py-4 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
-                  style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+                  className="rounded-xl px-3 py-4 text-sm bg-[#10000a] text-[#ffbbcc] focus:outline-none"
+                  style={{ border: "1px solid rgba(220,20,60,0.3)" }}
                 >
                   {(["未着手", "進行中", "確認中"] as TaskStatus[]).map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -149,8 +149,8 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 <select
                   name="priority"
                   defaultValue=""
-                  className="rounded-xl px-3 py-4 text-sm bg-[#0d0014] text-[#ffbbee] focus:outline-none"
-                  style={{ border: "1px solid rgba(255,0,204,0.3)" }}
+                  className="rounded-xl px-3 py-4 text-sm bg-[#10000a] text-[#ffbbcc] focus:outline-none"
+                  style={{ border: "1px solid rgba(220,20,60,0.3)" }}
                 >
                   <option value="">Priority</option>
                   <option value="high">🚨 High</option>
@@ -160,7 +160,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
               </div>
 
               <div>
-                <label className="block text-xs text-[#996688] mb-2 tracking-widest uppercase">期限</label>
+                <label className="block text-xs text-[#996677] mb-2 tracking-widest uppercase">期限</label>
                 <DueDateTimeInput
                   date={dueDate}
                   time={dueTime}
@@ -172,7 +172,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
               </div>
 
               <div>
-                <p className="text-xs text-[#996688] mb-2 tracking-widest uppercase">タグ</p>
+                <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">タグ</p>
                 <div className="flex flex-wrap gap-2">
                   {tagOptions.map((tag) => (
                     <button
@@ -182,8 +182,8 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                       className="px-3 py-2 rounded-full text-xs transition-all"
                       style={
                         selectedTags.includes(tag)
-                          ? { backgroundColor: "#ff00cc", color: "#0d0014", border: "1px solid transparent", boxShadow: "0 0 8px rgba(255,0,204,0.5)" }
-                          : { backgroundColor: "#0d0014", color: "#996688", border: "1px solid rgba(255,0,204,0.2)" }
+                          ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+                          : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
                       }
                     >
                       {tag}
