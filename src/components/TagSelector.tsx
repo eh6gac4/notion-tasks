@@ -70,7 +70,7 @@ export function TagSelector({
           placeholder="新しいタグ"
           aria-label="新しいタグを追加"
           maxLength={MAX_TAG_LENGTH}
-          className="flex-1 min-w-0 rounded-full border border-[rgba(220,20,60,0.3)] px-4 py-2 text-xs text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c]"
+          className="flex-1 min-w-0 h-9 rounded-full border border-[rgba(220,20,60,0.3)] px-4 text-xs text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c]"
           style={{ transition: "border-color 0.2s" }}
         />
         <button
@@ -78,10 +78,13 @@ export function TagSelector({
           onClick={addTag}
           disabled={!draft.trim()}
           aria-label="タグを追加"
-          className="px-4 py-2 rounded-full text-xs transition-all disabled:opacity-40"
+          className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-40"
           style={{ backgroundColor: "#dc143c", color: "#10000a" }}
         >
-          +
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </button>
       </div>
     </div>
