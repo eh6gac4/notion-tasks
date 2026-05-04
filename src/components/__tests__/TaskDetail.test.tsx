@@ -232,6 +232,19 @@ describe("TaskDetail フィールド変更", () => {
     })
   })
 
+  it("新規タグを追加すると updateTaskAction に新タグ入りで送られる", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1", tags: [] })} onClose={() => {}} />)
+    fireEvent.change(screen.getByLabelText("新しいタグを追加"), { target: { value: "新タグ" } })
+    fireEvent.click(screen.getByRole("button", { name: "タグを追加" }))
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { tags: ["新タグ"] })
+    })
+  })
+
   it("時刻入力で updateTaskAction に時刻入り due が渡る", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()

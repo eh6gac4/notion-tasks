@@ -7,6 +7,7 @@ import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
+import { TagSelector } from "./TagSelector"
 
 export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptions: string[]; onClose: () => void }) {
   const [, startTransition] = useTransition()
@@ -275,10 +276,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
     save({ due: buildDue(date, time) })
   }
 
-  function toggleTag(tag: string) {
-    const next = editTags.includes(tag)
-      ? editTags.filter((t) => t !== tag)
-      : [...editTags, tag]
+  function handleTagsChange(next: string[]) {
     setEditTags(next)
     save({ tags: next })
   }
@@ -370,23 +368,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           </Row>
 
           <Row label="タグ">
-            <div className="flex flex-wrap gap-2">
-              {tagOptions.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className="px-3 py-2 rounded-full text-xs transition-all"
-                  style={
-                    editTags.includes(tag)
-                      ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                      : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-                  }
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
+            <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} />
           </Row>
 
           {task.source && (

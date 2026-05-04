@@ -113,6 +113,29 @@ test.describe("タスク一覧", () => {
     await expect(page.locator("[data-testid='sort-active-dot']")).toHaveCount(0)
   })
 
+  test("作成シートで新規タグを追加するとリストの新タスクに反映される", async ({ page }) => {
+    // 一意な名前で衝突回避（dev モードのストアは pid 単位で永続）
+    const tagName = `e2e-tag-${Date.now()}`
+    const taskName = `タグ追加検証-${tagName}`
+
+    await page.getByRole("button", { name: "タスクを追加" }).click()
+    await expect(page.getByText("✦ New Task")).toBeVisible()
+
+    await page.getByPlaceholder(/TASK NAME/).fill(taskName)
+    await page.getByLabel("新しいタグを追加").fill(tagName)
+    await page.getByRole("button", { name: "タグを追加" }).click()
+
+    // 新タグが選択済みピルとして並ぶ
+    await expect(page.getByRole("button", { name: tagName })).toBeVisible()
+
+    await page.getByRole("button", { name: /CREATE TASK/i }).click()
+
+    // 作成後、リストに当該タスクが現れる
+    const newItem = page.locator(TASK_ITEM, { hasText: taskName })
+    await expect(newItem).toBeVisible({ timeout: 10_000 })
+    await expect(newItem).toContainText(tagName)
+  })
+
   test("ステータスボタンクリックでバッジが楽観的更新される", async ({ page }) => {
     // mock-1 は「未着手」なので「→ 進行中」ボタンが表示される
     const firstItem = page.locator(`${CENTER} ${TASK_ITEM}`).first()

@@ -91,6 +91,43 @@ describe("TaskCreate タグトグル", () => {
     expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "#dc143c" })
     expect(screen.getByRole("button", { name: "Blog" })).toHaveStyle({ backgroundColor: "#dc143c" })
   })
+
+  it("新規タグを入力して追加すると選択済みピルとして並ぶ", () => {
+    fireEvent.change(screen.getByLabelText("新しいタグを追加"), { target: { value: "新タグ" } })
+    fireEvent.click(screen.getByRole("button", { name: "タグを追加" }))
+
+    const newPill = screen.getByRole("button", { name: "新タグ" })
+    expect(newPill).toBeInTheDocument()
+    expect(newPill).toHaveStyle({ backgroundColor: "#dc143c" })
+  })
+})
+
+describe("TaskCreate 新規タグを送信", () => {
+  beforeEach(() => {
+    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
+  })
+
+  it("新規タグを追加して送信すると tags に含まれる", async () => {
+    const { createTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(createTaskAction)
+    mock.mockClear()
+
+    fireEvent.change(screen.getByLabelText("新しいタグを追加"), { target: { value: "新タグ" } })
+    fireEvent.click(screen.getByRole("button", { name: "タグを追加" }))
+
+    const titleInput = screen.getByPlaceholderText(/TASK NAME/)
+    fireEvent.change(titleInput, { target: { value: "タスクB" } })
+
+    const form = titleInput.closest("form") as HTMLFormElement
+    fireEvent.submit(form)
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "タスクB", tags: ["新タグ"] })
+      )
+    })
+  })
 })
 
 describe("TaskCreate バックドロップで閉じる", () => {
