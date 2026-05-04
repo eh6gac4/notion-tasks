@@ -114,7 +114,7 @@ test.describe("タスク一覧", () => {
   })
 
   test("作成シートで新規タグを追加するとリストの新タスクに反映される", async ({ page }) => {
-    // 一意な名前で衝突回避（dev モードのストアは pid 単位で永続）
+    // dev サーバー内のモックストアは複数テスト間で共有されるため、Date.now() で一意化
     const tagName = `e2e-tag-${Date.now()}`
     const taskName = `タグ追加検証-${tagName}`
 

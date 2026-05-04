@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { PILL_BUTTON_CLASS, pillButtonStyle } from "@/constants/styles"
 
 const MAX_TAG_LENGTH = 100
 
@@ -52,12 +53,8 @@ export function TagSelector({
             key={tag}
             type="button"
             onClick={() => toggle(tag)}
-            className="px-3 py-2 rounded-full text-xs transition-all"
-            style={
-              selected.includes(tag)
-                ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-            }
+            className={PILL_BUTTON_CLASS}
+            style={pillButtonStyle(selected.includes(tag))}
           >
             {tag}
           </button>
