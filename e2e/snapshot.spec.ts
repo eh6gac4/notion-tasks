@@ -1,29 +1,32 @@
-import { test } from "@playwright/test"
-import path from "path"
+import { test, expect } from "@playwright/test"
 
-const DIR = process.env.SNAPSHOT_DIR ?? "before"
+test.use({ storageState: "e2e/.auth/user.json" })
+
 const CENTER = "[data-testid='panel-center']"
 
-// スクリーンショット撮影ユーティリティ（アサーションなし）
-test("スナップショット撮影", async ({ page }) => {
-  await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
-  await page.goto("/reset")
-  await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 15_000 })
+test.describe("視覚回帰", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().addCookies([
+      { name: "filter", value: "active", domain: "localhost", path: "/" },
+      { name: "sort",   value: JSON.stringify({ key: "default", direction: "asc" }), domain: "localhost", path: "/" },
+    ])
+    await page.goto("/reset")
+    await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 15_000 })
+  })
 
-  const outDir = path.join("e2e/snapshots", DIR)
+  test("home: filter=active", async ({ page }) => {
+    await expect(page).toHaveScreenshot("home-mobile.png", { fullPage: true })
+  })
 
-  await page.screenshot({ path: `${outDir}/home-mobile.png`, fullPage: true })
+  test("home: filter=all", async ({ page }) => {
+    await page.locator("[data-testid='filter-select']").selectOption("all")
+    await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 10_000 })
+    await expect(page).toHaveScreenshot("home-filter-all.png", { fullPage: true })
+  })
 
-  await page.locator("[data-testid='filter-select']").selectOption("all")
-  await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 10_000 })
-  await page.screenshot({ path: `${outDir}/home-filter-all.png`, fullPage: true })
-
-  const firstTitle = page.locator(`${CENTER} [data-testid='task-title']`).first()
-  if (await firstTitle.isVisible()) {
-    await firstTitle.click()
+  test("detail sheet", async ({ page }) => {
+    await page.locator(`${CENTER} [data-testid='task-title']`).first().click()
     await page.locator("[data-testid='task-detail']").waitFor({ state: "visible", timeout: 5_000 })
-    await page.screenshot({ path: `${outDir}/detail-sheet.png`, fullPage: true })
-    await page.locator("[data-testid='task-detail-backdrop']").click({ position: { x: 10, y: 10 } })
-    await page.locator("[data-testid='task-detail']").waitFor({ state: "hidden", timeout: 5_000 })
-  }
+    await expect(page).toHaveScreenshot("detail-sheet.png", { fullPage: true })
+  })
 })

@@ -18,7 +18,14 @@ export default defineConfig({
   },
   expect: {
     timeout: 15_000,
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01,
+      animations: "disabled",
+      caret: "hide",
+      scale: "css",
+    },
   },
+  snapshotPathTemplate: "e2e/snapshots/baseline/{arg}{ext}",
   projects: [
     {
       name: "setup",
