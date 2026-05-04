@@ -19,3 +19,11 @@ export const PRIORITY_STYLES: Record<TaskPriority, { label: string; color: strin
   medium: { label: "⚠️ Med",  color: "text-[#ffaa00]" },
   low:    { label: "💤 Low",  color: "text-[#00ffcc]" },
 }
+
+export const PILL_BUTTON_CLASS = "px-3 py-2 rounded-full text-xs transition-all"
+
+export function pillButtonStyle(selected: boolean) {
+  return selected
+    ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
+    : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
+}

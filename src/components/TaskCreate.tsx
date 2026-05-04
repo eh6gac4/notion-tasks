@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
 import { buildDue } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
+import { TagSelector } from "./TagSelector"
 import type { TaskStatus, TaskPriority } from "@/types/task"
 
 function SubmitButton() {
@@ -39,12 +40,6 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
     document.body.style.overflow = "hidden"
     return () => { document.body.style.overflow = prev }
   }, [open])
-
-  function toggleTag(tag: string) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
-  }
 
   function handleOpen() {
     setSelectedTags([])
@@ -173,23 +168,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
 
               <div>
                 <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">タグ</p>
-                <div className="flex flex-wrap gap-2">
-                  {tagOptions.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className="px-3 py-2 rounded-full text-xs transition-all"
-                      style={
-                        selectedTags.includes(tag)
-                          ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                          : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-                      }
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
+                <TagSelector options={tagOptions} selected={selectedTags} onChange={setSelectedTags} />
               </div>
 
               <SubmitButton />

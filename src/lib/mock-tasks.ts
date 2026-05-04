@@ -249,8 +249,11 @@ export function addMockTaskComment(id: string, text: string): TaskComment {
   return comment
 }
 
+const SEED_TAG_OPTIONS = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
+
 export function getMockTagOptions(): string[] {
-  return ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
+  const fromStore = store.flatMap((t) => t.tags)
+  return Array.from(new Set([...SEED_TAG_OPTIONS, ...fromStore]))
 }
 
 export function updateMockTask(id: string, input: UpdateTaskInput): Task | null {

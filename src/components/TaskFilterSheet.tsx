@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import type { AdvancedFilter, DueDateMode, TaskPriority } from "@/types/task"
 import { DEFAULT_ADVANCED_FILTER } from "@/constants/filters"
-import { PRIORITY_STYLES } from "@/constants/styles"
+import { PRIORITY_STYLES, PILL_BUTTON_CLASS, pillButtonStyle } from "@/constants/styles"
 
 const DUE_OPTIONS: { value: DueDateMode; label: string }[] = [
   { value: "any",     label: "不問" },
@@ -96,12 +96,8 @@ export function TaskFilterSheet({
                     key={tag}
                     type="button"
                     onClick={() => toggleTag(tag)}
-                    className="px-3 py-2 rounded-full text-xs transition-all"
-                    style={
-                      draft.tags.includes(tag)
-                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-                    }
+                    className={PILL_BUTTON_CLASS}
+                    style={pillButtonStyle(draft.tags.includes(tag))}
                   >
                     {tag}
                   </button>
@@ -123,12 +119,8 @@ export function TaskFilterSheet({
                     data-testid={`due-${opt.value}`}
                     aria-pressed={active}
                     onClick={() => setDue(opt.value)}
-                    className="px-3 py-2 rounded-full text-xs transition-all"
-                    style={
-                      active
-                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-                    }
+                    className={PILL_BUTTON_CLASS}
+                    style={pillButtonStyle(active)}
                   >
                     {opt.label}
                   </button>
@@ -149,12 +141,8 @@ export function TaskFilterSheet({
                     type="button"
                     data-testid={`priority-${p}`}
                     onClick={() => togglePriority(p)}
-                    className="px-3 py-2 rounded-full text-xs transition-all"
-                    style={
-                      active
-                        ? { backgroundColor: "#dc143c", color: "#10000a", border: "1px solid transparent", boxShadow: "0 0 8px rgba(220,20,60,0.5)" }
-                        : { backgroundColor: "#10000a", color: "#996677", border: "1px solid rgba(220,20,60,0.2)" }
-                    }
+                    className={PILL_BUTTON_CLASS}
+                    style={pillButtonStyle(active)}
                   >
                     {PRIORITY_STYLES[p].label}
                   </button>
