@@ -2,11 +2,17 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "To-do",
     short_name: "To-do",
     description: "Notion タスク管理",
     start_url: "/",
+    scope: "/",
     display: "standalone",
+    orientation: "portrait",
+    lang: "ja",
+    dir: "ltr",
+    categories: ["productivity"],
     background_color: "#10000a",
     theme_color: "#dc143c",
     icons: [
