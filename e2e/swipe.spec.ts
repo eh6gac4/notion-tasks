@@ -8,7 +8,8 @@ const TASK_ITEM = "[data-testid='task-item']"
 
 async function resetAndWait(page: Page) {
   await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
-  await page.goto("/reset")
+  await page.request.get("/api/dev/reset")
+  await page.goto("/")
   await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
   // 隣接パネル（左右フィルター）のプリフェッチ完了を待つ。
   // バックグラウンドリクエストが詰まっても永遠に待たないよう timeout を明示する。
