@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { DotGothic16 } from "next/font/google"
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 import { SplashScreen } from "@/components/SplashScreen"
+import { splashStartupImages } from "@/constants/splash"
 import "./globals.css"
 
 const dotGothic = DotGothic16({
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     capable: true,
     title: "To-do",
     statusBarStyle: "black-translucent",
+    startupImage: splashStartupImages(),
   },
 }
 
