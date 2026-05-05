@@ -1,20 +1,8 @@
 import { test, expect } from "@playwright/test"
 import type { Page, CDPSession } from "@playwright/test"
+import { CENTER, TASK_ITEM, resetAndOpenHome } from "./helpers"
 
 test.use({ storageState: "e2e/.auth/user.json" })
-
-const CENTER = "[data-testid='panel-center']"
-const TASK_ITEM = "[data-testid='task-item']"
-
-async function resetAndWait(page: Page) {
-  await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
-  await page.request.get("/api/dev/reset")
-  await page.goto("/")
-  await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
-  // 隣接パネル（左右フィルター）のプリフェッチ完了を待つ。
-  // バックグラウンドリクエストが詰まっても永遠に待たないよう timeout を明示する。
-  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {})
-}
 
 // CDP Input.dispatchTouchEvent でスワイプをシミュレート（Chromium のみ）
 async function swipe(cdp: CDPSession, sx: number, sy: number, dx: number, dy = 0) {
@@ -45,7 +33,7 @@ test.describe("スワイプナビゲーション", () => {
   test.describe.configure({ mode: "serial" })
 
   test.beforeEach(async ({ page }) => {
-    await resetAndWait(page)
+    await resetAndOpenHome(page)
   })
 
   test("左スワイプでフィルターが次に進む (active → todo)", async ({ page, context }) => {
