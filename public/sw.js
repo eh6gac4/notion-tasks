@@ -1,5 +1,5 @@
-const CACHE_NAME = "notion-tasks-v3"
-const STATIC_CACHE_NAME = "notion-tasks-static-v3"
+const CACHE_NAME = "notion-tasks-v4"
+const STATIC_CACHE_NAME = "notion-tasks-static-v4"
 
 const OFFLINE_URL = "/offline"
 
@@ -9,11 +9,16 @@ const STATIC_ORIGINS_PATTERNS = [
   /\/icons\//,
 ]
 
+// install では skipWaiting しない: 既存タブが操作中に SW が切り替わるのを防ぎ、
+// クライアント側 UI でユーザーが「更新」を押したタイミングで SKIP_WAITING を受けて切り替える
 self.addEventListener("install", (event) => {
-  self.skipWaiting()
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.add(new Request(OFFLINE_URL, { cache: "reload" })))
   )
+})
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
