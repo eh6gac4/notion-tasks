@@ -10,7 +10,8 @@ test.describe("視覚回帰", () => {
       { name: "filter", value: "active", domain: "localhost", path: "/" },
       { name: "sort",   value: JSON.stringify({ key: "default", direction: "asc" }), domain: "localhost", path: "/" },
     ])
-    await page.goto("/reset")
+    await page.request.get("/api/dev/reset")
+    await page.goto("/")
     await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 15_000 })
   })
 

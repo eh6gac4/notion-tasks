@@ -9,7 +9,8 @@ const PULL_INDICATOR = "[data-testid='pull-indicator']"
 
 async function resetAndWait(page: Page) {
   await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
-  await page.goto("/reset")
+  await page.request.get("/api/dev/reset")
+  await page.goto("/")
   await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
   await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {})
 }
