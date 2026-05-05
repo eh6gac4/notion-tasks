@@ -17,9 +17,18 @@ export async function resetMockStore(page: Page) {
   await page.request.get("/api/dev/reset")
 }
 
+export async function waitForHydration(page: Page) {
+  await page.waitForFunction(
+    () => document.documentElement.dataset.hydrated === "1",
+    null,
+    { timeout: 5_000 },
+  )
+}
+
 export async function resetAndOpenHome(page: Page) {
   await setDefaultCookies(page.context())
   await resetMockStore(page)
   await page.goto("/")
   await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
+  await waitForHydration(page)
 }

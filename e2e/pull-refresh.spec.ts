@@ -1,19 +1,10 @@
 import { test, expect } from "@playwright/test"
-import type { Page, CDPSession } from "@playwright/test"
+import type { CDPSession, Page } from "@playwright/test"
+import { resetAndOpenHome } from "./helpers"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
-const CENTER = "[data-testid='panel-center']"
-const TASK_ITEM = "[data-testid='task-item']"
 const PULL_INDICATOR = "[data-testid='pull-indicator']"
-
-async function resetAndWait(page: Page) {
-  await page.context().addCookies([{ name: "filter", value: "active", domain: "localhost", path: "/" }])
-  await page.request.get("/api/dev/reset")
-  await page.goto("/")
-  await expect(page.locator(`${CENTER} ${TASK_ITEM}`).first()).toBeVisible({ timeout: 15_000 })
-  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {})
-}
 
 async function swipe(cdp: CDPSession, sx: number, sy: number, dx: number, dy = 0) {
   const STEPS = 8
@@ -44,7 +35,7 @@ test.describe("プル・トゥ・リフレッシュ", () => {
   test.describe.configure({ mode: "serial" })
 
   test.beforeEach(async ({ page }) => {
-    await resetAndWait(page)
+    await resetAndOpenHome(page)
   })
 
   test("インジケーターが DOM に存在する", async ({ page }) => {

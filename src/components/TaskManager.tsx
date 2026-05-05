@@ -130,6 +130,11 @@ export function TaskManager({
   initialSort: SortConfig
   initialTaskId?: string | null
 }) {
+  // E2E 用にハイドレーション完了を <html data-hydrated="1"> でマーキングする
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "1"
+  }, [])
+
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
   const [sort, setSort] = useState<SortConfig>(initialSort)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)

@@ -1,18 +1,11 @@
 import { test, expect } from "@playwright/test"
+import { CENTER, resetAndOpenHome } from "./helpers"
 
 test.use({ storageState: "e2e/.auth/user.json" })
 
-const CENTER = "[data-testid='panel-center']"
-
 test.describe("視覚回帰", () => {
   test.beforeEach(async ({ page }) => {
-    await page.context().addCookies([
-      { name: "filter", value: "active", domain: "localhost", path: "/" },
-      { name: "sort",   value: JSON.stringify({ key: "default", direction: "asc" }), domain: "localhost", path: "/" },
-    ])
-    await page.request.get("/api/dev/reset")
-    await page.goto("/")
-    await page.locator(`${CENTER} [data-testid='task-item']`).first().waitFor({ state: "visible", timeout: 15_000 })
+    await resetAndOpenHome(page)
   })
 
   test("home: filter=active", async ({ page }) => {
