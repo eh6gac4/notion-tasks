@@ -213,6 +213,17 @@ export function TaskManager({
   useEffect(() => { selectedTaskIdRef.current = selectedTaskId }, [selectedTaskId])
   useEffect(() => { isPendingRef.current = isPending }, [isPending])
 
+  // ─── Refresh on visibility change ─────────────────────────────────────────
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== "visible") return
+      if (isPendingRef.current) return
+      startTransition(async () => { await refreshTasksAction() })
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [])
+
   // ─── Swipe gesture ────────────────────────────────────────────────────────
   useEffect(() => {
     const el = mainRef.current
