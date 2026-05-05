@@ -1,5 +1,7 @@
-const CACHE_NAME = "notion-tasks-v2"
-const STATIC_CACHE_NAME = "notion-tasks-static-v2"
+const CACHE_NAME = "notion-tasks-v3"
+const STATIC_CACHE_NAME = "notion-tasks-static-v3"
+
+const OFFLINE_URL = "/offline"
 
 // Static assets that can be cached long-term (content-hashed filenames)
 const STATIC_ORIGINS_PATTERNS = [
@@ -9,7 +11,9 @@ const STATIC_ORIGINS_PATTERNS = [
 
 self.addEventListener("install", (event) => {
   self.skipWaiting()
-  event.waitUntil(caches.open(STATIC_CACHE_NAME))
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.add(new Request(OFFLINE_URL, { cache: "reload" })))
+  )
 })
 
 self.addEventListener("activate", (event) => {
@@ -47,7 +51,7 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
-  // Network-first for navigation: always fetch fresh HTML, fall back to cache when offline
+  // Network-first for navigation: always fetch fresh HTML, fall back to cache, then to /offline when offline
   if (request.mode === "navigate") {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
@@ -56,7 +60,11 @@ self.addEventListener("fetch", (event) => {
           if (res.ok) cache.put(request, res.clone())
           return res
         } catch {
-          return (await cache.match(request)) ?? Response.error()
+          const cached = await cache.match(request)
+          if (cached) return cached
+          const offline = await cache.match(OFFLINE_URL)
+          if (offline) return offline
+          return Response.error()
         }
       })
     )

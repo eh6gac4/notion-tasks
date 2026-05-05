@@ -15,6 +15,11 @@ const dotGothic = DotGothic16({
 export const metadata: Metadata = {
   title: "To-do",
   description: "Notion タスク管理",
+  appleWebApp: {
+    capable: true,
+    title: "To-do",
+    statusBarStyle: "black-translucent",
+  },
 }
 
 export const viewport: Viewport = {
