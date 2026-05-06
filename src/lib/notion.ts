@@ -86,24 +86,37 @@ function pageToTask(page: PageObjectResponse): Task {
 }
 
 async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
+  // ボード化で全ステータスを 1 クエリで取るようになったため、page_size 100
+  // (Notion API デフォルト) では完了/中止が大量にあると未着手・進行中が
+  // 切り落とされる。has_more が消えるまでカーソル送りして全件取得する。
   try {
-    const response = await notion.dataSources.query({
-      data_source_id: DATA_SOURCE_ID,
-      filter: {
-        or: statuses.map((s) => ({
-          property: NOTION_PROPS.STATUS,
-          status: { equals: s },
-        })),
-      },
-      sorts: [
-        { property: NOTION_PROPS.PRIORITY, direction: "ascending" },
-        { property: NOTION_PROPS.DUE,      direction: "ascending" },
-      ],
-    })
+    const all: PageObjectResponse[] = []
+    let cursor: string | undefined = undefined
 
-    return response.results
-      .filter((r): r is PageObjectResponse => r.object === "page" && "properties" in r)
-      .map(pageToTask)
+    do {
+      const response = await notion.dataSources.query({
+        data_source_id: DATA_SOURCE_ID,
+        filter: {
+          or: statuses.map((s) => ({
+            property: NOTION_PROPS.STATUS,
+            status: { equals: s },
+          })),
+        },
+        sorts: [
+          { property: NOTION_PROPS.PRIORITY, direction: "ascending" },
+          { property: NOTION_PROPS.DUE,      direction: "ascending" },
+        ],
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      })
+
+      for (const r of response.results) {
+        if (r.object === "page" && "properties" in r) all.push(r as PageObjectResponse)
+      }
+      cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
+    } while (cursor)
+
+    return all.map(pageToTask)
   } catch (e) {
     console.error("[getTasks] Notion error:", e)
     return []
