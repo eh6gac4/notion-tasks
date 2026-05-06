@@ -10,7 +10,7 @@ export function splashJsx(width: number, height: number) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#10000a",
+        background: "#0b0008",
       }}
     >
       <div style={{ width: iconSize, height: iconSize, display: "flex" }}>

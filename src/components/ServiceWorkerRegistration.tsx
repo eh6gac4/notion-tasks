@@ -66,17 +66,18 @@ export default function ServiceWorkerRegistration() {
         left: "16px",
         right: "16px",
         zIndex: 9999,
-        background: "rgba(16, 0, 10, 0.95)",
-        border: "1px solid #dc143c",
-        boxShadow: "0 0 16px #dc143c, inset 0 0 16px rgba(220,20,60,0.1)",
-        color: "#dc143c",
+        background: "var(--surface)",
+        border: "1px solid var(--border-accent)",
+        borderRadius: "8px",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(220,20,60,0.25)",
+        color: "var(--text)",
         padding: "12px 16px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: "12px",
-        fontSize: "12px",
-        letterSpacing: "0.1em",
+        fontSize: "13px",
+        letterSpacing: "0.02em",
       }}
     >
       <span>新しいバージョンが利用可能です</span>
@@ -84,14 +85,15 @@ export default function ServiceWorkerRegistration() {
         type="button"
         onClick={() => waiting.postMessage({ type: "SKIP_WAITING" })}
         style={{
-          background: "#dc143c",
-          color: "#10000a",
+          background: "var(--accent)",
+          color: "var(--bg)",
           border: "none",
           padding: "8px 16px",
           fontSize: "12px",
           fontWeight: "bold",
           letterSpacing: "0.15em",
           cursor: "pointer",
+          borderRadius: "6px",
         }}
       >
         更新

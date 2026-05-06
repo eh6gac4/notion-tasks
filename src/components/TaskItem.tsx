@@ -19,14 +19,14 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
   return (
     <div
       data-testid="task-item"
-      className="px-4 py-4 active:bg-[#1a0011] transition-colors cursor-pointer"
+      className="px-4 py-4 hover:bg-[var(--surface)] active:bg-[var(--surface-2)] transition-colors cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <p data-testid="task-title" className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[#ffbbcc] leading-snug">{task.title}</p>
+      <p data-testid="task-title" className="block w-full text-left mb-3 min-h-[44px] flex items-center text-sm text-[var(--text)] leading-snug">{task.title}</p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative inline-flex">
-          <span data-testid="task-status-badge" className={`px-3 py-2 rounded-full text-xs ${statusStyle}`}>
+          <span data-testid="task-status-badge" className={`px-3 py-1 rounded-full text-xs uppercase tracking-wider ${statusStyle}`}>
             {status ?? "未着手"}
           </span>
           <select
@@ -63,22 +63,22 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
           </span>
         )}
         {task.due && (
-          <span className={`text-xs ${overdue ? "text-[#ff3355]" : "text-[#996677]"}`}>
+          <span className={`font-pixel text-xs ${overdue ? "text-[var(--status-cancel)]" : "text-[var(--text-dim)]"}`}>
             {overdue ? "⚠ " : ""}{formatDueShort(task.due)}
           </span>
         )}
         {task.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="text-xs text-[#996677] bg-[#1a0011] border border-[rgba(220,20,60,0.2)] px-2 py-1 rounded-full">
+          <span key={tag} className="font-pixel text-xs text-[var(--text-dim)] border border-[var(--border-strong)] px-2 py-1 rounded-full">
             {tag}
           </span>
         ))}
         {task.tags.length > 2 && (
-          <span className="text-xs text-[#553344] bg-[#1a0011] border border-[rgba(220,20,60,0.15)] px-2 py-1 rounded-full">
+          <span className="font-pixel text-xs text-[var(--text-faint)] border border-[var(--border)] px-2 py-1 rounded-full">
             +{task.tags.length - 2}
           </span>
         )}
         {task.childTaskIds.length > 0 && (
-          <span className="text-xs text-[#553344]">子{task.childTaskIds.length}件</span>
+          <span className="text-xs text-[var(--text-faint)]">子{task.childTaskIds.length}件</span>
         )}
       </div>
 
@@ -106,7 +106,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
       </div>
 
       {updateError && (
-        <p className="text-xs text-[#ff3355] mt-2">{updateError}</p>
+        <p className="text-xs text-[var(--status-cancel)] mt-2">{updateError}</p>
       )}
     </div>
   )

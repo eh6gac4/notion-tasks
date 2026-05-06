@@ -14,7 +14,7 @@ describe("TagSelector ピル", () => {
 
   it("選択済みタグはアクセント色で描画される", () => {
     render(<TagSelector options={OPTIONS} selected={["Tech"]} onChange={() => {}} />)
-    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "#dc143c" })
+    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "var(--accent)" })
   })
 
   it("候補にない選択済みタグもピルとして描画される", () => {

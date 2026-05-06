@@ -38,17 +38,17 @@ export default async function Page({
 
   return (
     <div className="flex flex-col h-full">
-      <header className="sticky top-0 z-20 bg-[#10000a] border-b border-[rgba(220,20,60,0.3)]">
+      <header className="sticky top-0 z-20 bg-[var(--bg)] border-b border-[var(--border)]">
         <div className="flex items-center justify-between px-4 h-14">
-          <h1 className="text-sm font-bold text-[#dc143c] cyber-glow-text tracking-widest uppercase">
+          <h1 className="font-pixel text-sm font-bold text-[var(--accent)] accent-glow-text-sm tracking-widest uppercase">
             ✦ To-do
           </h1>
           <div className="flex items-center gap-4">
-            <span className="text-xs text-[#996677]">{session?.user?.name}</span>
+            <span className="text-xs text-[var(--text-dim)]">{session?.user?.name}</span>
             <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }} className="flex items-center">
               <button
                 type="submit"
-                className="text-xs text-[#996677] hover:text-[#dc143c] transition-colors"
+                className="text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors"
               >
                 logout
               </button>

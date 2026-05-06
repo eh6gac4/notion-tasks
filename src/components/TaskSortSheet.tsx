@@ -16,22 +16,22 @@ const DIR_OPTIONS: { value: SortDirection; label: string }[] = [
 ]
 
 const ACTIVE_STYLE = {
-  backgroundColor: "#dc143c",
-  color: "#10000a",
+  backgroundColor: "var(--accent)",
+  color: "var(--bg)",
   border: "1px solid transparent",
-  boxShadow: "0 0 8px rgba(220,20,60,0.5)",
+  boxShadow: "0 0 6px rgba(220,20,60,0.45)",
 }
 
 const INACTIVE_STYLE = {
-  backgroundColor: "#10000a",
-  color: "#996677",
-  border: "1px solid rgba(220,20,60,0.2)",
+  backgroundColor: "transparent",
+  color: "var(--text-dim)",
+  border: "1px solid var(--border-strong)",
 }
 
 const DISABLED_STYLE = {
-  backgroundColor: "#10000a",
-  color: "#553344",
-  border: "1px solid rgba(220,20,60,0.1)",
+  backgroundColor: "transparent",
+  color: "var(--text-faint)",
+  border: "1px solid var(--border)",
   opacity: 0.5,
 }
 
@@ -80,22 +80,22 @@ export function TaskSortSheet({
       <div
         className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
         style={{
-          backgroundColor: "#1a0011",
-          borderTop: "1px solid rgba(220,20,60,0.5)",
-          boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
+          backgroundColor: "var(--surface)",
+          borderTop: "1px solid var(--border-strong)",
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
         }}
       >
         <button onClick={onClose} className="w-full flex justify-center pb-2 -mt-1" aria-label="閉じる">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
-        <h2 className="text-sm text-[#dc143c] tracking-widest uppercase mb-5 cyber-glow-text-sm">
+        <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-5 accent-glow-text-sm">
           ✦ Sort By
         </h2>
 
         <div className="flex flex-col gap-5">
           <div>
-            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">並び替え</p>
+            <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">並び替え</p>
             <div className="flex flex-wrap gap-2">
               {KEY_OPTIONS.map((opt) => {
                 const active = draft.key === opt.value
@@ -106,7 +106,7 @@ export function TaskSortSheet({
                     data-testid={`sort-key-${opt.value}`}
                     aria-pressed={active}
                     onClick={() => setKey(opt.value)}
-                    className="px-3 py-2 rounded-full text-xs transition-all"
+                    className="font-pixel px-3 py-2 rounded-full text-xs transition-colors"
                     style={active ? ACTIVE_STYLE : INACTIVE_STYLE}
                   >
                     {opt.label}
@@ -117,7 +117,7 @@ export function TaskSortSheet({
           </div>
 
           <div>
-            <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">方向</p>
+            <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">方向</p>
             <div className="flex flex-wrap gap-2">
               {DIR_OPTIONS.map((opt) => {
                 const active = !directionDisabled && draft.direction === opt.value
@@ -134,7 +134,7 @@ export function TaskSortSheet({
                     aria-pressed={active}
                     disabled={directionDisabled}
                     onClick={() => setDirection(opt.value)}
-                    className="px-3 py-2 rounded-full text-xs transition-all"
+                    className="font-pixel px-3 py-2 rounded-full text-xs transition-colors"
                     style={style}
                   >
                     {opt.label}
@@ -149,19 +149,19 @@ export function TaskSortSheet({
           <button
             type="button"
             onClick={handleReset}
-            className="flex-1 rounded-xl py-3 text-xs text-[#996677] hover:text-[#ffbbcc] transition-colors tracking-widest uppercase"
-            style={{ border: "1px solid rgba(220,20,60,0.25)" }}
+            className="font-pixel flex-1 rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors tracking-widest uppercase"
+            style={{ border: "1px solid var(--border-strong)" }}
           >
             リセット
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="flex-[2] rounded-xl py-3 text-sm tracking-widest uppercase"
+            className="font-pixel flex-[2] rounded-lg py-3 text-sm tracking-widest uppercase font-semibold"
             style={{
-              backgroundColor: "#dc143c",
-              color: "#10000a",
-              boxShadow: "0 0 12px rgba(220,20,60,0.5), 0 0 30px rgba(220,20,60,0.2)",
+              backgroundColor: "var(--accent)",
+              color: "var(--bg)",
+              boxShadow: "0 0 8px rgba(220,20,60,0.4)",
             }}
           >
             適用

@@ -25,7 +25,15 @@ export async function waitForHydration(page: Page) {
   )
 }
 
+// SW のインストールを抑止して、更新バナーがテスト中に「適用」ボタン等を
+// インターセプトする flaky を排除する（pwa.spec.ts は本ヘルパー非経由で
+// 直接 page.goto しているため影響しない）。
+export async function disableServiceWorker(page: Page) {
+  await page.route("**/sw.js", (route) => route.fulfill({ status: 404, body: "" }))
+}
+
 export async function resetAndOpenHome(page: Page) {
+  await disableServiceWorker(page)
   await setDefaultCookies(page.context())
   await resetMockStore(page)
   await page.goto("/")
