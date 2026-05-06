@@ -3,7 +3,7 @@ import { auth, signOut } from "@/auth"
 import { getTasks, getTagOptions } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
-import { getQueryStatuses, parseAdvancedFilter } from "@/constants/filters"
+import { parseAdvancedFilter } from "@/constants/filters"
 import { parseSortConfig } from "@/lib/task-sort"
 
 export default async function Page({
@@ -12,7 +12,6 @@ export default async function Page({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const cookieStore = await cookies()
-  const filter = cookieStore.get("filter")?.value ?? "active"
   const advancedRaw = cookieStore.get("filter_advanced")?.value
   let advancedFilter
   try {
@@ -32,7 +31,7 @@ export default async function Page({
 
   const [session, tasks, tagOptions] = await Promise.all([
     auth(),
-    getTasks({ statuses: getQueryStatuses(filter) }),
+    getTasks(),
     getTagOptions(),
   ])
 
@@ -58,7 +57,7 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} tagOptions={tagOptions} currentFilter={filter} initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
+      <TaskManager tasks={tasks} tagOptions={tagOptions} initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
     </div>
   )
 }

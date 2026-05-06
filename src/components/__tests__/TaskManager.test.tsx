@@ -1,22 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, fireEvent, act, waitFor, within } from "@testing-library/react"
+import { render, screen, fireEvent, within } from "@testing-library/react"
 import { TaskManager } from "@/components/TaskManager"
-import { FILTERS } from "@/constants/filters"
 import { DEFAULT_SORT } from "@/lib/task-sort"
 import type { Task } from "@/types/task"
 
 vi.mock("@/app/actions", () => ({
-  setFilterAction: vi.fn().mockResolvedValue(undefined),
   setAdvancedFilterAction: vi.fn().mockResolvedValue(undefined),
   setSortAction: vi.fn().mockResolvedValue(undefined),
   refreshTasksAction: vi.fn().mockResolvedValue(undefined),
-  fetchTasksByFilterAction: vi.fn().mockResolvedValue([]),
 }))
 
-// TaskItem / TaskCreate は描画内容ではなくフィルター論理をテストするため簡略化
+// TaskItem は描画内容ではなくボード分配ロジックを検証するため簡略化
 vi.mock("@/components/TaskItem", () => ({
   TaskItem: ({ task }: { task: Task }) => (
-    <div data-testid="task-item" data-task-id={task.id}>
+    <div data-testid="task-item" data-task-id={task.id} data-status={task.status ?? ""}>
       {task.title}
     </div>
   ),
@@ -54,250 +51,65 @@ const tasks: Task[] = [
   makeTask({ id: "3", title: "確認中タスク",   status: "確認中" }),
   makeTask({ id: "4", title: "一時中断タスク", status: "一時中断" }),
   makeTask({ id: "5", title: "完了タスク",     status: "完了" }),
+  makeTask({ id: "6", title: "中止タスク",     status: "中止" }),
 ]
 
-// 隣パネルのプリフェッチが正しい絞り込み結果を返すスマートモック
-async function setupSmartFetchMock() {
-  const { fetchTasksByFilterAction } = await import("@/app/actions")
-  vi.mocked(fetchTasksByFilterAction).mockImplementation(async (filterKey: string) => {
-    const filter = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
-    return filter.statuses
-      ? tasks.filter((t) => t.status && filter.statuses!.includes(t.status))
-      : tasks
-  })
-}
+const NONE = { tags: [], dueDate: "any" as const, priorities: [] }
 
-// 中央パネル（現在フィルター）のみを対象にするヘルパー
-function getCenterPanel() {
-  return document.querySelector('[data-testid="panel-center"]') as HTMLElement
-}
-
-beforeEach(async () => {
+beforeEach(() => {
   vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => { cb(0); return 0 })
   vi.stubGlobal("cancelAnimationFrame", () => {})
-  await setupSmartFetchMock()
 })
 
 afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe("TaskManager フィルター", () => {
-  it("active フィルターは進行中・未着手のみを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
-    expect(within(panel).queryByText("一時中断タスク")).not.toBeInTheDocument()
-    expect(within(panel).queryByText("完了タスク")).not.toBeInTheDocument()
-  })
-
-  it("todo フィルターは未着手のみを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="todo" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
-  })
-
-  it("doing フィルターは進行中のみを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="doing" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("未着手タスク")).not.toBeInTheDocument()
-  })
-
-  it("review フィルターは確認中のみを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="review" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("確認中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
-  })
-
-  it("paused フィルターは一時中断のみを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="paused" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("一時中断タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
-  })
-
-  it("all フィルターはすべてのタスクを表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
-    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
-  })
-
-  it("不明なフィルターキーは active にフォールバックする", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="unknown-key" />)
-    const panel = getCenterPanel()
-    // active = 進行中・未着手
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("完了タスク")).not.toBeInTheDocument()
-  })
-
-  it("タスク数を表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
-    expect(within(getCenterPanel()).getByText("5 TASKS")).toBeInTheDocument()
-  })
-
-  it("フィルターに一致するタスクがない場合「タスクがありません」を表示する", () => {
-    const noTasks = [makeTask({ status: "完了" })]
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={noTasks} currentFilter="todo" />)
-    expect(within(getCenterPanel()).getByText("— NO TASKS —")).toBeInTheDocument()
-  })
-
-  it("status が null のタスクは any ステータスフィルターにマッチしない", () => {
-    const nullStatusTasks = [makeTask({ id: "n1", title: "ステータス不明", status: null })]
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={nullStatusTasks} currentFilter="active" />)
-    expect(within(getCenterPanel()).queryByText("ステータス不明")).not.toBeInTheDocument()
-  })
-})
-
-// ─── スワイプテスト用ヘルパー ─────────────────────────────────────────────
-
-function swipe(el: HTMLElement, dx: number, dy = 0) {
-  fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }] })
-  fireEvent.touchMove(el, { touches: [{ clientX: dx / 2, clientY: dy / 2 }] })
-  fireEvent.touchEnd(el, { changedTouches: [{ clientX: dx, clientY: dy }] })
+function getColumn(status: string) {
+  return document.querySelector(`[data-testid='board-column'][data-status='${status}']`) as HTMLElement
 }
 
-function getMain() {
-  return document.querySelector("[data-testid='task-list-main']") as HTMLElement
-}
-
-describe("スワイプフィルター切り替え", () => {
-  // commitSwipe 内の setTimeout(150) を制御するため fake timers を使用
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ["setTimeout"] })
-  })
-  afterEach(() => {
-    vi.useRealTimers()
+describe("TaskManager ボード", () => {
+  it("ボード全6カラムが描画される", () => {
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
+    const expected = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
+    expected.forEach((status) => {
+      expect(getColumn(status)).toBeInTheDocument()
+    })
   })
 
-  it("左スワイプ 80px で active(0番) → todo(1番) に変わる", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    act(() => { swipe(getMain(), -80) })
-    await act(async () => { vi.runAllTimers() })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
+  it("各タスクは status と一致するカラム内にだけ並ぶ", () => {
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
+    expect(within(getColumn("未着手")).getByText("未着手タスク")).toBeInTheDocument()
+    expect(within(getColumn("進行中")).getByText("進行中タスク")).toBeInTheDocument()
+    expect(within(getColumn("完了")).getByText("完了タスク")).toBeInTheDocument()
+    expect(within(getColumn("未着手")).queryByText("進行中タスク")).not.toBeInTheDocument()
+    expect(within(getColumn("完了")).queryByText("中止タスク")).not.toBeInTheDocument()
   })
 
-  it("右スワイプ 80px で todo(1番) → active(0番) に戻る", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="todo" />)
-    act(() => { swipe(getMain(), 80) })
-    await act(async () => { vi.runAllTimers() })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
+  it("status が null のタスクはどのカラムにも入らない", () => {
+    const withNull = [...tasks, makeTask({ id: "n1", title: "ステータス不明", status: null })]
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={withNull} />
+    )
+    expect(screen.queryByText("ステータス不明")).not.toBeInTheDocument()
   })
 
-  it("左スワイプ @ all(末尾) → active(先頭) に循環する", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
-    act(() => { swipe(getMain(), -80) })
-    await act(async () => { vi.runAllTimers() })
-    const panel = getCenterPanel()
-    // active: 未着手・進行中のみ
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
-  })
-
-  it("右スワイプ @ active(先頭) → all(末尾) に循環する", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    act(() => { swipe(getMain(), 80) })
-    await act(async () => { vi.runAllTimers() })
-    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
-  })
-
-  it("50px スワイプ（閾値未満）ではフィルターが変わらない", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    act(() => { swipe(getMain(), -50) })
-    await act(async () => { vi.runAllTimers() })
-    const panel = getCenterPanel()
-    // active のまま: 進行中が表示される
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
-  })
-
-  it("縦スワイプ (dx=30, dy=200) ではフィルターが変わらない", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    vi.mocked(refreshTasksAction).mockClear()
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    // 中央パネルがスクロール中（scrollTop>0）の状態でテスト：プルも発動せず、フィルター変更も起きない
-    setCenterPanelScrollTop(100)
-    act(() => { swipe(getMain(), 30, 200) })
-    await act(async () => { vi.runAllTimers() })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
-    expect(refreshTasksAction).not.toHaveBeenCalled()
-  })
-})
-
-function setCenterPanelScrollTop(value: number) {
-  Object.defineProperty(getCenterPanel(), "scrollTop", { value, configurable: true, writable: true })
-}
-
-// プル・トゥ・リフレッシュ用：touchMove で full dy を送る（共通 swipe ヘルパーは中間値のみ送るため）
-function pullGesture(el: HTMLElement, dx: number, dy: number) {
-  fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }] })
-  fireEvent.touchMove(el, { touches: [{ clientX: dx, clientY: dy }] })
-  fireEvent.touchEnd(el, { changedTouches: [{ clientX: dx, clientY: dy }] })
-}
-
-describe("プル・トゥ・リフレッシュ", () => {
-  beforeEach(async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    vi.mocked(refreshTasksAction).mockClear()
-  })
-
-  it("中央パネル最上部から下方向 200px ドラッグで refreshTasksAction が呼ばれる", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    setCenterPanelScrollTop(0)
-    act(() => { pullGesture(getMain(), 0, 200) })
-    await waitFor(() => expect(refreshTasksAction).toHaveBeenCalledTimes(1))
-  })
-
-  it("中央パネルがスクロール済み（scrollTop>0）の場合は呼ばれない", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    setCenterPanelScrollTop(100)
-    act(() => { pullGesture(getMain(), 0, 200) })
-    await new Promise((r) => setTimeout(r, 0))
-    expect(refreshTasksAction).not.toHaveBeenCalled()
-  })
-
-  it("閾値未満（dy=120、damped=60 < 64）では呼ばれない", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    setCenterPanelScrollTop(0)
-    act(() => { pullGesture(getMain(), 0, 120) })
-    await new Promise((r) => setTimeout(r, 0))
-    expect(refreshTasksAction).not.toHaveBeenCalled()
-  })
-
-  it("水平方向が支配的（dx=200, dy=20）なら pull は発動しない", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    setCenterPanelScrollTop(0)
-    act(() => { pullGesture(getMain(), 200, 20) })
-    await new Promise((r) => setTimeout(r, 0))
-    expect(refreshTasksAction).not.toHaveBeenCalled()
-  })
-
-  it("詳細ビューが開いている時は呼ばれない", async () => {
-    const { refreshTasksAction } = await import("@/app/actions")
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" initialTaskId="1" />)
-    setCenterPanelScrollTop(0)
-    act(() => { pullGesture(getMain(), 0, 200) })
-    await new Promise((r) => setTimeout(r, 0))
-    expect(refreshTasksAction).not.toHaveBeenCalled()
-  })
-
-  it("プルインジケーターが DOM に存在する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    expect(document.querySelector("[data-testid='pull-indicator']")).toBeInTheDocument()
+  it("各カラムヘッダにそのカラムの件数が出る", () => {
+    const repeat = [
+      makeTask({ id: "a", title: "A", status: "未着手" }),
+      makeTask({ id: "b", title: "B", status: "未着手" }),
+      makeTask({ id: "c", title: "C", status: "進行中" }),
+    ]
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={repeat} />
+    )
+    expect(within(getColumn("未着手")).getByText("2")).toBeInTheDocument()
+    expect(within(getColumn("進行中")).getByText("1")).toBeInTheDocument()
   })
 })
 
@@ -306,14 +118,13 @@ function getSearchInput() {
 }
 
 describe("インクリメンタルサーチ", () => {
-  it("タイトル部分一致で絞り込まれる", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
+  it("タイトル部分一致で全カラムから絞り込まれる", () => {
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
     fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("未着手タスク")).not.toBeInTheDocument()
-    expect(within(panel).queryByText("確認中タスク")).not.toBeInTheDocument()
-    expect(within(panel).getByText("1 TASKS")).toBeInTheDocument()
+    expect(within(getColumn("進行中")).getByText("進行中タスク")).toBeInTheDocument()
+    expect(within(getColumn("未着手")).queryByText("未着手タスク")).not.toBeInTheDocument()
   })
 
   it("大文字小文字を無視して検索する", () => {
@@ -321,121 +132,77 @@ describe("インクリメンタルサーチ", () => {
       makeTask({ id: "e1", title: "Refactor API", status: "進行中" }),
       makeTask({ id: "e2", title: "Write Tests", status: "未着手" }),
     ]
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={englishTasks} currentFilter="all" />)
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={englishTasks} />
+    )
     fireEvent.change(getSearchInput(), { target: { value: "refactor" } })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("Refactor API")).toBeInTheDocument()
-    expect(within(panel).queryByText("Write Tests")).not.toBeInTheDocument()
+    expect(within(getColumn("進行中")).getByText("Refactor API")).toBeInTheDocument()
+    expect(within(getColumn("未着手")).queryByText("Write Tests")).not.toBeInTheDocument()
   })
 
-  it("空入力で全件に戻る", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
-    const input = getSearchInput()
-    fireEvent.change(input, { target: { value: "進行中" } })
-    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
-    fireEvent.change(input, { target: { value: "" } })
-    expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
-  })
-
-  it("マッチが無いとき NO MATCH を表示する", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
+  it("マッチが無いカラムは NO MATCH を表示する", () => {
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
     fireEvent.change(getSearchInput(), { target: { value: "存在しない文字列" } })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("— NO MATCH —")).toBeInTheDocument()
-    expect(within(panel).queryByText("— NO TASKS —")).not.toBeInTheDocument()
-  })
-
-  it("status フィルターと AND で組み合わさる", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="todo" />)
-    fireEvent.change(getSearchInput(), { target: { value: "タスク" } })
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(panel).queryByText("進行中タスク")).not.toBeInTheDocument()
-  })
-
-  it("swipe してフィルターが変わってもクエリは保持される", async () => {
-    vi.useFakeTimers({ toFake: ["setTimeout"] })
-    try {
-      render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="all" />)
-      fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
-      expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(1)
-
-      // 右スワイプ: all(末尾) → paused(一時中断)。"進行中" は一時中断タスクにマッチせず NO MATCH。
-      act(() => { swipe(getMain(), 80) })
-      await act(async () => { vi.runAllTimers() })
-
-      expect(getSearchInput().value).toBe("進行中")
-      expect(within(getCenterPanel()).getByText("— NO MATCH —")).toBeInTheDocument()
-    } finally {
-      vi.useRealTimers()
-    }
+    const matches = screen.getAllByText("— NO MATCH —")
+    expect(matches.length).toBeGreaterThan(0)
   })
 })
 
 describe("ソート", () => {
   const sortableTasks: Task[] = [
-    makeTask({ id: "p1", title: "高",   status: "未着手", priority: "high",   due: "2024-04-01" }),
-    makeTask({ id: "p2", title: "中",   status: "進行中", priority: "medium", due: "2024-02-01" }),
-    makeTask({ id: "p3", title: "低",   status: "未着手", priority: "low",    due: "2024-06-01" }),
+    makeTask({ id: "p1", title: "高", status: "未着手", priority: "high",   due: "2024-04-01" }),
+    makeTask({ id: "p2", title: "中", status: "未着手", priority: "medium", due: "2024-02-01" }),
+    makeTask({ id: "p3", title: "低", status: "未着手", priority: "low",    due: "2024-06-01" }),
   ]
 
   it("ソートボタン押下で TaskSortSheet が開く", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={sortableTasks} currentFilter="active" />)
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={sortableTasks} />
+    )
     expect(screen.queryByTestId("task-sort-sheet")).not.toBeInTheDocument()
     fireEvent.click(screen.getByTestId("sort-button"))
     expect(screen.getByTestId("task-sort-sheet")).toBeInTheDocument()
   })
 
-  it("default の active フィルター（複数ステータス）はステータスヘッダーが表示される", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={sortableTasks} currentFilter="active" />)
-    const panel = getCenterPanel()
-    expect(within(panel).getByText("未着手")).toBeInTheDocument()
-    expect(within(panel).getByText("進行中")).toBeInTheDocument()
-  })
-
-  it("ソート適用時はグルーピングが解除されフラット表示になる", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={{ key: "due", direction: "asc" }} tasks={sortableTasks} currentFilter="active" />)
-    const panel = getCenterPanel()
-    // ステータスヘッダーが消える
-    expect(within(panel).queryByText("未着手")).not.toBeInTheDocument()
-    expect(within(panel).queryByText("進行中")).not.toBeInTheDocument()
-    // 期限昇順: p2 → p1 → p3
-    const items = within(panel).getAllByTestId("task-item")
+  it("期限昇順ソート時はカラム内の並び順が due 昇順になる", () => {
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={{ key: "due", direction: "asc" }} tasks={sortableTasks} />
+    )
+    const items = within(getColumn("未着手")).getAllByTestId("task-item")
     expect(items.map((el) => el.getAttribute("data-task-id"))).toEqual(["p2", "p1", "p3"])
   })
 
   it("ソート active 時に sort-active-dot が表示される", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={{ key: "priority", direction: "desc" }} tasks={sortableTasks} currentFilter="all" />)
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={{ key: "priority", direction: "desc" }} tasks={sortableTasks} />
+    )
     expect(screen.getByTestId("sort-active-dot")).toBeInTheDocument()
   })
 
   it("default ソート時は sort-active-dot が表示されない", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={sortableTasks} currentFilter="all" />)
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={sortableTasks} />
+    )
     expect(screen.queryByTestId("sort-active-dot")).not.toBeInTheDocument()
   })
 })
 
-describe("ページネーションドット", () => {
-  it("FILTERS の数だけドットが表示される", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    expect(screen.getAllByRole("tab")).toHaveLength(FILTERS.length)
+describe("フィルタ", () => {
+  it("フィルタボタン押下で TaskFilterSheet が開く", () => {
+    render(
+      <TaskManager tagOptions={["Tech"]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
+    expect(screen.queryByTestId("task-filter-sheet")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId("filter-button"))
+    expect(screen.getByTestId("task-filter-sheet")).toBeInTheDocument()
   })
 
-  it("現在フィルターのドットが aria-selected=true、他は false", () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="review" />)
-    const dots = screen.getAllByRole("tab")
-    const activeIdx = FILTERS.findIndex((f) => f.key === "review")
-    dots.forEach((dot, i) => {
-      expect(dot.getAttribute("aria-selected")).toBe(i === activeIdx ? "true" : "false")
-    })
-  })
-
-  it("ドットをクリックするとフィルターが変わる", async () => {
-    render(<TaskManager tagOptions={[]} initialAdvancedFilter={{ tags: [], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} currentFilter="active" />)
-    const allDot = screen.getByRole("tab", { name: "すべて" })
-    await act(async () => { fireEvent.click(allDot) })
-    await waitFor(() => {
-      expect(within(getCenterPanel()).getAllByTestId("task-item")).toHaveLength(5)
-    })
+  it("active な advanced filter があると filter-active-dot が出る", () => {
+    render(
+      <TaskManager tagOptions={["Tech"]} initialAdvancedFilter={{ tags: ["Tech"], dueDate: "any", priorities: [] }} initialSort={DEFAULT_SORT} tasks={tasks} />
+    )
+    expect(screen.getByTestId("filter-active-dot")).toBeInTheDocument()
   })
 })
