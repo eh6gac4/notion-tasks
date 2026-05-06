@@ -19,7 +19,7 @@ export default function Loading() {
 
       <div className="flex-1 overflow-hidden flex divide-x divide-[var(--border)]">
         {[...Array(3)].map((_, col) => (
-          <div key={col} className="w-[320px] flex-shrink-0 flex flex-col">
+          <div key={col} className="w-[360px] flex-shrink-0 flex flex-col">
             <div className="px-3 py-3 border-b border-[var(--border)] flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-2)]" />
               <div className="h-3 w-16 bg-[var(--surface-2)] rounded animate-pulse" />
