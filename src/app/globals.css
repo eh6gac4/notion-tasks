@@ -46,8 +46,7 @@
 body {
   color: var(--text);
   background-color: var(--bg);
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
-  font-feature-settings: "palt";
+  font-family: var(--font-dot-gothic), ui-monospace, "Courier New", monospace;
 }
 
 /* グロー系ユーティリティ — 局所適用前提に強度を抑制 */

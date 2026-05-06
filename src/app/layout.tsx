@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className="h-full antialiased">
+      <body className={`h-full antialiased ${dotGothic.className}`}>
         {/* キーフレームをインライン定義してCSSファイル読み込み前からアニメーションを有効化 */}
         {/* eslint-disable-next-line react/no-danger */}
         <style dangerouslySetInnerHTML={{ __html: "@keyframes _ss{to{transform:rotate(360deg)}}" }} />
