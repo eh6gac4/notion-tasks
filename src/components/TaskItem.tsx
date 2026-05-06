@@ -6,8 +6,9 @@ import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, PRIORITY_STYLES } from "@/constants/styles"
 import { formatDueShort, isOverdue } from "@/lib/due-date"
 
-// ボード上の1カード。カラム自体が現ステータスを示すため status badge は出さず、
-// ⋮ ボタン上に透明な select を被せて「タップで他カラムへ移動」を成立させる。
+// ボード上の1カード。カラム自体が現ステータスを示すが、status pill + ▾ を
+// カード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンス
+// を持たせる。pill 全体に透明 select を被せ、ネイティブのドロップダウンを開く。
 export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
@@ -32,20 +33,17 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
         >
           {task.title}
         </p>
-        <div className="relative flex-shrink-0 -mt-1 -mr-1">
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label="ステータスを変更"
-            onClick={(e) => e.stopPropagation()}
-            className="w-7 h-7 rounded flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors"
+        <div className="relative flex-shrink-0 -mt-0.5 -mr-1">
+          <span
+            data-testid="task-status-button"
+            aria-hidden="true"
+            className="font-pixel inline-flex items-center gap-1 px-2 py-1 rounded border border-[var(--border-strong)] text-[10px] tracking-wider uppercase text-[var(--text-dim)] bg-[var(--surface-2)] hover:text-[var(--text)] hover:border-[var(--border-accent)] transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="6" r="1" />
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="12" cy="18" r="1" />
+            <span>{status ?? "未着手"}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
             </svg>
-          </button>
+          </span>
           <select
             ref={selectRef}
             defaultValue={status ?? "未着手"}
