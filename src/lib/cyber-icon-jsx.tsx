@@ -10,8 +10,8 @@ export function cyberIconJsx(size: number) {
       style={{
         width: "100%",
         height: "100%",
-        background: "#10000a",
-        backgroundImage: `radial-gradient(circle, rgba(220,20,60,0.25) ${dotRadius}px, transparent ${dotRadius}px)`,
+        background: "#0b0008",
+        backgroundImage: `radial-gradient(circle, rgba(220,20,60,0.22) ${dotRadius}px, transparent ${dotRadius}px)`,
         backgroundSize: `${dotSpacing}px ${dotSpacing}px`,
         display: "flex",
         alignItems: "center",

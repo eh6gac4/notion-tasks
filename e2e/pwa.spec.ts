@@ -8,7 +8,7 @@ test.describe("PWA マニフェスト", () => {
     const manifest = await response.json()
     expect(manifest.display).toBe("standalone")
     expect(manifest.theme_color).toBe("#dc143c")
-    expect(manifest.background_color).toBe("#10000a")
+    expect(manifest.background_color).toBe("#0b0008")
     expect(Array.isArray(manifest.icons)).toBe(true)
     expect(manifest.icons.length).toBeGreaterThan(0)
 

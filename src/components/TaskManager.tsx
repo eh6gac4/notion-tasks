@@ -1,131 +1,25 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef, useMemo } from "react"
+import { useState, useTransition, useEffect, useRef } from "react"
 import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
-import { TaskItem } from "./TaskItem"
+import { TaskBoard } from "./TaskBoard"
 import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
 import { TaskFilterSheet } from "./TaskFilterSheet"
 import { TaskSortSheet } from "./TaskSortSheet"
-import { setFilterAction, setAdvancedFilterAction, setSortAction, refreshTasksAction, fetchTasksByFilterAction } from "@/app/actions"
-import { FILTERS, applyAdvancedFilter, isAdvancedFilterActive } from "@/constants/filters"
-import { groupAndSort, applySort, isSortActive } from "@/lib/task-sort"
-
-// ─── TaskListPanel ─────────────────────────────────────────────────────────────
-
-function TaskSkeleton() {
-  return (
-    <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
-      {[...Array(5)].map((_, i) => (
-        <li key={i} className="px-4 py-4">
-          <div
-            className="h-4 bg-[#2e0010] rounded animate-pulse mb-3"
-            style={{ width: `${60 + (i % 3) * 13}%` }}
-          />
-          <div className="flex gap-2">
-            <div className="h-5 w-14 bg-[#1a0011] rounded-full animate-pulse" />
-            <div className="h-5 w-10 bg-[#1a0011] rounded-full animate-pulse" />
-          </div>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function TaskListPanel({
-  filterKey,
-  tasks,
-  searchQuery,
-  advancedFilter,
-  sort,
-  onSelect,
-}: {
-  filterKey: string
-  tasks: Task[] | undefined
-  searchQuery: string
-  advancedFilter: AdvancedFilter
-  sort: SortConfig
-  onSelect: (id: string) => void
-}) {
-  const current = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0]
-  const q = searchQuery.trim().toLowerCase()
-
-  const filtered = useMemo(() => {
-    const byStatus = current.statuses
-      ? (tasks ?? []).filter((t) => t.status && current.statuses!.includes(t.status))
-      : (tasks ?? [])
-    const byAdvanced = applyAdvancedFilter(byStatus, advancedFilter)
-    return q === "" ? byAdvanced : byAdvanced.filter((t) => t.title.toLowerCase().includes(q))
-  }, [tasks, current.statuses, q, advancedFilter])
-
-  const sortActive = isSortActive(sort)
-  const isGrouped = !sortActive && (!current.statuses || current.statuses.length > 1)
-  const groups = isGrouped ? groupAndSort(filtered) : null
-  const sortedFlat = !isGrouped ? applySort(filtered, sort) : null
-
-  if (tasks === undefined) return <TaskSkeleton />
-
-  if (filtered.length === 0) {
-    return (
-      <p className="text-center text-[#553344] text-xs py-20 tracking-widest">
-        {q !== "" ? "— NO MATCH —" : "— NO TASKS —"}
-      </p>
-    )
-  }
-
-  return (
-    <>
-      {isGrouped ? (
-        groups!.map(({ status, tasks: groupTasks }) => (
-          <section key={status}>
-            <div className="px-4 py-2 flex items-center gap-2 border-b border-[rgba(220,20,60,0.15)] sticky top-0 bg-[#10000a] z-10">
-              <span className="text-[10px] tracking-[0.2em] text-[#aa6677]">{status}</span>
-              <span className="text-[10px] text-[#553344]">{groupTasks.length}</span>
-            </div>
-            <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
-              {groupTasks.map((task) => (
-                <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
-              ))}
-            </ul>
-          </section>
-        ))
-      ) : (
-        <ul className="divide-y divide-[rgba(220,20,60,0.1)]">
-          {sortedFlat!.map((task) => (
-            <li key={task.id}><TaskItem task={task} onSelect={onSelect} /></li>
-          ))}
-        </ul>
-      )}
-      <p className="text-center text-xs text-[#553344] py-4 pb-24 tracking-widest">
-        {filtered.length} TASKS
-      </p>
-    </>
-  )
-}
-
-// ─── TaskManager ───────────────────────────────────────────────────────────────
-
-const N = FILTERS.length
-
-function getPanelKeys(idx: number) {
-  return {
-    left:   FILTERS[(idx - 1 + N) % N].key,
-    center: FILTERS[idx].key,
-    right:  FILTERS[(idx + 1) % N].key,
-  }
-}
+import { setAdvancedFilterAction, setSortAction, refreshTasksAction } from "@/app/actions"
+import { isAdvancedFilterActive } from "@/constants/filters"
+import { isSortActive } from "@/lib/task-sort"
 
 export function TaskManager({
   tasks,
   tagOptions,
-  currentFilter,
   initialAdvancedFilter,
   initialSort,
   initialTaskId,
 }: {
   tasks: Task[]
   tagOptions: string[]
-  currentFilter: string
   initialAdvancedFilter: AdvancedFilter
   initialSort: SortConfig
   initialTaskId?: string | null
@@ -139,8 +33,11 @@ export function TaskManager({
   const [sort, setSort] = useState<SortConfig>(initialSort)
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
+  const [searchQuery, setSearchQuery] = useState("")
   const advancedActive = isAdvancedFilterActive(advancedFilter)
   const sortActive = isSortActive(sort)
+
   const [isPending, startTransition] = useTransition()
   const [completingBar, setCompletingBar] = useState(false)
   const prevIsPendingRef = useRef(isPending)
@@ -148,77 +45,17 @@ export function TaskManager({
     if (prevIsPendingRef.current && !isPending) {
       setCompletingBar(true)
       const timer = setTimeout(() => setCompletingBar(false), 400)
-      const ind = pullIndicatorRef.current
-      if (ind) {
-        ind.style.transition = "transform 250ms ease-out, opacity 250ms ease-out"
-        ind.style.transform = "translate(-50%, 0)"
-        ind.style.opacity = "0"
-        ind.dataset.ready = "false"
-      }
       return () => clearTimeout(timer)
     }
     prevIsPendingRef.current = isPending
   }, [isPending])
 
-  const initialIndex = Math.max(0, FILTERS.findIndex((f) => f.key === currentFilter))
-  const initialKey = FILTERS[initialIndex].key
-  const [centerIndex, setCenterIndex] = useState(initialIndex)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
-  const [searchQuery, setSearchQuery] = useState("")
-
-  // Task cache: filterKey → Task[]
-  const [taskCache, setTaskCache] = useState<Map<string, Task[]>>(
-    () => new Map([[initialKey, tasks]])
-  )
-
-  // When server delivers fresh tasks, sync to the matching filter key
-  useEffect(() => {
-    const key = FILTERS.find((f) => f.key === currentFilter)?.key ?? FILTERS[0].key
-    setTaskCache((prev) => new Map(prev).set(key, tasks))
-  }, [tasks, currentFilter])
-
-  // Pre-fetch adjacent panels when centerIndex changes
-  const taskCacheRef = useRef(taskCache)
-  useEffect(() => { taskCacheRef.current = taskCache }, [taskCache])
-
-  useEffect(() => {
-    const { left, right } = getPanelKeys(centerIndex)
-    for (const key of [left, right]) {
-      if (!taskCacheRef.current.has(key)) {
-        fetchTasksByFilterAction(key).then((data) => {
-          setTaskCache((prev) => new Map(prev).set(key, data))
-        })
-      }
-    }
-  }, [centerIndex])
-
-  // Selected task: search across all cached tasks
-  const selectedTask = selectedTaskId
-    ? [...taskCache.values()].flat().find((t) => t.id === selectedTaskId) ?? null
-    : null
-
-  // ─── Carousel refs ────────────────────────────────────────────────────────
-  const mainRef = useRef<HTMLElement>(null)
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef(0)
-  const isAnimatingRef = useRef(false)
-
-  const centerIndexRef = useRef(centerIndex)
-  const selectedTaskIdRef = useRef<string | null>(selectedTaskId)
-  const isPendingRef = useRef(false)
-
-  // ─── Pull-to-refresh refs ─────────────────────────────────────────────────
-  const centerPanelRef = useRef<HTMLDivElement>(null)
-  const pullIndicatorRef = useRef<HTMLDivElement>(null)
-  const pullDistanceRef = useRef(0)
-  const isPullingRef = useRef(false)
-  const startScrollTopRef = useRef(0)
-
-  useEffect(() => { centerIndexRef.current = centerIndex }, [centerIndex])
-  useEffect(() => { selectedTaskIdRef.current = selectedTaskId }, [selectedTaskId])
-  useEffect(() => { isPendingRef.current = isPending }, [isPending])
+  // 選択中タスクは現在の tasks から検索
+  const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null
 
   // ─── Refresh on visibility change ─────────────────────────────────────────
+  const isPendingRef = useRef(false)
+  useEffect(() => { isPendingRef.current = isPending }, [isPending])
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState !== "visible") return
@@ -229,174 +66,6 @@ export function TaskManager({
     return () => document.removeEventListener("visibilitychange", onVisible)
   }, [])
 
-  // ─── Swipe gesture ────────────────────────────────────────────────────────
-  useEffect(() => {
-    const el = mainRef.current
-    if (!el) return
-    const THRESHOLD = 60
-    const LOCK_DIST = 8
-    const PULL_THRESHOLD = 64
-    const PULL_LOCK_POSITION = 48
-    const PULL_DAMPING = 0.5
-
-    const touchStartXRef = { current: 0 }
-    const touchStartYRef = { current: 0 }
-    const directionRef = { current: null as "horiz" | "vert" | "pull" | null }
-
-    function onStart(e: TouchEvent) {
-      isPullingRef.current = false
-      pullDistanceRef.current = 0
-      startScrollTopRef.current = centerPanelRef.current?.scrollTop ?? 0
-      if (e.touches.length > 1) { directionRef.current = "vert"; return }
-      if (isAnimatingRef.current) return
-      touchStartXRef.current = e.touches[0].clientX
-      touchStartYRef.current = e.touches[0].clientY
-      directionRef.current = null
-    }
-
-    function onMove(e: TouchEvent) {
-      if (isAnimatingRef.current) return
-      const dx = e.touches[0].clientX - touchStartXRef.current
-      const dy = e.touches[0].clientY - touchStartYRef.current
-
-      if (directionRef.current === null) {
-        if (Math.hypot(dx, dy) < LOCK_DIST) return
-        directionRef.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert"
-      }
-
-      // vert 確定後、最上部から下方向にドラッグなら pull に昇格
-      if (directionRef.current === "vert") {
-        if (
-          e.touches.length === 1 &&
-          dy > 0 &&
-          startScrollTopRef.current === 0 &&
-          !isPendingRef.current &&
-          selectedTaskIdRef.current === null
-        ) {
-          directionRef.current = "pull"
-        } else {
-          return  // 通常の縦スクロールに任せる
-        }
-      }
-
-      if (directionRef.current === "pull") {
-        e.preventDefault()
-        const damped = Math.max(0, dy) * PULL_DAMPING
-        pullDistanceRef.current = damped
-        isPullingRef.current = true
-
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = requestAnimationFrame(() => {
-          const ind = pullIndicatorRef.current
-          if (!ind) return
-          ind.style.transition = "none"
-          ind.style.transform = `translate(-50%, ${damped}px)`
-          ind.style.opacity = String(Math.min(1, damped / 30))
-          ind.dataset.ready = damped >= PULL_THRESHOLD ? "true" : "false"
-        })
-        return
-      }
-
-      if (directionRef.current !== "horiz") return
-
-      e.preventDefault()
-
-      cancelAnimationFrame(rafRef.current)
-      const capture = dx
-      rafRef.current = requestAnimationFrame(() => {
-        if (wrapperRef.current) {
-          wrapperRef.current.style.transition = "none"
-          wrapperRef.current.style.transform = `translateX(calc(-33.333% + ${capture}px))`
-        }
-      })
-    }
-
-    function animatePullIndicator(targetY: number) {
-      const ind = pullIndicatorRef.current
-      if (!ind) return
-      ind.style.transition = "transform 200ms ease-out, opacity 200ms ease-out"
-      ind.style.transform = `translate(-50%, ${targetY}px)`
-      ind.style.opacity = targetY > 0 ? "1" : "0"
-    }
-
-    function onEnd(e: TouchEvent) {
-      cancelAnimationFrame(rafRef.current)
-
-      if (directionRef.current === "pull") {
-        const damped = pullDistanceRef.current
-        isPullingRef.current = false
-        pullDistanceRef.current = 0
-        if (damped >= PULL_THRESHOLD) {
-          animatePullIndicator(PULL_LOCK_POSITION)
-          startTransition(async () => { await refreshTasksAction() })
-        } else {
-          animatePullIndicator(0)
-        }
-        return
-      }
-
-      if (directionRef.current !== "horiz") return
-      if (selectedTaskIdRef.current !== null) return
-      if (isPendingRef.current) return
-      if (isAnimatingRef.current) return
-
-      const dx = e.changedTouches[0].clientX - touchStartXRef.current
-
-      if (Math.abs(dx) < THRESHOLD) {
-        snapBack()
-        return
-      }
-
-      const cur = centerIndexRef.current
-      if (dx < 0) {
-        commitSwipe((cur + 1) % N, "left")
-      } else {
-        commitSwipe((cur - 1 + N) % N, "right")
-      }
-    }
-
-    function snapBack() {
-      if (!wrapperRef.current) return
-      wrapperRef.current.style.transition = "transform 200ms ease-out"
-      wrapperRef.current.style.transform = "translateX(-33.333%)"
-    }
-
-    function commitSwipe(nextIndex: number, dir: "left" | "right") {
-      const wrapper = wrapperRef.current
-      if (!wrapper) return
-      isAnimatingRef.current = true
-
-      const exitX = dir === "left" ? "-66.666%" : "0%"
-      wrapper.style.transition = "transform 150ms ease-in"
-      wrapper.style.transform = `translateX(${exitX})`
-
-      setTimeout(() => {
-        const nextKey = FILTERS[nextIndex].key
-        setCenterIndex(nextIndex)
-        startTransition(async () => { await setFilterAction(nextKey) })
-
-        requestAnimationFrame(() => {
-          if (!wrapperRef.current) return
-          wrapperRef.current.style.transition = "none"
-          wrapperRef.current.style.transform = "translateX(-33.333%)"
-          setTimeout(() => { isAnimatingRef.current = false }, 50)
-        })
-      }, 150)
-    }
-
-    el.addEventListener("touchstart", onStart, { passive: true })
-    el.addEventListener("touchmove", onMove, { passive: false })
-    el.addEventListener("touchend", onEnd, { passive: true })
-    return () => {
-      cancelAnimationFrame(rafRef.current)
-      el.removeEventListener("touchstart", onStart)
-      el.removeEventListener("touchmove", onMove)
-      el.removeEventListener("touchend", onEnd)
-    }
-  }, [])
-
-  const { left, center, right } = getPanelKeys(centerIndex)
-
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ローディングバー */}
@@ -404,182 +73,84 @@ export function TaskManager({
         className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
         style={{
           width: completingBar ? "100%" : isPending ? "80%" : "0%",
-          boxShadow: "0 0 8px #dc143c",
+          boxShadow: "0 0 6px var(--accent)",
         }}
       />
 
-      <div className="bg-[#10000a] border-b border-[rgba(220,20,60,0.3)] px-4 pt-3 pb-2 flex-shrink-0 flex flex-col gap-2">
-        <div className="flex gap-2">
-          <select
-            data-testid="filter-select"
-            value={FILTERS[centerIndex].key}
-            onChange={(e) => {
-              const next = e.target.value
-              const idx = FILTERS.findIndex((f) => f.key === next)
-              if (idx >= 0) {
-                setCenterIndex(idx)
-                startTransition(async () => { await setFilterAction(next) })
-              }
-            }}
-            className="w-full rounded-xl px-4 py-3 text-sm bg-[#1a0011] text-[#ffbbcc] border border-[rgba(220,20,60,0.3)] focus:outline-none focus:border-[#dc143c]"
-            style={{ transition: "border-color 0.2s" }}
+      {/* Toolbar */}
+      <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 pt-3 pb-3 flex-shrink-0 flex items-center gap-2">
+        <input
+          data-testid="search-input"
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="検索..."
+          aria-label="タスクを検索"
+          className="flex-1 min-w-0 rounded-lg px-4 py-2 text-sm bg-[var(--surface)] text-[var(--text)] placeholder:text-[var(--text-faint)] border border-[var(--border-strong)] focus:outline-none focus:border-[var(--accent)]"
+          style={{ transition: "border-color 0.2s" }}
+        />
+        <button
+          data-testid="filter-button"
+          aria-label="フィルタを開く"
+          onClick={() => setFilterSheetOpen(true)}
+          className="relative flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            {FILTERS.map((f) => (
-              <option key={f.key} value={f.key}>{f.label}</option>
-            ))}
-          </select>
-          <button
-            data-testid="refresh-button"
-            disabled={isPending}
-            onClick={() => startTransition(async () => { await refreshTasksAction() })}
-            className="flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 disabled:opacity-40 transition-colors"
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+          </svg>
+          {advancedActive && (
+            <span
+              data-testid="filter-active-dot"
+              className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 4px rgba(220,20,60,0.6)" }}
+            />
+          )}
+        </button>
+        <button
+          data-testid="sort-button"
+          aria-label="並び替えを開く"
+          onClick={() => setSortSheetOpen(true)}
+          className="relative flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              className={isPending ? "animate-spin-cyber" : ""}
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-              <path d="M8 16H3v5" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex gap-2">
-          <input
-            data-testid="search-input"
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="検索..."
-            aria-label="タスクを検索"
-            className="flex-1 min-w-0 rounded-xl px-4 py-3 text-sm bg-[#1a0011] text-[#ffbbcc] placeholder:text-[#553344] border border-[rgba(220,20,60,0.3)] focus:outline-none focus:border-[#dc143c]"
-            style={{ transition: "border-color 0.2s" }}
-          />
-          <button
-            data-testid="filter-button"
-            aria-label="フィルタを開く"
-            onClick={() => setFilterSheetOpen(true)}
-            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            </svg>
-            {advancedActive && (
-              <span
-                data-testid="filter-active-dot"
-                className="absolute top-1 right-1 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#dc143c", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
-              />
-            )}
-          </button>
-          <button
-            data-testid="sort-button"
-            aria-label="並び替えを開く"
-            onClick={() => setSortSheetOpen(true)}
-            className="relative flex-shrink-0 w-10 self-stretch rounded-xl border border-[rgba(220,20,60,0.3)] bg-[#1a0011] text-[#dc143c] flex items-center justify-center hover:border-[#dc143c] active:scale-95 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M6 12h12" />
-              <path d="M10 18h4" />
-            </svg>
-            {sortActive && (
-              <span
-                data-testid="sort-active-dot"
-                className="absolute top-1 right-1 w-2 h-2 rounded-full"
-                style={{ backgroundColor: "#dc143c", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
-              />
-            )}
-          </button>
-        </div>
-
-        {/* ページネーションドット */}
-        <div className="flex justify-center items-center gap-2">
-          {FILTERS.map((f, i) => {
-            const active = i === centerIndex
-            return (
-              <button
-                key={f.key}
-                role="tab"
-                aria-selected={active}
-                aria-label={f.label}
-                onClick={() => {
-                  if (isAnimatingRef.current) return
-                  setCenterIndex(i)
-                  startTransition(async () => { await setFilterAction(f.key) })
-                }}
-                className={active ? "animate-dot-pulse" : ""}
-                style={{
-                  transition: active
-                    ? "width 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease"
-                    : "width 250ms cubic-bezier(0.4, 0, 0.2, 1), background-color 200ms ease, box-shadow 250ms ease",
-                  width: active ? "20px" : "8px",
-                  height: "8px",
-                  borderRadius: "4px",
-                  backgroundColor: active ? "#dc143c" : "rgba(153,102,119,0.4)",
-                  boxShadow: active ? undefined : "none",
-                }}
-              />
-            )
-          })}
-        </div>
-      </div>
-
-      <main
-        ref={mainRef}
-        data-testid="task-list-main"
-        className="relative flex-1 overflow-hidden"
-      >
-        {/* プルインジケーター */}
-        <div
-          ref={pullIndicatorRef}
-          data-testid="pull-indicator"
-          aria-hidden="true"
-          className="absolute pointer-events-none flex items-center justify-center"
-          style={{
-            top: -32,
-            left: "50%",
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: "#1a0011",
-            border: "1px solid rgba(220,20,60,0.4)",
-            boxShadow: "0 0 8px rgba(220,20,60,0.4)",
-            transform: "translate(-50%, 0)",
-            opacity: 0,
-            zIndex: 20,
-            transition: "transform 200ms ease-out, opacity 200ms ease-out",
-          }}
+            <path d="M3 6h18" />
+            <path d="M6 12h12" />
+            <path d="M10 18h4" />
+          </svg>
+          {sortActive && (
+            <span
+              data-testid="sort-active-dot"
+              className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 4px rgba(220,20,60,0.6)" }}
+            />
+          )}
+        </button>
+        <button
+          data-testid="refresh-button"
+          disabled={isPending}
+          onClick={() => startTransition(async () => { await refreshTasksAction() })}
+          className="flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 disabled:opacity-40 transition-colors"
+          aria-label="再読み込み"
         >
           <svg
             className={isPending ? "animate-spin-cyber" : ""}
@@ -588,7 +159,7 @@ export function TaskManager({
             height="16"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#dc143c"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -598,38 +169,18 @@ export function TaskManager({
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
             <path d="M8 16H3v5" />
           </svg>
-        </div>
+        </button>
+      </div>
 
-        <div
-          ref={wrapperRef}
-          className="flex h-full"
-          style={{ width: "300%", transform: "translateX(-33.333%)", willChange: "transform" }}
-        >
-          {/* 左パネル（前フィルター） */}
-          <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
-            <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={left} tasks={taskCache.get(left)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
-            </div>
-          </div>
-
-          {/* 中央パネル（現在フィルター） */}
-          <div
-            ref={centerPanelRef}
-            data-testid="panel-center"
-            style={{ width: "33.333%", height: "100%", overflowY: "auto", overscrollBehaviorY: "contain" }}
-          >
-            <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={center} tasks={taskCache.get(center)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
-            </div>
-          </div>
-
-          {/* 右パネル（次フィルター） */}
-          <div style={{ width: "33.333%", height: "100%", overflowY: "auto" }}>
-            <div className="max-w-2xl mx-auto">
-              <TaskListPanel filterKey={right} tasks={taskCache.get(right)} searchQuery={searchQuery} advancedFilter={advancedFilter} sort={sort} onSelect={setSelectedTaskId} />
-            </div>
-          </div>
-        </div>
+      {/* Board */}
+      <main data-testid="task-list-main" className="flex-1 overflow-hidden">
+        <TaskBoard
+          tasks={tasks}
+          searchQuery={searchQuery}
+          advancedFilter={advancedFilter}
+          sort={sort}
+          onSelect={setSelectedTaskId}
+        />
       </main>
 
       <TaskCreate tagOptions={tagOptions} />

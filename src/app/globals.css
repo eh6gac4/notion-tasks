@@ -1,24 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  --cyber-bg:           #10000a;
-  --cyber-surface:      #1a0011;
-  --cyber-surface-2:    #2e0010;
-  --cyber-border:       rgba(220, 20, 60, 0.25);
-  --cyber-border-bright: rgba(220, 20, 60, 0.6);
-  --cyber-text:         #ffbbcc;
-  --cyber-text-dim:     #996677;
-  --cyber-text-faint:   #553344;
-  --cyber-accent:       #dc143c;
-  --cyber-accent-dark:  #a01030;
+  /* 背景階層 */
+  --bg:           #0b0008;
+  --surface:      #15090f;
+  --surface-2:   #1f0e15;
+
+  /* テキスト階層 */
+  --text:         #f0e6ea;
+  --text-dim:     #a08a92;
+  --text-faint:   #5a4a52;
+
+  /* 境界（crimson 系で「ネオン発光線が画面を切る」ルック） */
+  --border:        rgba(220, 20, 60, 0.15);
+  --border-strong: rgba(220, 20, 60, 0.35);
+  --border-accent: rgba(220, 20, 60, 0.6);
+
+  /* アクセント (crimson) */
+  --accent:        #dc143c;
+  --accent-soft:   rgba(220, 20, 60, 0.12);
+  --accent-glow:   rgba(220, 20, 60, 0.55);
+  --accent-dark:   #a01030;
+
+  /* セマンティック・ステータス */
+  --status-todo:   #9ca3af;
+  --status-doing:  #dc143c;
+  --status-review: #f59e0b;
+  --status-pause:  #fb7185;
+  --status-done:   #34d399;
+  --status-cancel: #f43f5e;
+
+  /* レガシーエイリアス（残置 — テスト/未置換箇所のため） */
+  --cyber-bg:           var(--bg);
+  --cyber-surface:      var(--surface);
+  --cyber-surface-2:    var(--surface-2);
+  --cyber-border:       var(--border);
+  --cyber-border-bright: var(--border-accent);
+  --cyber-text:         var(--text);
+  --cyber-text-dim:     var(--text-dim);
+  --cyber-text-faint:   var(--text-faint);
+  --cyber-accent:       var(--accent);
+  --cyber-accent-dark:  var(--accent-dark);
 }
 
 body {
-  color: var(--cyber-text);
-  background-color: var(--cyber-bg);
+  color: var(--text);
+  background-color: var(--bg);
+  font-family: var(--font-dot-gothic), ui-monospace, "Courier New", monospace;
 }
 
-/* スキャンライン overlay */
+/* CRT スキャンライン overlay — レトロ CRT 質感を全面に薄く重ねる */
 body::before {
   content: "";
   position: fixed;
@@ -27,44 +58,52 @@ body::before {
     to bottom,
     transparent 0px,
     transparent 3px,
-    rgba(0, 0, 0, 0.08) 3px,
-    rgba(0, 0, 0, 0.08) 4px
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
   );
   pointer-events: none;
   z-index: 9999;
 }
 
-/* グロー系ユーティリティ */
+/* グロー系ユーティリティ — 局所適用前提に強度を抑制 */
 @layer utilities {
-  .cyber-glow {
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.5), 0 0 20px rgba(220, 20, 60, 0.2);
+  .font-pixel {
+    font-family: var(--font-dot-gothic), monospace;
+    letter-spacing: 0.04em;
   }
-  .cyber-glow-sm {
-    box-shadow: 0 0 5px rgba(220, 20, 60, 0.4), 0 0 10px rgba(220, 20, 60, 0.15);
+  .accent-glow {
+    box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25);
   }
-  .cyber-glow-text {
+  .accent-glow-sm {
+    box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2);
+  }
+  .accent-glow-text {
     text-shadow: 0 0 8px rgba(220, 20, 60, 0.7);
   }
-  .cyber-glow-text-sm {
-    text-shadow: 0 0 5px rgba(220, 20, 60, 0.5);
+  .accent-glow-text-sm {
+    text-shadow: 0 0 6px rgba(220, 20, 60, 0.55);
   }
-  .cyber-border {
-    border: 1px solid var(--cyber-border);
+  .surface {
+    background-color: var(--surface);
   }
-  .cyber-border-bright {
-    border: 1px solid var(--cyber-border-bright);
+  .surface-2 {
+    background-color: var(--surface-2);
   }
-  .cyber-surface {
-    background-color: var(--cyber-surface);
-  }
-  .cyber-surface-2 {
-    background-color: var(--cyber-surface-2);
-  }
+
+  /* レガシー名のエイリアス */
+  .cyber-glow      { box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25); }
+  .cyber-glow-sm   { box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2); }
+  .cyber-glow-text { text-shadow: 0 0 8px rgba(220, 20, 60, 0.7); }
+  .cyber-glow-text-sm { text-shadow: 0 0 6px rgba(220, 20, 60, 0.55); }
+  .cyber-border    { border: 1px solid var(--border); }
+  .cyber-border-bright { border: 1px solid var(--border-accent); }
+  .cyber-surface   { background-color: var(--surface); }
+  .cyber-surface-2 { background-color: var(--surface-2); }
 }
 
 @keyframes dot-pulse {
-  0%, 100% { box-shadow: 0 0 6px rgba(220,20,60,0.7); }
-  50%       { box-shadow: 0 0 16px #dc143c, 0 0 32px rgba(220,20,60,0.4); }
+  0%, 100% { box-shadow: 0 0 6px rgba(220,20,60,0.6); }
+  50%       { box-shadow: 0 0 14px var(--accent), 0 0 24px rgba(220,20,60,0.35); }
 }
 
 @keyframes spin-cyber {
@@ -83,10 +122,10 @@ body::before {
   }
   .animate-spin-cyber {
     animation: spin-cyber 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    filter: drop-shadow(0 0 4px #dc143c);
+    filter: drop-shadow(0 0 3px var(--accent));
   }
   .loading-bar-shimmer {
-    background: linear-gradient(90deg, #dc143c 0%, #ff6688 40%, #ffffff 50%, #ff6688 60%, #dc143c 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, #ff6688 40%, #ffffff 50%, #ff6688 60%, var(--accent) 100%);
     background-size: 200% 100%;
     animation: shimmer-bar 1.2s linear infinite;
   }
@@ -94,13 +133,13 @@ body::before {
 
 /* スクロールバー */
 ::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: var(--cyber-bg); }
-::-webkit-scrollbar-thumb { background: var(--cyber-accent-dark); border-radius: 2px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
 
 /* select の option をダークに */
 option {
-  background-color: var(--cyber-surface);
-  color: var(--cyber-text);
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 /* CSS-based task filtering — no React state needed */
@@ -112,6 +151,6 @@ option {
 
 /* プル・トゥ・リフレッシュ閾値到達時の視覚フィードバック */
 [data-testid="pull-indicator"][data-ready="true"] {
-  border-color: #dc143c !important;
-  box-shadow: 0 0 12px rgba(220, 20, 60, 0.8) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 10px rgba(220, 20, 60, 0.7) !important;
 }

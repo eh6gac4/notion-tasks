@@ -20,8 +20,8 @@ export function DueDateTimeInput({
   onChange: (date: string, time: string) => void
   size?: Size
 }) {
-  const inputClass = `rounded-xl px-3 ${VERTICAL_PADDING[size]} text-sm text-[#ffbbcc] bg-[#10000a] focus:outline-none disabled:opacity-40`
-  const inputStyle = { border: "1px solid rgba(220,20,60,0.3)", colorScheme: "dark" as const }
+  const inputClass = `rounded-lg px-3 ${VERTICAL_PADDING[size]} text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none disabled:opacity-40`
+  const inputStyle = { border: "1px solid var(--border-strong)", colorScheme: "dark" as const }
 
   return (
     <div className="flex gap-2 items-center">

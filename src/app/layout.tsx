@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className={`h-full bg-[#10000a] antialiased ${dotGothic.className}`}>
+      <body className={`h-full antialiased ${dotGothic.className}`}>
         {/* キーフレームをインライン定義してCSSファイル読み込み前からアニメーションを有効化 */}
         {/* eslint-disable-next-line react/no-danger */}
         <style dangerouslySetInnerHTML={{ __html: "@keyframes _ss{to{transform:rotate(360deg)}}" }} />
@@ -44,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           style={{
             position: "fixed",
             inset: 0,
-            background: "#10000a",
+            background: "#0b0008",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -53,29 +53,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             transition: "opacity 0.3s ease",
           }}
         >
-          <div style={{ color: "#dc143c", fontSize: "18px", fontWeight: "bold", letterSpacing: "0.3em", marginBottom: "20px", textShadow: "0 0 20px #dc143c" }}>
+          <div
+            className="font-pixel"
+            style={{ color: "#dc143c", fontSize: "18px", fontWeight: "bold", letterSpacing: "0.3em", marginBottom: "20px", textShadow: "0 0 12px rgba(220,20,60,0.6)" }}
+          >
             ✦ To-do
           </div>
-          <div style={{ width: 28, height: 28, border: "2px solid rgba(220,20,60,0.2)", borderTopColor: "#dc143c", borderRadius: "50%", animation: "_ss 0.8s linear infinite" }} />
+          <div style={{ width: 24, height: 24, border: "2px solid rgba(220,20,60,0.18)", borderTopColor: "#dc143c", borderRadius: "50%", animation: "_ss 0.8s linear infinite" }} />
         </div>
         <ServiceWorkerRegistration />
         <SplashScreen />
         {children}
         {process.env.NODE_ENV === "development" && (
           <div
+            className="font-pixel"
             style={{
               position: "fixed",
               bottom: "12px",
               left: "12px",
               zIndex: 9999,
-              background: "rgba(16, 0, 10, 0.85)",
-              border: "1px solid #ffcc00",
-              color: "#ffcc00",
+              background: "rgba(11, 0, 8, 0.85)",
+              border: "1px solid rgba(245, 158, 11, 0.45)",
+              color: "#f59e0b",
               fontSize: "10px",
               fontWeight: "bold",
               letterSpacing: "0.15em",
-              padding: "3px 7px",
-              boxShadow: "0 0 8px #ffcc00, inset 0 0 8px rgba(255,204,0,0.1)",
+              padding: "4px 8px",
+              borderRadius: "4px",
               pointerEvents: "none",
             }}
           >

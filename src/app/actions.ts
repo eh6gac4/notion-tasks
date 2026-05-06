@@ -4,9 +4,8 @@ import { revalidatePath, revalidateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks } from "@/lib/notion"
-import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
-import { getQueryStatuses } from "@/constants/filters"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment } from "@/lib/notion"
+import type { AdvancedFilter, SortConfig, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -18,22 +17,12 @@ async function requireAuth() {
   if (!session?.user) redirect("/login")
 }
 
-export async function setFilterAction(filter: string) {
-  ;(await cookies()).set("filter", filter, { maxAge: 86400, path: "/" })
-  revalidatePath("/")
-}
-
 export async function setAdvancedFilterAction(filter: AdvancedFilter) {
   ;(await cookies()).set("filter_advanced", JSON.stringify(filter), { maxAge: 86400, path: "/" })
 }
 
 export async function setSortAction(sort: SortConfig) {
   ;(await cookies()).set("sort", JSON.stringify(sort), { maxAge: 86400, path: "/" })
-}
-
-export async function fetchTasksByFilterAction(filterKey: string): Promise<Task[]> {
-  await requireAuth()
-  return getTasks({ statuses: getQueryStatuses(filterKey) })
 }
 
 export async function updateTaskStatus(id: string, status: TaskStatus) {

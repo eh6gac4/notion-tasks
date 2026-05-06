@@ -296,18 +296,18 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         data-testid="task-detail"
         className="relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto"
         style={{
-          backgroundColor: "#1a0011",
-          borderTop: "1px solid rgba(220,20,60,0.5)",
-          boxShadow: "0 -4px 30px rgba(220,20,60,0.2)",
+          backgroundColor: "var(--surface)",
+          borderTop: "1px solid var(--border-strong)",
+          boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
         }}
       >
         {/* Handle */}
         <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "rgba(220,20,60,0.4)" }} />
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
         {saveError && (
-          <p className="text-xs text-[#ff3355] mb-4">{saveError}</p>
+          <p className="text-xs text-[var(--status-cancel)] mb-4">{saveError}</p>
         )}
 
         {/* Title — blur で保存 */}
@@ -316,16 +316,16 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="w-full rounded-xl border border-[rgba(220,20,60,0.3)] px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] placeholder:text-[#553344] focus:outline-none focus:border-[#dc143c] mb-4"
+          className="w-full rounded-lg border border-[var(--border-strong)] px-4 py-3 text-base text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)] mb-4"
           style={{ transition: "border-color 0.2s" }}
           aria-label="タイトル"
         />
 
         {/* Status */}
         <div className="mb-4">
-          <p className="text-xs text-[#996677] mb-2 tracking-widest uppercase">Status</p>
+          <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
-            <span className={`px-3 py-2 rounded-full text-sm ${statusStyle}`}>
+            <span className={`px-3 py-1 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
               {editStatus}
             </span>
             <select
@@ -348,8 +348,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
-              className="rounded-xl px-3 py-2 text-sm bg-[#10000a] text-[#ffbbcc] focus:outline-none"
-              style={{ border: "1px solid rgba(220,20,60,0.3)" }}
+              className="rounded-lg px-3 py-2 text-sm bg-[var(--bg)] text-[var(--text)] focus:outline-none"
+              style={{ border: "1px solid var(--border-strong)" }}
             >
               <option value="">未設定</option>
               <option value="high">🚨 High</option>
@@ -373,14 +373,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {task.source && (
             <Row label="ソース">
-              <span className="text-sm text-[#ffbbcc]">{task.source}</span>
+              <span className="text-sm text-[var(--text)]">{task.source}</span>
             </Row>
           )}
 
           {task.sourceUrl && (
             <Row label="URL">
               <a href={task.sourceUrl} target="_blank" rel="noopener noreferrer"
-                className="text-sm text-[#dc143c] underline break-all hover:text-[#ffaabb]">
+                className="text-sm text-[var(--accent)] underline break-all hover:opacity-80">
                 {task.sourceUrl}
               </a>
             </Row>
@@ -388,13 +388,13 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
           {task.childTaskIds.length > 0 && (
             <Row label="子タスク">
-              <span className="text-sm text-[#ffbbcc]">{task.childTaskIds.length}件</span>
+              <span className="text-sm text-[var(--text)]">{task.childTaskIds.length}件</span>
             </Row>
           )}
 
           {task.parentTaskIds.length > 0 && (
             <Row label="親タスク">
-              <span className="text-sm text-[#ffbbcc]">{task.parentTaskIds.length}件</span>
+              <span className="text-sm text-[var(--text)]">{task.parentTaskIds.length}件</span>
             </Row>
           )}
         </div>
@@ -402,12 +402,12 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         {/* 本文 */}
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-[#996677] tracking-widest uppercase">本文</p>
+            <p className="font-pixel text-xs text-[var(--text-dim)] tracking-widest uppercase">本文</p>
             {!isLoadingBlocks && !isEditingBlocks && (
               <button
                 type="button"
                 onClick={startEditingBlocks}
-                className="text-xs text-[#996677] hover:text-[#dc143c] transition-colors tracking-widest uppercase"
+                className="font-pixel text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
               >
                 編集
               </button>
@@ -415,12 +415,12 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           </div>
 
           {blocksLoadError && !isEditingBlocks && (
-            <p className="mb-2 text-xs text-[#ff77aa]">{blocksLoadError}</p>
+            <p className="mb-2 text-xs text-[var(--status-cancel)]">{blocksLoadError}</p>
           )}
 
           {isLoadingBlocks ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[rgba(220,20,60,0.3)] border-t-[#dc143c] animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           ) : isEditingBlocks ? (
             <div>
@@ -434,8 +434,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   el.style.height = "auto"
                   el.style.height = `${el.scrollHeight}px`
                 }}
-                className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] focus:outline-none focus:border-[#dc143c] resize-none min-h-[120px] font-mono"
-                style={{ border: "1px solid rgba(220,20,60,0.3)" }}
+                className="w-full rounded-lg px-4 py-3 text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-[var(--accent)] resize-none min-h-[120px] font-mono"
+                style={{ border: "1px solid var(--border-strong)" }}
                 placeholder="Markdownで入力（# 見出し、- リスト など）"
               />
               <div className="flex gap-2 mt-2 justify-end">
@@ -445,8 +445,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                     setBlocksSaveError(null)
                     setIsEditingBlocks(false)
                   }}
-                  className="px-4 py-2 rounded-xl text-xs text-[#996677] hover:text-[#ffbbcc] transition-colors"
-                  style={{ border: "1px solid rgba(220,20,60,0.2)" }}
+                  className="px-4 py-2 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+                  style={{ border: "1px solid var(--border-strong)" }}
                 >
                   キャンセル
                 </button>
@@ -454,52 +454,52 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   type="button"
                   disabled={isSavingBlocks}
                   onClick={handleSaveBlocks}
-                  className="px-4 py-2 rounded-xl text-xs text-[#10000a] transition-all"
-                  style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "#dc143c" }}
+                  className="px-4 py-2 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
+                  style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
                 </button>
               </div>
               {blocksSaveError && (
-                <p className="mt-2 text-xs text-[#ff77aa]">{blocksSaveError}</p>
+                <p className="mt-2 text-xs text-[var(--status-cancel)]">{blocksSaveError}</p>
               )}
             </div>
           ) : blocks ? (
             <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
           ) : (
-            <p className="text-xs text-[#553344] italic">本文なし</p>
+            <p className="text-xs text-[var(--text-faint)] italic">本文なし</p>
           )}
         </div>
 
         {/* コメント */}
         <div className="mt-6">
-          <p className="text-xs text-[#996677] mb-3 tracking-widest uppercase">
-            コメント{comments.length > 0 && <span className="ml-2 text-[#553344]">({comments.length})</span>}
+          <p className="font-pixel text-xs text-[var(--text-dim)] mb-3 tracking-widest uppercase">
+            コメント{comments.length > 0 && <span className="ml-2 text-[var(--text-faint)]">({comments.length})</span>}
           </p>
 
           {commentsLoadError && (
-            <p className="mb-2 text-xs text-[#ff77aa]">{commentsLoadError}</p>
+            <p className="mb-2 text-xs text-[var(--status-cancel)]">{commentsLoadError}</p>
           )}
 
           {isLoadingComments ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[rgba(220,20,60,0.3)] border-t-[#dc143c] animate-spin" />
+              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           ) : (
             <div className="space-y-3 mb-4">
               {comments.length === 0 && (
-                <p className="text-xs text-[#553344] italic">コメントなし</p>
+                <p className="text-xs text-[var(--text-faint)] italic">コメントなし</p>
               )}
               {comments.map((c) => (
                 <div
                   key={c.id}
-                  className="rounded-xl px-4 py-3"
-                  style={{ backgroundColor: "#10000a", border: "1px solid rgba(220,20,60,0.15)" }}
+                  className="rounded-lg px-4 py-3"
+                  style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-[#dc143c]">{c.author}</span>
-                    <span className="text-xs text-[#553344]">·</span>
-                    <span className="text-xs text-[#553344]">
+                    <span className="text-xs text-[var(--accent)]">{c.author}</span>
+                    <span className="text-xs text-[var(--text-faint)]">·</span>
+                    <span className="text-xs text-[var(--text-faint)]">
                       {formatDueShort(c.createdTime)}
                     </span>
                   </div>
@@ -520,22 +520,22 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               }}
               placeholder="コメントを追加…"
               rows={2}
-              className="w-full rounded-xl px-4 py-3 text-sm text-[#ffbbcc] bg-[#10000a] focus:outline-none focus:border-[#dc143c] resize-none font-mono"
-              style={{ border: "1px solid rgba(220,20,60,0.3)" }}
+              className="w-full rounded-lg px-4 py-3 text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-[var(--accent)] resize-none"
+              style={{ border: "1px solid var(--border-strong)" }}
             />
             <div className="flex justify-end mt-2">
               <button
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
                 onClick={handlePostComment}
-                className="px-4 py-2 rounded-xl text-xs text-[#10000a] transition-all disabled:opacity-40"
-                style={{ backgroundColor: "#dc143c" }}
+                className="px-4 py-2 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
+                style={{ backgroundColor: "var(--accent)" }}
               >
                 {isPostingComment ? "投稿中…" : "投稿"}
               </button>
             </div>
             {commentPostError && (
-              <p className="mt-1 text-xs text-[#ff77aa]">{commentPostError}</p>
+              <p className="mt-1 text-xs text-[var(--status-cancel)]">{commentPostError}</p>
             )}
           </div>
         </div>
@@ -545,8 +545,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 flex items-center justify-center gap-2 w-full rounded-xl py-3 text-sm text-[#996677] hover:text-[#dc143c] transition-colors tracking-widest uppercase"
-          style={{ border: "1px solid rgba(220,20,60,0.25)" }}
+          className="font-pixel mt-6 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+          style={{ border: "1px solid var(--border-strong)" }}
         >
           Open in Notion →
         </a>
@@ -558,7 +558,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3">
-      <span className="text-xs text-[#553344] w-16 flex-shrink-0 pt-1 tracking-wide">{label}</span>
+      <span className="font-pixel text-xs text-[var(--text-faint)] w-16 flex-shrink-0 pt-1 tracking-wide uppercase">{label}</span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )

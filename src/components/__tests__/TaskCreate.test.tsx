@@ -74,22 +74,22 @@ describe("TaskCreate タグトグル", () => {
   it("タグをクリックすると選択される", () => {
     const techBtn = screen.getByRole("button", { name: "Tech" })
     fireEvent.click(techBtn)
-    // 選択済みスタイル（backgroundColor が #dc143c）になる
-    expect(techBtn).toHaveStyle({ backgroundColor: "#dc143c" })
+    // 選択済みスタイル（accent 色）になる
+    expect(techBtn).toHaveStyle({ backgroundColor: "var(--accent)" })
   })
 
   it("選択済みタグを再クリックすると解除される", () => {
     const techBtn = screen.getByRole("button", { name: "Tech" })
     fireEvent.click(techBtn)
     fireEvent.click(techBtn)
-    expect(techBtn).not.toHaveStyle({ backgroundColor: "#dc143c" })
+    expect(techBtn).not.toHaveStyle({ backgroundColor: "var(--accent)" })
   })
 
   it("複数タグを同時に選択できる", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tech" }))
     fireEvent.click(screen.getByRole("button", { name: "Blog" }))
-    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "#dc143c" })
-    expect(screen.getByRole("button", { name: "Blog" })).toHaveStyle({ backgroundColor: "#dc143c" })
+    expect(screen.getByRole("button", { name: "Tech" })).toHaveStyle({ backgroundColor: "var(--accent)" })
+    expect(screen.getByRole("button", { name: "Blog" })).toHaveStyle({ backgroundColor: "var(--accent)" })
   })
 
   it("新規タグを入力して追加すると選択済みピルとして並ぶ", () => {
@@ -98,7 +98,7 @@ describe("TaskCreate タグトグル", () => {
 
     const newPill = screen.getByRole("button", { name: "新タグ" })
     expect(newPill).toBeInTheDocument()
-    expect(newPill).toHaveStyle({ backgroundColor: "#dc143c" })
+    expect(newPill).toHaveStyle({ backgroundColor: "var(--accent)" })
   })
 })
 

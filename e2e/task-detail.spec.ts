@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test"
 import type { BrowserContext, Page } from "@playwright/test"
-import { AUTH_FILE, CENTER, TASK_ITEM, resetAndOpenHome } from "./helpers"
+import { AUTH_FILE, BOARD, TASK_ITEM, resetAndOpenHome } from "./helpers"
 
 const TASK_DETAIL = "[data-testid='task-detail']"
 const TASK_DETAIL_BACKDROP = "[data-testid='task-detail-backdrop']"
@@ -30,7 +30,7 @@ test.describe("タスク詳細ボトムシート", () => {
   })
 
   async function openFirstTaskDetail() {
-    const firstTitle = page.locator(`${CENTER} ${TASK_ITEM} [data-testid='task-title']`).first()
+    const firstTitle = page.locator(`${BOARD} ${TASK_ITEM} [data-testid='task-title']`).first()
     await firstTitle.click()
     await expect(page.locator(TASK_DETAIL)).toBeVisible({ timeout: 5_000 })
   }

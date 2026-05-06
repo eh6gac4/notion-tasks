@@ -110,11 +110,15 @@ async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
   }
 }
 
+// Notion ボードビューでは全ステータス（"アーカイブ済み" を除く）を一括取得して
+// クライアント側でカラムごとにグルーピングする。
+const BOARD_STATUSES: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
+
 export function getTasks(options?: {
   statuses?: TaskStatus[]
   includeCompleted?: boolean
 }): Promise<Task[]> {
-  const statuses: TaskStatus[] = options?.statuses ?? ["未着手", "進行中"]
+  const statuses: TaskStatus[] = options?.statuses ?? BOARD_STATUSES
   if (isDevMode()) return Promise.resolve(getMockTasks(statuses))
   return unstable_cache(
     () => fetchTasks(statuses),
