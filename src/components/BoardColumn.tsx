@@ -45,7 +45,7 @@ export function BoardColumn({
     <section
       data-testid="board-column"
       data-status={status}
-      className="flex-shrink-0 w-[280px] h-full flex flex-col snap-start"
+      className="flex-shrink-0 w-[320px] h-full flex flex-col snap-start"
       style={{ scrollSnapAlign: "start" }}
     >
       <header
