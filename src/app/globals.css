@@ -11,10 +11,10 @@
   --text-dim:     #a08a92;
   --text-faint:   #5a4a52;
 
-  /* 境界 */
-  --border:        rgba(240, 230, 234, 0.08);
-  --border-strong: rgba(240, 230, 234, 0.16);
-  --border-accent: rgba(220, 20, 60, 0.45);
+  /* 境界（crimson 系で「ネオン発光線が画面を切る」ルック） */
+  --border:        rgba(220, 20, 60, 0.15);
+  --border-strong: rgba(220, 20, 60, 0.35);
+  --border-accent: rgba(220, 20, 60, 0.6);
 
   /* アクセント (crimson) */
   --accent:        #dc143c;
@@ -49,6 +49,22 @@ body {
   font-family: var(--font-dot-gothic), ui-monospace, "Courier New", monospace;
 }
 
+/* CRT スキャンライン overlay — レトロ CRT 質感を全面に薄く重ねる */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
 /* グロー系ユーティリティ — 局所適用前提に強度を抑制 */
 @layer utilities {
   .font-pixel {
@@ -56,16 +72,16 @@ body {
     letter-spacing: 0.04em;
   }
   .accent-glow {
-    box-shadow: 0 0 8px var(--accent-glow), 0 0 16px rgba(220, 20, 60, 0.18);
+    box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25);
   }
   .accent-glow-sm {
-    box-shadow: 0 0 4px var(--accent-glow), 0 0 8px rgba(220, 20, 60, 0.15);
+    box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2);
   }
   .accent-glow-text {
-    text-shadow: 0 0 6px rgba(220, 20, 60, 0.55);
+    text-shadow: 0 0 8px rgba(220, 20, 60, 0.7);
   }
   .accent-glow-text-sm {
-    text-shadow: 0 0 4px rgba(220, 20, 60, 0.4);
+    text-shadow: 0 0 6px rgba(220, 20, 60, 0.55);
   }
   .surface {
     background-color: var(--surface);
@@ -75,10 +91,10 @@ body {
   }
 
   /* レガシー名のエイリアス */
-  .cyber-glow      { box-shadow: 0 0 8px var(--accent-glow), 0 0 16px rgba(220, 20, 60, 0.18); }
-  .cyber-glow-sm   { box-shadow: 0 0 4px var(--accent-glow), 0 0 8px rgba(220, 20, 60, 0.15); }
-  .cyber-glow-text { text-shadow: 0 0 6px rgba(220, 20, 60, 0.55); }
-  .cyber-glow-text-sm { text-shadow: 0 0 4px rgba(220, 20, 60, 0.4); }
+  .cyber-glow      { box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25); }
+  .cyber-glow-sm   { box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2); }
+  .cyber-glow-text { text-shadow: 0 0 8px rgba(220, 20, 60, 0.7); }
+  .cyber-glow-text-sm { text-shadow: 0 0 6px rgba(220, 20, 60, 0.55); }
   .cyber-border    { border: 1px solid var(--border); }
   .cyber-border-bright { border: 1px solid var(--border-accent); }
   .cyber-surface   { background-color: var(--surface); }
