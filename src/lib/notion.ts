@@ -140,8 +140,7 @@ export function getTasks(options?: {
   )()
 }
 
-export async function getTagOptions(): Promise<string[]> {
-  if (isDevMode()) return getMockTagOptions()
+async function fetchTagOptions(): Promise<string[]> {
   try {
     const ds = await notion.dataSources.retrieve({ data_source_id: DATA_SOURCE_ID })
     const tagProp = (ds as { properties: Record<string, unknown> }).properties?.[NOTION_PROPS.TAG] as
@@ -152,6 +151,15 @@ export async function getTagOptions(): Promise<string[]> {
     console.error("[getTagOptions] Notion error:", e)
     return []
   }
+}
+
+export function getTagOptions(): Promise<string[]> {
+  if (isDevMode()) return Promise.resolve(getMockTagOptions())
+  return unstable_cache(
+    fetchTagOptions,
+    ["tag-options"],
+    { tags: ["tasks"] }
+  )()
 }
 
 export async function getTask(id: string): Promise<Task | null> {
@@ -432,6 +440,7 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
     // Fetch existing blocks; delete only non-image blocks so user-attached
     // images survive a body edit (file-type Notion images use signed URLs
     // that can't be safely re-created).
+    const idsToDelete: string[] = []
     let cursor: string | undefined = undefined
     do {
       const response = await notion.blocks.children.list({
@@ -441,10 +450,18 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
       })
       for (const block of response.results) {
         if (isFullBlockObjectResponse(block) && (block as { type: string }).type === "image") continue
-        await notion.blocks.delete({ block_id: block.id })
+        idsToDelete.push(block.id)
       }
       cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
     } while (cursor)
+
+    // Notion API のレート上限は 3 req/s 想定。3 件ずつバッチで並列削除して
+    // 直列 await による N+1 ラウンドトリップを潰す。
+    const BATCH = 3
+    for (let i = 0; i < idsToDelete.length; i += BATCH) {
+      const batch = idsToDelete.slice(i, i + BATCH)
+      await Promise.all(batch.map((bid) => notion.blocks.delete({ block_id: bid })))
+    }
 
     // Strip image markdown lines: existing image blocks were preserved above,
     // so re-creating them would duplicate (and create dead links for
