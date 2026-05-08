@@ -1,6 +1,6 @@
 "use server"
 
-import { revalidatePath, revalidateTag } from "next/cache"
+import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
@@ -33,28 +33,24 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
     console.error("[updateTaskStatus] Notion error:", e)
     throw e
   }
-  revalidateTag("tasks", "default")
-  revalidatePath("/")
+  updateTag("tasks")
 }
 
 export async function createTaskAction(input: CreateTaskInput) {
   await requireAuth()
   await createTask(input)
-  revalidateTag("tasks", "default")
-  revalidatePath("/")
+  updateTag("tasks")
 }
 
 export async function updateTaskAction(id: string, input: UpdateTaskInput) {
   await requireAuth()
   await updateTask(id, input)
-  revalidateTag("tasks", "default")
-  revalidatePath("/")
+  updateTag("tasks")
 }
 
 export async function refreshTasksAction() {
   await requireAuth()
-  revalidateTag("tasks", "default")
-  revalidatePath("/")
+  updateTag("tasks")
 }
 
 export async function getTaskBlocksAction(id: string): Promise<string> {
