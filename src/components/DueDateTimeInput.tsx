@@ -22,8 +22,10 @@ export function DueDateTimeInput({
   // 値が空の間は absolute span で「日付」「時刻」のヒントを重ねている。
   const inputClass = size === "compact" ? "field-sm w-full" : "field w-full"
   const inputStyle = { colorScheme: "dark" as const }
-  // .field padding-left は 16px (default) / 12px (compact) と揃える
-  const placeholderLeft = size === "compact" ? "left-3" : "left-4"
+  // .field の padding-left に揃える (default 16px / compact 12px)
+  const placeholderClass = `pointer-events-none absolute inset-0 flex items-center text-sm text-[var(--text-faint)] ${
+    size === "compact" ? "px-3" : "px-4"
+  }`
 
   return (
     <div className="flex gap-2 items-center">
@@ -38,13 +40,7 @@ export function DueDateTimeInput({
           className={inputClass}
           style={inputStyle}
         />
-        {!date && (
-          <span
-            className={`pointer-events-none absolute ${placeholderLeft} top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]`}
-          >
-            日付
-          </span>
-        )}
+        {!date && <span className={placeholderClass}>日付</span>}
       </div>
       <div className="relative flex-1 min-w-0">
         <input
@@ -57,13 +53,7 @@ export function DueDateTimeInput({
           className={inputClass}
           style={inputStyle}
         />
-        {!time && (
-          <span
-            className={`pointer-events-none absolute ${placeholderLeft} top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]`}
-          >
-            時刻
-          </span>
-        )}
+        {!time && <span className={placeholderClass}>時刻</span>}
       </div>
     </div>
   )
