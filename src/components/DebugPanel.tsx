@@ -8,10 +8,12 @@ type RequestLog = {
   id: number
   url: string
   method: string
+  actionId: string
   durMs: number
   status: number
   ok: boolean
   startedAt: number
+  pending: boolean
 }
 
 const MAX_LOGS = 20
@@ -65,6 +67,25 @@ export function DebugPanel() {
 
       const start = performance.now()
       const startedAt = Date.now()
+      idRef.current += 1
+      const id = idRef.current
+      const actionShort = actionId.slice(0, 8)
+
+      setLogs((prev) => {
+        const next = [...prev, {
+          id,
+          url: urlStr,
+          method,
+          actionId: actionShort,
+          durMs: 0,
+          status: 0,
+          ok: false,
+          startedAt,
+          pending: true,
+        }]
+        return next.length > MAX_LOGS ? next.slice(next.length - MAX_LOGS) : next
+      })
+
       let status = 0
       let ok = false
       try {
@@ -74,12 +95,9 @@ export function DebugPanel() {
         return res
       } finally {
         const durMs = performance.now() - start
-        idRef.current += 1
-        const id = idRef.current
-        setLogs((prev) => {
-          const next = [...prev, { id, url: urlStr, method, durMs, status, ok, startedAt }]
-          return next.length > MAX_LOGS ? next.slice(next.length - MAX_LOGS) : next
-        })
+        setLogs((prev) => prev.map((l) => (
+          l.id === id ? { ...l, durMs, status, ok, pending: false } : l
+        )))
       }
     }
 
@@ -89,11 +107,13 @@ export function DebugPanel() {
     }
   }, [])
 
-  const clear = useCallback(() => setLogs([]), [])
+  const clear = useCallback(() => setLogs((prev) => prev.filter((l) => l.pending)), [])
 
   const total = logs.length
-  const maxDur = total === 0 ? 0 : Math.round(logs.reduce((m, l) => Math.max(m, l.durMs), 0))
-  const lastDur = total === 0 ? 0 : Math.round(logs[logs.length - 1].durMs)
+  const completed = logs.filter((l) => !l.pending)
+  const pendingCount = total - completed.length
+  const maxDur = completed.length === 0 ? 0 : Math.round(completed.reduce((m, l) => Math.max(m, l.durMs), 0))
+  const lastDur = completed.length === 0 ? 0 : Math.round(completed[completed.length - 1].durMs)
 
   return (
     <div
@@ -125,7 +145,7 @@ export function DebugPanel() {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "4px", borderBottom: "1px solid rgba(220, 20, 60, 0.25)" }}>
             <span style={{ color: "#dc143c", fontWeight: "bold", letterSpacing: "0.15em" }}>
-              ✦ DEBUG · {total} reqs · max {maxDur}ms
+              ✦ DEBUG · {total} reqs{pendingCount > 0 ? ` · ${pendingCount} live` : ""} · max {maxDur}ms
             </span>
             <span style={{ display: "flex", gap: "8px" }}>
               <button
@@ -162,17 +182,43 @@ export function DebugPanel() {
                     alignItems: "center",
                     padding: "2px 4px",
                     borderRadius: "2px",
-                    background: l.ok ? "rgba(34, 197, 94, 0.08)" : "rgba(220, 38, 38, 0.12)",
+                    background: l.pending
+                      ? "rgba(220, 20, 60, 0.10)"
+                      : l.ok
+                        ? "rgba(34, 197, 94, 0.08)"
+                        : "rgba(220, 38, 38, 0.12)",
                   }}
                 >
                   <span style={{ color: "rgba(255,255,255,0.45)" }}>{formatTime(l.startedAt)}</span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${l.method} ${l.url}`}>
-                    {l.method} {shortenUrl(l.url)}
+                  <span
+                    style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                    title={`${l.method} ${l.url} (action ${l.actionId})`}
+                  >
+                    {l.method} #{l.actionId} <span style={{ opacity: 0.4 }}>{shortenUrl(l.url)}</span>
                   </span>
-                  <span style={{ textAlign: "right", color: l.durMs > 1000 ? "#f59e0b" : "rgba(255,255,255,0.85)" }}>
-                    {Math.round(l.durMs)}ms
-                  </span>
-                  <span style={{ color: l.ok ? "#22c55e" : "#dc2626" }}>{l.ok ? "✓" : "✗"}</span>
+                  {l.pending ? (
+                    <span style={{ textAlign: "right", color: "rgba(255,255,255,0.55)" }}>…</span>
+                  ) : (
+                    <span style={{ textAlign: "right", color: l.durMs > 1000 ? "#f59e0b" : "rgba(255,255,255,0.85)" }}>
+                      {Math.round(l.durMs)}ms
+                    </span>
+                  )}
+                  {l.pending ? (
+                    <span
+                      aria-label="リクエスト処理中"
+                      style={{
+                        display: "inline-block",
+                        width: 8,
+                        height: 8,
+                        border: "1px solid rgba(220,20,60,0.35)",
+                        borderTopColor: "#dc143c",
+                        borderRadius: "50%",
+                        animation: "_ss 0.6s linear infinite",
+                      }}
+                    />
+                  ) : (
+                    <span style={{ color: l.ok ? "#22c55e" : "#dc2626" }}>{l.ok ? "✓" : "✗"}</span>
+                  )}
                 </div>
               ))
             )}
@@ -193,10 +239,31 @@ export function DebugPanel() {
             fontSize: "10px",
             letterSpacing: "0.1em",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
           }}
         >
+          {pendingCount > 0 && (
+            <span
+              aria-label="リクエスト処理中"
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                border: "1px solid rgba(220,20,60,0.35)",
+                borderTopColor: "#dc143c",
+                borderRadius: "50%",
+                animation: "_ss 0.6s linear infinite",
+              }}
+            />
+          )}
           {total === 0 ? (
             "✦ debug"
+          ) : pendingCount > 0 ? (
+            <>
+              {pendingCount} live <span style={{ opacity: 0.5, margin: "0 4px" }}>·</span> {total} req{total === 1 ? "" : "s"}
+            </>
           ) : (
             <>
               {total} req{total === 1 ? "" : "s"} <span style={{ opacity: 0.5, margin: "0 4px" }}>·</span> last {lastDur}ms
