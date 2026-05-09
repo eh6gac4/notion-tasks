@@ -7,13 +7,26 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
       - run: npm ci
+
+      # main への push 1 回ごとに patch を +1 (10 で上位繰り上げ)。
+      # ビルドより前に bump して、デプロイ成果物に新バージョンを反映する。
+      - name: Bump version
+        id: bump
+        run: |
+          NEXT=$(node scripts/bump-version.mjs)
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+
       - run: npm run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -22,3 +35,15 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           APP_USERNAME: ${{ secrets.APP_USERNAME }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+
+      # デプロイ成功後に bump を main へ push 戻す。
+      # GITHUB_TOKEN による push は他 workflow を発火しないので無限ループしない。
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to v${{ steps.bump.outputs.version }}"
+          # 並行 PR マージで先に進んでいた場合に備えて rebase してから push
+          git pull --rebase origin main
+          git push
