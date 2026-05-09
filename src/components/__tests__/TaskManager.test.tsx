@@ -70,30 +70,53 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+// status 名で部分一致 (進行中/未着手 をまとめた WIP カラムも拾えるよう *= で)
 function getColumn(status: string) {
-  return document.querySelector(`[data-testid='board-column'][data-status='${status}']`) as HTMLElement
+  return document.querySelector(`[data-testid='board-column'][data-status*='${status}']`) as HTMLElement
 }
 
 describe("TaskManager ボード", () => {
-  it("ボード全6カラムが描画される", () => {
+  it("ボードに 5 カラム描画される (進行中/未着手は1カラムにマージ)", () => {
     render(
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
     )
-    const expected = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
-    expected.forEach((status) => {
+    const cols = document.querySelectorAll("[data-testid='board-column']")
+    expect(cols.length).toBe(5)
+    // 各 status が必ずいずれかのカラムに含まれる
+    for (const status of ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]) {
       expect(getColumn(status)).toBeInTheDocument()
-    })
+    }
   })
 
-  it("各タスクは status と一致するカラム内にだけ並ぶ", () => {
+  it("各タスクは status と一致するカラム内にだけ並ぶ (未着手/進行中は同居)", () => {
     render(
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
     )
-    expect(within(getColumn("未着手")).getByText("未着手タスク")).toBeInTheDocument()
-    expect(within(getColumn("進行中")).getByText("進行中タスク")).toBeInTheDocument()
+    const wip = getColumn("進行中")
+    expect(within(wip).getByText("未着手タスク")).toBeInTheDocument()
+    expect(within(wip).getByText("進行中タスク")).toBeInTheDocument()
     expect(within(getColumn("完了")).getByText("完了タスク")).toBeInTheDocument()
-    expect(within(getColumn("未着手")).queryByText("進行中タスク")).not.toBeInTheDocument()
     expect(within(getColumn("完了")).queryByText("中止タスク")).not.toBeInTheDocument()
+    expect(within(getColumn("確認中")).queryByText("未着手タスク")).not.toBeInTheDocument()
+  })
+
+  it("WIP カラム内では 進行中 タスクが 未着手 タスクより上に並ぶ", () => {
+    const ordered = [
+      makeTask({ id: "t1", title: "未着手1", status: "未着手" }),
+      makeTask({ id: "t2", title: "進行中1", status: "進行中" }),
+      makeTask({ id: "t3", title: "未着手2", status: "未着手" }),
+      makeTask({ id: "t4", title: "進行中2", status: "進行中" }),
+    ]
+    render(
+      <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={ordered} />
+    )
+    const wip = getColumn("進行中")
+    const items = within(wip).getAllByTestId("task-item")
+    const statuses = items.map((el) => el.getAttribute("data-status"))
+    // 全 進行中 タスクが先頭から並び、その後 未着手 タスク
+    const firstNotDoing = statuses.findIndex((s) => s !== "進行中")
+    const lastDoing = statuses.lastIndexOf("進行中")
+    expect(lastDoing).toBeLessThan(firstNotDoing === -1 ? statuses.length : firstNotDoing)
   })
 
   it("status が null のタスクはどのカラムにも入らない", () => {
@@ -104,7 +127,7 @@ describe("TaskManager ボード", () => {
     expect(screen.queryByText("ステータス不明")).not.toBeInTheDocument()
   })
 
-  it("各カラムヘッダにそのカラムの件数が出る", () => {
+  it("WIP カラムヘッダには 未着手+進行中 の合計件数が出る", () => {
     const repeat = [
       makeTask({ id: "a", title: "A", status: "未着手" }),
       makeTask({ id: "b", title: "B", status: "未着手" }),
@@ -113,8 +136,7 @@ describe("TaskManager ボード", () => {
     render(
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={repeat} />
     )
-    expect(within(getColumn("未着手")).getByText("2")).toBeInTheDocument()
-    expect(within(getColumn("進行中")).getByText("1")).toBeInTheDocument()
+    expect(within(getColumn("進行中")).getByText("3")).toBeInTheDocument()
   })
 })
 
@@ -128,8 +150,9 @@ describe("インクリメンタルサーチ", () => {
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
     )
     fireEvent.change(getSearchInput(), { target: { value: "進行中" } })
-    expect(within(getColumn("進行中")).getByText("進行中タスク")).toBeInTheDocument()
-    expect(within(getColumn("未着手")).queryByText("未着手タスク")).not.toBeInTheDocument()
+    const wip = getColumn("進行中")
+    expect(within(wip).getByText("進行中タスク")).toBeInTheDocument()
+    expect(within(wip).queryByText("未着手タスク")).not.toBeInTheDocument()
   })
 
   it("大文字小文字を無視して検索する", () => {
@@ -141,8 +164,9 @@ describe("インクリメンタルサーチ", () => {
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={englishTasks} />
     )
     fireEvent.change(getSearchInput(), { target: { value: "refactor" } })
-    expect(within(getColumn("進行中")).getByText("Refactor API")).toBeInTheDocument()
-    expect(within(getColumn("未着手")).queryByText("Write Tests")).not.toBeInTheDocument()
+    const wip = getColumn("進行中")
+    expect(within(wip).getByText("Refactor API")).toBeInTheDocument()
+    expect(within(wip).queryByText("Write Tests")).not.toBeInTheDocument()
   })
 
   it("マッチが無いカラムは NO MATCH を表示する", () => {
