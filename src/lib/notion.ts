@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache"
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse, CommentObjectResponse } from "@notionhq/client/build/src/api-endpoints"
 import type { Task, TaskComment, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
@@ -127,16 +126,15 @@ async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
 // 該当カラムが画面に出たときに別途 fetch するようにし、初回コストを下げる。
 const INITIAL_STATUSES: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断"]
 
+// Cloudflare Workers (open-next) では tagCache 未設定時に updateTag が no-op に
+// なり、unstable_cache の値が永久に古くなる。個人用アプリで Notion API 呼び
+// 出しを毎回行ってもコストは小さいため、キャッシュを使わず常に直接 fetch する。
 export function getTasks(options?: {
   statuses?: TaskStatus[]
 }): Promise<Task[]> {
   const statuses: TaskStatus[] = options?.statuses ?? INITIAL_STATUSES
   if (isDevMode()) return Promise.resolve(getMockTasks(statuses))
-  return unstable_cache(
-    () => fetchTasks(statuses),
-    ["tasks", statuses.join(",")],
-    { tags: ["tasks"] }
-  )()
+  return fetchTasks(statuses)
 }
 
 async function fetchTagOptions(): Promise<string[]> {
@@ -154,11 +152,7 @@ async function fetchTagOptions(): Promise<string[]> {
 
 export function getTagOptions(): Promise<string[]> {
   if (isDevMode()) return Promise.resolve(getMockTagOptions())
-  return unstable_cache(
-    fetchTagOptions,
-    ["tag-options"],
-    { tags: ["tasks"] }
-  )()
+  return fetchTagOptions()
 }
 
 export async function getTask(id: string): Promise<Task | null> {
