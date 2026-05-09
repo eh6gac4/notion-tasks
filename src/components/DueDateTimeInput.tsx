@@ -18,33 +18,53 @@ export function DueDateTimeInput({
   // default: .field (44px、TaskCreate などの新規作成シート)
   // compact: .field-sm (36px、TaskDetail の省スペース)
   // webkit の <input type="date"> ネイティブ装飾は globals.css で抑制している。
-  // appearance: none を当てるとプレースホルダが消えて min-content 幅に縮むため、
-  // flex-1 + min-w-0 で親 flex の幅を 50/50 で確保する。
-  const inputClass = size === "compact" ? "field-sm flex-1 min-w-0" : "field flex-1 min-w-0"
+  // appearance: none を当てるとネイティブのプレースホルダ (mm/dd/yyyy) が消えるため、
+  // 値が空の間は absolute span で「日付」「時刻」のヒントを重ねている。
+  const inputClass = size === "compact" ? "field-sm w-full" : "field w-full"
   const inputStyle = { colorScheme: "dark" as const }
+  // .field padding-left は 16px (default) / 12px (compact) と揃える
+  const placeholderLeft = size === "compact" ? "left-3" : "left-4"
 
   return (
     <div className="flex gap-2 items-center">
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => {
-          const nextDate = e.target.value
-          onChange(nextDate, nextDate ? time : "")
-        }}
-        className={inputClass}
-        style={inputStyle}
-      />
-      <input
-        type="time"
-        value={time}
-        onChange={(e) => onChange(date, snapTimeTo5Min(e.target.value))}
-        disabled={!date}
-        step={300}
-        aria-label="期限の時刻"
-        className={inputClass}
-        style={inputStyle}
-      />
+      <div className="relative flex-1 min-w-0">
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => {
+            const nextDate = e.target.value
+            onChange(nextDate, nextDate ? time : "")
+          }}
+          className={inputClass}
+          style={inputStyle}
+        />
+        {!date && (
+          <span
+            className={`pointer-events-none absolute ${placeholderLeft} top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]`}
+          >
+            日付
+          </span>
+        )}
+      </div>
+      <div className="relative flex-1 min-w-0">
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => onChange(date, snapTimeTo5Min(e.target.value))}
+          disabled={!date}
+          step={300}
+          aria-label="期限の時刻"
+          className={inputClass}
+          style={inputStyle}
+        />
+        {!time && (
+          <span
+            className={`pointer-events-none absolute ${placeholderLeft} top-1/2 -translate-y-1/2 text-sm text-[var(--text-faint)]`}
+          >
+            時刻
+          </span>
+        )}
+      </div>
     </div>
   )
 }
