@@ -10,6 +10,10 @@ vi.mock("@/app/actions", () => ({
   refreshTasksAction: vi.fn().mockResolvedValue(undefined),
 }))
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+}))
+
 // TaskItem は描画内容ではなくボード分配ロジックを検証するため簡略化
 vi.mock("@/components/TaskItem", () => ({
   TaskItem: ({ task }: { task: Task }) => (

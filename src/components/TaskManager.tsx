@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
 import { TaskBoard } from "./TaskBoard"
 import { TaskDetail } from "./TaskDetail"
@@ -54,17 +55,23 @@ export function TaskManager({
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null
 
   // ─── Refresh on visibility change ─────────────────────────────────────────
+  // updateTag だけではサーバーキャッシュを無効化するのみで RSC 再描画はトリガ
+  // されないことがあるため、router.refresh() で明示的にツリーを再取得する。
+  const router = useRouter()
   const isPendingRef = useRef(false)
   useEffect(() => { isPendingRef.current = isPending }, [isPending])
   useEffect(() => {
     function onVisible() {
       if (document.visibilityState !== "visible") return
       if (isPendingRef.current) return
-      startTransition(async () => { await refreshTasksAction() })
+      startTransition(async () => {
+        await refreshTasksAction()
+        router.refresh()
+      })
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [])
+  }, [router])
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -148,7 +155,7 @@ export function TaskManager({
         <button
           data-testid="refresh-button"
           disabled={isPending}
-          onClick={() => startTransition(async () => { await refreshTasksAction() })}
+          onClick={() => startTransition(async () => { await refreshTasksAction(); router.refresh() })}
           className="flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 disabled:opacity-40 transition-colors"
           aria-label="再読み込み"
         >

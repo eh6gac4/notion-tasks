@@ -68,6 +68,19 @@ export function BoardColumn({
     return () => obs.disconnect()
   }, [isLazyStatus, propsHasLazy, lazyTasks, status])
 
+  // タブ復帰時に lazy state をクリアして、再びカラムが見えたら fetch しなおす。
+  // (TaskManager 側の router.refresh() ではローカル state は消えないので個別に対応)
+  useEffect(() => {
+    if (!isLazyStatus) return
+    function onVisible() {
+      if (document.visibilityState !== "visible") return
+      setLazyTasks(null)
+      setHasLoadError(false)
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [isLazyStatus])
+
   const q = searchQuery.trim().toLowerCase()
   const filtered = useMemo(() => {
     let source: Task[]
