@@ -400,144 +400,144 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
         {/* 本文 */}
         <div className="mt-4">
-          <Row label="本文" block>
+          <div className="flex items-center justify-between mb-4 min-h-9">
+            <span className="font-pixel text-xs text-[var(--text-faint)] tracking-wide uppercase">本文</span>
             {!isLoadingBlocks && !isEditingBlocks && (
-              <div className="flex justify-end mb-4 -mt-2">
-                <button
-                  type="button"
-                  onClick={startEditingBlocks}
-                  className="font-pixel inline-flex items-center min-h-9 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
-                >
-                  編集
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={startEditingBlocks}
+                className="font-pixel inline-flex items-center h-9 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
+              >
+                編集
+              </button>
             )}
+          </div>
 
-            {blocksLoadError && !isEditingBlocks && (
-              <p className="mb-4 text-xs text-[var(--status-cancel)]">{blocksLoadError}</p>
-            )}
+          {blocksLoadError && !isEditingBlocks && (
+            <p className="mb-4 text-xs text-[var(--status-cancel)]">{blocksLoadError}</p>
+          )}
 
-            {isLoadingBlocks ? (
-              <div className="flex justify-center py-4">
-                <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
-              </div>
-            ) : isEditingBlocks ? (
-              <div>
-                <textarea
-                  ref={textareaRef}
-                  value={editBlocksContent}
-                  onChange={(e) => {
-                    setEditBlocksContent(e.target.value)
-                    // auto-resize
-                    const el = e.target
-                    el.style.height = "auto"
-                    el.style.height = `${el.scrollHeight}px`
-                  }}
-                  className="field-sm w-full resize-none min-h-[120px] font-mono"
-                  placeholder="Markdownで入力（# 見出し、- リスト など）"
-                />
-                <div className="flex gap-2 mt-4 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBlocksSaveError(null)
-                      setIsEditingBlocks(false)
-                    }}
-                    className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
-                    style={{ border: "1px solid var(--border-strong)" }}
-                  >
-                    キャンセル
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isSavingBlocks}
-                    onClick={handleSaveBlocks}
-                    className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
-                    style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
-                  >
-                    {isSavingBlocks ? "保存中…" : "保存"}
-                  </button>
-                </div>
-                {blocksSaveError && (
-                  <p className="mt-4 text-xs text-[var(--status-cancel)]">{blocksSaveError}</p>
-                )}
-              </div>
-            ) : blocks ? (
-              <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
-            ) : (
-              <p className="text-xs text-[var(--text-faint)] italic">本文なし</p>
-            )}
-          </Row>
-        </div>
-
-        {/* コメント */}
-        <div className="mt-4">
-          <Row label="コメント" block>
-            {comments.length > 0 && (
-              <p className="text-xs text-[var(--text-faint)] mb-4">{comments.length}件</p>
-            )}
-
-            {commentsLoadError && (
-              <p className="mb-4 text-xs text-[var(--status-cancel)]">{commentsLoadError}</p>
-            )}
-
-            {isLoadingComments ? (
-              <div className="flex justify-center py-4">
-                <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
-              </div>
-            ) : (
-              <div className="space-y-4 mb-4">
-                {comments.length === 0 && (
-                  <p className="text-xs text-[var(--text-faint)] italic">コメントなし</p>
-                )}
-                {comments.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-lg px-4 py-3"
-                    style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
-                  >
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-xs text-[var(--accent)]">{c.author}</span>
-                      <span className="text-xs text-[var(--text-faint)]">·</span>
-                      <span className="text-xs text-[var(--text-faint)]">
-                        {formatDueShort(c.createdTime)}
-                      </span>
-                    </div>
-                    <MarkdownPreview content={c.text} />
-                  </div>
-                ))}
-              </div>
-            )}
-
+          {isLoadingBlocks ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+            </div>
+          ) : isEditingBlocks ? (
             <div>
               <textarea
-                value={commentInput}
+                ref={textareaRef}
+                value={editBlocksContent}
                 onChange={(e) => {
-                  setCommentInput(e.target.value)
+                  setEditBlocksContent(e.target.value)
+                  // auto-resize
                   const el = e.target
                   el.style.height = "auto"
                   el.style.height = `${el.scrollHeight}px`
                 }}
-                placeholder="コメントを追加…"
-                rows={2}
-                className="field-sm w-full resize-none min-h-[64px]"
+                className="field-sm w-full resize-none min-h-[120px] font-mono"
+                placeholder="Markdownで入力（# 見出し、- リスト など）"
               />
-              <div className="flex justify-end mt-4">
+              <div className="flex gap-2 mt-4 justify-end">
                 <button
                   type="button"
-                  disabled={isPostingComment || !commentInput.trim()}
-                  onClick={handlePostComment}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
-                  style={{ backgroundColor: "var(--accent)" }}
+                  onClick={() => {
+                    setBlocksSaveError(null)
+                    setIsEditingBlocks(false)
+                  }}
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+                  style={{ border: "1px solid var(--border-strong)" }}
                 >
-                  {isPostingComment ? "投稿中…" : "投稿"}
+                  キャンセル
+                </button>
+                <button
+                  type="button"
+                  disabled={isSavingBlocks}
+                  onClick={handleSaveBlocks}
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
+                  style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
+                >
+                  {isSavingBlocks ? "保存中…" : "保存"}
                 </button>
               </div>
-              {commentPostError && (
-                <p className="mt-4 text-xs text-[var(--status-cancel)]">{commentPostError}</p>
+              {blocksSaveError && (
+                <p className="mt-4 text-xs text-[var(--status-cancel)]">{blocksSaveError}</p>
               )}
             </div>
-          </Row>
+          ) : blocks ? (
+            <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
+          ) : (
+            <p className="text-xs text-[var(--text-faint)] italic">本文なし</p>
+          )}
+        </div>
+
+        {/* コメント */}
+        <div className="mt-4">
+          <div className="flex items-center mb-4 min-h-9">
+            <span className="font-pixel text-xs text-[var(--text-faint)] tracking-wide uppercase">コメント</span>
+            {comments.length > 0 && (
+              <span className="ml-2 text-xs text-[var(--text-faint)]">({comments.length})</span>
+            )}
+          </div>
+
+          {commentsLoadError && (
+            <p className="mb-4 text-xs text-[var(--status-cancel)]">{commentsLoadError}</p>
+          )}
+
+          {isLoadingComments ? (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+            </div>
+          ) : (
+            <div className="space-y-4 mb-4">
+              {comments.length === 0 && (
+                <p className="text-xs text-[var(--text-faint)] italic">コメントなし</p>
+              )}
+              {comments.map((c) => (
+                <div
+                  key={c.id}
+                  className="rounded-lg px-4 py-3"
+                  style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
+                >
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs text-[var(--accent)]">{c.author}</span>
+                    <span className="text-xs text-[var(--text-faint)]">·</span>
+                    <span className="text-xs text-[var(--text-faint)]">
+                      {formatDueShort(c.createdTime)}
+                    </span>
+                  </div>
+                  <MarkdownPreview content={c.text} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div>
+            <textarea
+              value={commentInput}
+              onChange={(e) => {
+                setCommentInput(e.target.value)
+                const el = e.target
+                el.style.height = "auto"
+                el.style.height = `${el.scrollHeight}px`
+              }}
+              placeholder="コメントを追加…"
+              rows={2}
+              className="field-sm w-full resize-none min-h-[64px]"
+            />
+            <div className="flex justify-end mt-4">
+              <button
+                type="button"
+                disabled={isPostingComment || !commentInput.trim()}
+                onClick={handlePostComment}
+                className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
+                style={{ backgroundColor: "var(--accent)" }}
+              >
+                {isPostingComment ? "投稿中…" : "投稿"}
+              </button>
+            </div>
+            {commentPostError && (
+              <p className="mt-4 text-xs text-[var(--status-cancel)]">{commentPostError}</p>
+            )}
+          </div>
         </div>
 
         {/* Notion link */}
