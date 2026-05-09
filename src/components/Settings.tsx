@@ -72,15 +72,20 @@ export function Settings() {
                 aria-checked={settings.debugVisible}
                 aria-label="デバッグ表示の切り替え"
                 onClick={() => update({ debugVisible: !settings.debugVisible })}
-                className="font-pixel flex-shrink-0 rounded-md border px-3 py-1.5 text-xs tracking-widest uppercase transition-colors"
+                className="flex-shrink-0 relative w-12 h-6 rounded-full transition-colors"
                 style={{
-                  borderColor: settings.debugVisible ? "var(--accent)" : "var(--border-strong)",
-                  color: settings.debugVisible ? "var(--accent)" : "var(--text-dim)",
-                  backgroundColor: settings.debugVisible ? "rgba(220,20,60,0.08)" : "var(--surface-2)",
-                  boxShadow: settings.debugVisible ? "0 0 6px rgba(220,20,60,0.35)" : "none",
+                  backgroundColor: settings.debugVisible ? "var(--accent)" : "var(--surface-2)",
+                  boxShadow: settings.debugVisible ? "0 0 8px rgba(220,20,60,0.4)" : "inset 0 0 0 1px var(--border-strong)",
                 }}
               >
-                {settings.debugVisible ? "ON" : "OFF"}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform"
+                  style={{
+                    backgroundColor: settings.debugVisible ? "#fff" : "var(--text-dim)",
+                    transform: settings.debugVisible ? "translateX(24px)" : "translateX(0)",
+                  }}
+                />
               </button>
             </div>
           </div>
