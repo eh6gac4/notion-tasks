@@ -8,10 +8,12 @@ import { MarkdownPreview } from "./MarkdownPreview"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
+import { useTasksRefresh } from "./TasksRefreshContext"
 
 export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptions: string[]; onClose: () => void }) {
   const [, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
+  const refreshTasks = useTasksRefresh()
 
   const [editTitle, setEditTitle] = useState(task.title)
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
@@ -254,6 +256,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
     startTransition(async () => {
       try {
         await updateTaskAction(task.id, input)
+        refreshTasks()
       } catch {
         setSaveError("更新に失敗しました")
       }

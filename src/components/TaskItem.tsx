@@ -5,6 +5,7 @@ import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, PRIORITY_STYLES } from "@/constants/styles"
 import { formatDueShort, isOverdue } from "@/lib/due-date"
+import { useTasksRefresh } from "./TasksRefreshContext"
 
 // ボード上の1カード。カラム自体が現ステータスを示すが、status pill + ▾ を
 // カード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンス
@@ -14,6 +15,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const refreshTasks = useTasksRefresh()
 
   const status = optimisticStatus
   const overdue = isOverdue(task.due)
@@ -56,6 +58,7 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
                 if (selectRef.current) selectRef.current.value = next
                 try {
                   await updateTaskStatus(task.id, next)
+                  refreshTasks()
                 } catch {
                   setUpdateError("ステータスの更新に失敗しました")
                   if (selectRef.current) selectRef.current.value = task.status ?? "未着手"

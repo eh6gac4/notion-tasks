@@ -1,6 +1,5 @@
 import { cookies } from "next/headers"
 import { auth, signOut } from "@/auth"
-import { getTasks, getTagOptions } from "@/lib/notion"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
 import { parseAdvancedFilter } from "@/constants/filters"
@@ -29,11 +28,7 @@ export default async function Page({
   const { task: taskParam } = await searchParams
   const initialTaskId = typeof taskParam === "string" ? taskParam : null
 
-  const [session, tasks, tagOptions] = await Promise.all([
-    auth(),
-    getTasks(),
-    getTagOptions(),
-  ])
+  const session = await auth()
 
   return (
     <div className="flex flex-col h-full">
@@ -57,7 +52,7 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager tasks={tasks} tagOptions={tagOptions} initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
+      <TaskManager initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
     </div>
   )
 }
