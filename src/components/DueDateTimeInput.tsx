@@ -18,7 +18,9 @@ export function DueDateTimeInput({
   // default: .field (44px、TaskCreate などの新規作成シート)
   // compact: .field-sm (36px、TaskDetail の省スペース)
   // webkit の <input type="date"> ネイティブ装飾は globals.css で抑制している。
-  const inputClass = size === "compact" ? "field-sm" : "field"
+  // appearance: none を当てるとプレースホルダが消えて min-content 幅に縮むため、
+  // flex-1 + min-w-0 で親 flex の幅を 50/50 で確保する。
+  const inputClass = size === "compact" ? "field-sm flex-1 min-w-0" : "field flex-1 min-w-0"
   const inputStyle = { colorScheme: "dark" as const }
 
   return (
