@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { DotGothic16 } from "next/font/google"
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 import { SplashScreen } from "@/components/SplashScreen"
-import { VersionTag } from "@/components/VersionTag"
-import { DebugPanel } from "@/components/DebugPanel"
+import { DebugUI } from "@/components/DebugUI"
+import { SettingsProvider } from "@/components/SettingsContext"
 import { splashStartupImages } from "@/constants/splash"
 import "./globals.css"
 
@@ -65,9 +65,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <ServiceWorkerRegistration />
         <SplashScreen />
-        {children}
-        <VersionTag />
-        <DebugPanel />
+        <SettingsProvider>
+          {children}
+          <DebugUI />
+        </SettingsProvider>
       </body>
     </html>
   )

@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { auth, signOut } from "@/auth"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
+import { Settings } from "@/components/Settings"
 import { parseAdvancedFilter } from "@/constants/filters"
 import { parseSortConfig } from "@/lib/task-sort"
 
@@ -39,6 +40,7 @@ export default async function Page({
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-xs text-[var(--text-dim)]">{session?.user?.name}</span>
+            <Settings />
             <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }} className="flex items-center">
               <button
                 type="submit"
