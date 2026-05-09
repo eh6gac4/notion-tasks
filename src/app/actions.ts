@@ -4,8 +4,8 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment } from "@/lib/notion"
-import type { AdvancedFilter, SortConfig, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks } from "@/lib/notion"
+import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -51,6 +51,11 @@ export async function updateTaskAction(id: string, input: UpdateTaskInput) {
 export async function refreshTasksAction() {
   await requireAuth()
   updateTag("tasks")
+}
+
+export async function getCompletedTasksAction(): Promise<Task[]> {
+  await requireAuth()
+  return getTasks({ statuses: ["完了"] })
 }
 
 export async function getTaskBlocksAction(id: string): Promise<string> {

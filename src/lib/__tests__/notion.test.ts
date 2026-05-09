@@ -353,6 +353,22 @@ describe("getTasks", () => {
     expect(statuses).toContain("進行中")
   })
 
+  it("デフォルトでは完了ステータスは取得しない (lazy load 用)", async () => {
+    mockDataSources.query.mockResolvedValue({ results: [] })
+    await getTasks()
+    const call = mockDataSources.query.mock.calls[0][0]
+    const statuses = call.filter.or.map((f: { status: { equals: string } }) => f.status.equals)
+    expect(statuses).not.toContain("完了")
+  })
+
+  it("statuses: ['完了'] を明示すると完了のみ取得する", async () => {
+    mockDataSources.query.mockResolvedValue({ results: [] })
+    await getTasks({ statuses: ["完了"] })
+    const call = mockDataSources.query.mock.calls[0][0]
+    const statuses = call.filter.or.map((f: { status: { equals: string } }) => f.status.equals)
+    expect(statuses).toEqual(["完了"])
+  })
+
   it("statuses オプションで任意のフィルターを渡せる", async () => {
     mockDataSources.query.mockResolvedValue({ results: [] })
     await getTasks({ statuses: ["確認中", "一時中断"] })
