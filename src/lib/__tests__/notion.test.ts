@@ -597,4 +597,64 @@ describe("updateTaskBlocks", () => {
     const types = appendCall.children.map((b: { type: string }) => b.type)
     expect(types).toEqual(["heading_1", "paragraph"])
   })
+
+  it("差分更新: 内容が完全一致なら delete も append も呼ばれない", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文1" }] } },
+        { id: "p2", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文2" }] } },
+        { id: "p3", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文3" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "本文1\n本文2\n本文3")
+
+    expect(mockBlocks.delete).not.toHaveBeenCalled()
+    expect(mockBlocks.children.append).not.toHaveBeenCalled()
+  })
+
+  it("差分更新: 中間の1行を変更したら、その1ブロックのみ delete + insert", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文1" }] } },
+        { id: "p2", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文2" }] } },
+        { id: "p3", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文3" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "本文1\n本文2変更\n本文3")
+
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    expect(deletedIds).toEqual(["p2"])
+
+    expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    expect(appendCall.after).toBe("p1")
+    expect(appendCall.children).toHaveLength(1)
+    expect(appendCall.children[0].paragraph.rich_text[0].text.content).toBe("本文2変更")
+  })
+
+  it("差分更新: 末尾に1行追加したら delete なし、append は after なし1コール", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文1" }] } },
+        { id: "p2", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文2" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "本文1\n本文2\n本文3")
+
+    expect(mockBlocks.delete).not.toHaveBeenCalled()
+    expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    expect(appendCall.after).toBe("p2")
+    expect(appendCall.children).toHaveLength(1)
+    expect(appendCall.children[0].paragraph.rich_text[0].text.content).toBe("本文3")
+  })
 })
