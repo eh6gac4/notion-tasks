@@ -155,7 +155,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
               </div>
 
               <div>
-                <label className="font-pixel block text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">期限</label>
+                <label className="font-pixel block text-xs text-[var(--text-dim)] mb-4 tracking-widest uppercase">期限</label>
                 <DueDateTimeInput
                   date={dueDate}
                   time={dueTime}
@@ -167,7 +167,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
               </div>
 
               <div>
-                <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">タグ</p>
+                <p className="font-pixel text-xs text-[var(--text-dim)] mb-4 tracking-widest uppercase">タグ</p>
                 <TagSelector options={tagOptions} selected={selectedTags} onChange={setSelectedTags} />
               </div>
 
