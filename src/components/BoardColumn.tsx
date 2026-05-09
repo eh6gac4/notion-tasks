@@ -5,7 +5,7 @@ import type { AdvancedFilter, SortConfig, Task, TaskStatus } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { applyAdvancedFilter } from "@/constants/filters"
 import { applySort } from "@/lib/task-sort"
-import { getCompletedTasksAction } from "@/app/actions"
+import { getCompletedTasksAction, getCancelledTasksAction } from "@/app/actions"
 
 const STATUS_ACCENT: Record<TaskStatus, string> = {
   "未着手":         "var(--status-todo)",
@@ -32,56 +32,57 @@ export function BoardColumn({
   sort: SortConfig
   onSelect: (id: string) => void
 }) {
-  // 完了カラムは初回ページ取得から除外しているため、カラムが viewport に
+  // 完了/中止カラムは初回ページ取得から除外しているため、カラムが viewport に
   // 入ったタイミングで一度だけ fetch する (ページ初期化を軽くする目的)。
-  // ただし tasks prop が既に完了タスクを含む場合 (= テスト/明示的 fetch 済み)
-  // はそれをそのまま使い、lazy load はスキップする。
-  const isCompleted = status === "完了"
-  const propCompletedTasks = useMemo(
-    () => (isCompleted ? tasks.filter((t) => t.status === "完了") : []),
-    [isCompleted, tasks]
+  // ただし tasks prop が既に該当ステータスのタスクを含む場合
+  // (= テスト/明示的 fetch 済み) はそれをそのまま使い、lazy load はスキップする。
+  const isLazyStatus = status === "完了" || status === "中止"
+  const propLazyTasks = useMemo(
+    () => (isLazyStatus ? tasks.filter((t) => t.status === status) : []),
+    [isLazyStatus, status, tasks]
   )
-  const propsHasCompleted = propCompletedTasks.length > 0
+  const propsHasLazy = propLazyTasks.length > 0
   const [lazyTasks, setLazyTasks] = useState<Task[] | null>(null)
   const [isLoadingLazy, setIsLoadingLazy] = useState(false)
   const [hasLoadError, setHasLoadError] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    if (!isCompleted) return
-    if (propsHasCompleted) return
+    if (!isLazyStatus) return
+    if (propsHasLazy) return
     if (lazyTasks !== null) return
     const el = sectionRef.current
     if (!el) return
     if (typeof IntersectionObserver === "undefined") return
+    const fetcher = status === "完了" ? getCompletedTasksAction : getCancelledTasksAction
     const obs = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return
       obs.disconnect()
       setIsLoadingLazy(true)
-      getCompletedTasksAction()
+      fetcher()
         .then((t) => setLazyTasks(t))
         .catch(() => setHasLoadError(true))
         .finally(() => setIsLoadingLazy(false))
     }, { threshold: 0.05 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [isCompleted, propsHasCompleted, lazyTasks])
+  }, [isLazyStatus, propsHasLazy, lazyTasks, status])
 
   const q = searchQuery.trim().toLowerCase()
   const filtered = useMemo(() => {
     let source: Task[]
-    if (isCompleted) {
-      source = propsHasCompleted ? propCompletedTasks : (lazyTasks ?? [])
+    if (isLazyStatus) {
+      source = propsHasLazy ? propLazyTasks : (lazyTasks ?? [])
     } else {
       source = tasks.filter((t) => t.status === status)
     }
     const byAdvanced = applyAdvancedFilter(source, advancedFilter)
     const bySearch = q === "" ? byAdvanced : byAdvanced.filter((t) => t.title.toLowerCase().includes(q))
     return applySort(bySearch, sort)
-  }, [isCompleted, propsHasCompleted, propCompletedTasks, lazyTasks, tasks, status, advancedFilter, q, sort])
+  }, [isLazyStatus, propsHasLazy, propLazyTasks, lazyTasks, tasks, status, advancedFilter, q, sort])
 
   const accent = STATUS_ACCENT[status]
-  const isLazyPending = isCompleted && !propsHasCompleted && lazyTasks === null
+  const isLazyPending = isLazyStatus && !propsHasLazy && lazyTasks === null
   const showLazyLoading = isLazyPending && !hasLoadError
   const showLazyError = isLazyPending && hasLoadError
 
