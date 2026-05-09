@@ -327,7 +327,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         <div className="space-y-4">
           <Row label="Status">
             <div className="relative inline-flex items-center">
-              <span className={`inline-flex items-center h-7 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+              <span className={`inline-flex items-center h-11 px-4 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
                 {editStatus}
               </span>
               <select
@@ -366,7 +366,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           </Row>
 
           <Row label="タグ">
-            <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} />
+            <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} size="lg" />
           </Row>
 
           {task.source && (
