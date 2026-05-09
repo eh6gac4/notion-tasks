@@ -21,28 +21,34 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
   const overdue = isOverdue(task.due)
   const hasMeta = task.priority || task.due || task.tags.length > 0 || task.childTaskIds.length > 0
 
+  const isDoing = status === "進行中"
   return (
     <div
       data-testid="task-item"
       data-task-id={task.id}
-      className="rounded-md border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] transition-colors cursor-pointer"
+      data-status={status ?? "未着手"}
+      className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <div className="flex items-start gap-2 px-3 pt-3 pb-2">
+      <div className="flex items-start gap-3 px-4 pt-3 pb-2">
         <p
           data-testid="task-title"
           className="flex-1 min-w-0 text-sm text-[var(--text)] leading-snug font-medium break-words"
         >
           {task.title}
         </p>
-        <div className="relative flex-shrink-0 -mt-0.5 -mr-1">
+        <div className="relative flex-shrink-0 -mt-1">
           <span
             data-testid="task-status-button"
             aria-hidden="true"
-            className="font-pixel inline-flex items-center gap-1 px-2 py-1 rounded border border-[var(--border-strong)] text-[10px] tracking-wider uppercase text-[var(--text-dim)] bg-[var(--surface-2)] hover:text-[var(--text)] hover:border-[var(--border-accent)] transition-colors"
+            className={`font-pixel inline-flex items-center gap-1 px-3 h-8 rounded text-[11px] tracking-wider uppercase border transition-colors ${
+              isDoing
+                ? "bg-[var(--accent)] text-[var(--bg)] border-transparent accent-glow-sm"
+                : "bg-[var(--surface-2)] border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--border-accent)]"
+            }`}
           >
             <span>{status ?? "未着手"}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </span>
@@ -77,35 +83,35 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
       </div>
 
       {hasMeta && (
-        <div className="flex flex-wrap items-center gap-1.5 px-3 pb-3">
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-3">
           {task.priority && (
             <span className={`text-[11px] ${PRIORITY_STYLES[task.priority].color}`}>
               {PRIORITY_STYLES[task.priority].label}
             </span>
           )}
           {task.due && (
-            <span className={`font-pixel text-[11px] ${overdue ? "text-[var(--status-cancel)]" : "text-[var(--text-dim)]"}`}>
+            <span className={`font-pixel text-[11px] ${overdue ? "text-[var(--status-cancel)] font-semibold" : "text-[var(--text-dim)]"}`}>
               {overdue ? "⚠ " : ""}{formatDueShort(task.due)}
             </span>
           )}
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="font-pixel text-[10px] text-[var(--text-dim)] border border-[var(--border-strong)] px-1.5 py-0.5 rounded">
+            <span key={tag} className="font-pixel text-[11px] text-[var(--text-dim)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-1 rounded">
               {tag}
             </span>
           ))}
           {task.tags.length > 2 && (
-            <span className="font-pixel text-[10px] text-[var(--text-faint)]">
+            <span className="font-pixel text-[11px] text-[var(--text-faint)]">
               +{task.tags.length - 2}
             </span>
           )}
           {task.childTaskIds.length > 0 && (
-            <span className="text-[10px] text-[var(--text-faint)]">子{task.childTaskIds.length}件</span>
+            <span className="text-[11px] text-[var(--text-faint)]">子{task.childTaskIds.length}件</span>
           )}
         </div>
       )}
 
       {updateError && (
-        <p className="text-[10px] text-[var(--status-cancel)] px-3 pb-2">{updateError}</p>
+        <p className="text-[11px] text-[var(--status-cancel)] px-4 pb-3">{updateError}</p>
       )}
     </div>
   )

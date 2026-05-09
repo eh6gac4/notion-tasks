@@ -98,7 +98,7 @@ export function TaskManager({
   return (
     <TasksRefreshProvider value={refresh}>
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* ローディングバー */}
+      {/* ローディングバー (h-0.5 = 2px は装飾的細線として 4px 例外を適用 — globals.css 参照) */}
       <div
         className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
         style={{
@@ -108,7 +108,7 @@ export function TaskManager({
       />
 
       {/* Toolbar */}
-      <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 pt-3 pb-3 flex-shrink-0 flex items-center gap-2">
+      <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 py-3 flex-shrink-0 flex items-center gap-3">
         <input
           data-testid="search-input"
           type="search"
@@ -116,14 +116,13 @@ export function TaskManager({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="検索..."
           aria-label="タスクを検索"
-          className="flex-1 min-w-0 rounded-lg px-4 py-2 text-sm bg-[var(--surface)] text-[var(--text)] placeholder:text-[var(--text-faint)] border border-[var(--border-strong)] focus:outline-none focus:border-[var(--accent)]"
-          style={{ transition: "border-color 0.2s" }}
+          className="field flex-1 min-w-0"
         />
         <button
           data-testid="filter-button"
           aria-label="フィルタを開く"
           onClick={() => setFilterSheetOpen(true)}
-          className="relative flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 transition-colors"
+          className="icon-btn relative flex-shrink-0"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -141,8 +140,8 @@ export function TaskManager({
           {advancedActive && (
             <span
               data-testid="filter-active-dot"
-              className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 4px rgba(220,20,60,0.6)" }}
+              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
             />
           )}
         </button>
@@ -150,7 +149,7 @@ export function TaskManager({
           data-testid="sort-button"
           aria-label="並び替えを開く"
           onClick={() => setSortSheetOpen(true)}
-          className="relative flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 transition-colors"
+          className="icon-btn relative flex-shrink-0"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -170,8 +169,8 @@ export function TaskManager({
           {sortActive && (
             <span
               data-testid="sort-active-dot"
-              className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 4px rgba(220,20,60,0.6)" }}
+              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
             />
           )}
         </button>
@@ -179,7 +178,7 @@ export function TaskManager({
           data-testid="refresh-button"
           disabled={isPending}
           onClick={refresh}
-          className="flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 disabled:opacity-40 transition-colors"
+          className="icon-btn flex-shrink-0"
           aria-label="再読み込み"
         >
           <svg

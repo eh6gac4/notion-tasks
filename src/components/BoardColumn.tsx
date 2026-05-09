@@ -126,22 +126,22 @@ export function BoardColumn({
       style={{ scrollSnapAlign: "start" }}
     >
       <header
-        className="sticky top-0 z-10 px-3 py-3 bg-[var(--bg)] border-b border-[var(--border)] flex items-center gap-2"
+        className="sticky top-0 z-10 px-4 py-3 bg-[var(--bg)] border-b border-[var(--border)] flex items-center gap-3"
       >
         <span
           aria-hidden="true"
-          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-          style={{ backgroundColor: accent }}
+          className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
         />
-        <span className="font-pixel text-xs tracking-widest uppercase" style={{ color: accent }}>
+        <span className="font-pixel text-xs tracking-widest uppercase flex-1" style={{ color: accent }}>
           {title}
         </span>
-        <span className="font-pixel text-[11px] text-[var(--text-faint)] tabular-nums">
+        <span className="font-pixel text-[11px] text-[var(--text-dim)] tabular-nums bg-[var(--surface-2)] rounded px-2 py-1">
           {isLazyPending ? "" : filtered.length}
         </span>
       </header>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
         {showLazyLoading ? (
           <p className="font-pixel text-center text-[var(--text-faint)] text-[11px] py-6 tracking-widest">
             — LOADING —

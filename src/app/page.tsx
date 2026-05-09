@@ -38,13 +38,13 @@ export default async function Page({
           <h1 className="font-pixel text-sm font-bold text-[var(--accent)] accent-glow-text-sm tracking-widest uppercase">
             ✦ To-do
           </h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <span className="text-xs text-[var(--text-dim)]">{session?.user?.name}</span>
             <Settings />
             <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }} className="flex items-center">
               <button
                 type="submit"
-                className="text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors"
+                className="inline-flex items-center h-9 px-2 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors"
               >
                 logout
               </button>
