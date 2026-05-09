@@ -431,16 +431,87 @@ export async function createTaskComment(id: string, text: string, author = "Unkn
 
 const IMAGE_MARKDOWN_LINE = /^!\[[^\]]*\]\(.+\)$/
 
+// 旧ブロック (API レスポンス, rich_text[].plain_text) と新ブロック (作成ペイロード,
+// rich_text[].text.content) で同じキーを生成するため、それぞれ専用のヘルパを使う。
+function oldBlockDiffKey(block: BlockObjectResponse): string {
+  const b = block as Record<string, unknown>
+  const type = b.type as string
+  if (type === "divider") return "divider"
+  if (type === "code") {
+    const cd = b.code as { rich_text: Array<{ plain_text: string }>; language?: string }
+    return `code|${cd.language ?? ""}|${extractPlainText(cd.rich_text)}`
+  }
+  if (type === "to_do") {
+    const td = b.to_do as { rich_text: Array<{ plain_text: string }>; checked: boolean }
+    return `to_do|${td.checked ? 1 : 0}|${extractPlainText(td.rich_text)}`
+  }
+  const data = b[type] as { rich_text?: Array<{ plain_text: string }> } | undefined
+  const text = data?.rich_text ? extractPlainText(data.rich_text) : ""
+  return `${type}|${text}`
+}
+
+function newBlockDiffKey(block: object): string {
+  const b = block as Record<string, unknown>
+  const type = b.type as string
+  if (type === "divider") return "divider"
+  const newRichText = (rt: Array<{ text: { content: string } }>) =>
+    rt.map((r) => r.text.content).join("")
+  if (type === "code") {
+    const cd = b.code as { rich_text: Array<{ text: { content: string } }>; language?: string }
+    return `code|${cd.language ?? ""}|${newRichText(cd.rich_text)}`
+  }
+  if (type === "to_do") {
+    const td = b.to_do as { rich_text: Array<{ text: { content: string } }>; checked: boolean }
+    return `to_do|${td.checked ? 1 : 0}|${newRichText(td.rich_text)}`
+  }
+  const data = b[type] as { rich_text?: Array<{ text: { content: string } }> } | undefined
+  const text = data?.rich_text ? newRichText(data.rich_text) : ""
+  return `${type}|${text}`
+}
+
+type DiffOp =
+  | { kind: "keep"; oldIdx: number; newIdx: number }
+  | { kind: "delete"; oldIdx: number }
+  | { kind: "insert"; newIdx: number }
+
+function lcsDiff(oldKeys: string[], newKeys: string[]): DiffOp[] {
+  const m = oldKeys.length
+  const n = newKeys.length
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = oldKeys[i - 1] === newKeys[j - 1]
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1])
+    }
+  }
+  const ops: DiffOp[] = []
+  let i = m
+  let j = n
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldKeys[i - 1] === newKeys[j - 1]) {
+      ops.push({ kind: "keep", oldIdx: i - 1, newIdx: j - 1 })
+      i--
+      j--
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      ops.push({ kind: "insert", newIdx: j - 1 })
+      j--
+    } else {
+      ops.push({ kind: "delete", oldIdx: i - 1 })
+      i--
+    }
+  }
+  return ops.reverse()
+}
+
 export async function updateTaskBlocks(id: string, markdown: string): Promise<void> {
   if (isDevMode()) {
     updateMockTaskBlocks(id, markdown)
     return
   }
   try {
-    // Fetch existing blocks; delete only non-image blocks so user-attached
-    // images survive a body edit (file-type Notion images use signed URLs
-    // that can't be safely re-created).
-    const idsToDelete: string[] = []
+    // 1. 既存ブロックを取得
+    const oldBlocks: BlockObjectResponse[] = []
     let cursor: string | undefined = undefined
     do {
       const response = await notion.blocks.children.list({
@@ -449,34 +520,72 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
         ...(cursor ? { start_cursor: cursor } : {}),
       })
       for (const block of response.results) {
-        if (isFullBlockObjectResponse(block) && (block as { type: string }).type === "image") continue
-        idsToDelete.push(block.id)
+        if (isFullBlockObjectResponse(block)) oldBlocks.push(block)
       }
       cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
     } while (cursor)
 
-    // Notion API は 3 req/s 平均だがバースト許容。10 並列まで広げて
-    // 削除のラウンドトリップ数を抑える。
-    const BATCH = 10
-    for (let i = 0; i < idsToDelete.length; i += BATCH) {
-      const batch = idsToDelete.slice(i, i + BATCH)
-      await Promise.all(batch.map((bid) => notion.blocks.delete({ block_id: bid })))
-    }
+    // 2. 画像はそのまま保持。それ以外を diff 対象とする。
+    //    file-type の画像は署名付き URL なので作り直せない。
+    const oldTextBlocks = oldBlocks.filter((b) => (b as { type: string }).type !== "image")
 
-    // Strip image markdown lines: existing image blocks were preserved above,
-    // so re-creating them would duplicate (and create dead links for
-    // Notion-hosted file URLs that have since expired).
+    // 3. 入力 markdown から画像行を除外（既存画像との二重防止）
     const textOnly = markdown
       .split("\n")
       .filter((line) => !IMAGE_MARKDOWN_LINE.test(line))
       .join("\n")
-
     const newBlocks = markdownToNotionBlocks(textOnly)
-    if (newBlocks.length > 0) {
-      await notion.blocks.children.append({
+
+    // 4. ブロック単位の安定キーで LCS 差分。同じ内容のブロックは何もしない。
+    const oldKeys = oldTextBlocks.map(oldBlockDiffKey)
+    const newKeys = newBlocks.map(newBlockDiffKey)
+    const ops = lcsDiff(oldKeys, newKeys)
+
+    // 5. delete 対象を集める
+    const idsToDelete: string[] = []
+    for (const op of ops) {
+      if (op.kind === "delete") idsToDelete.push(oldTextBlocks[op.oldIdx].id)
+    }
+
+    // 6. insert は連続するものを1コールにまとめ、直前の keep ブロック ID を after に指定。
+    //    keep が無いまま insert する場合は after なし（= ページ末尾に追加）。
+    type InsertGroup = { after: string | null; payloads: object[] }
+    const insertGroups: InsertGroup[] = []
+    let currentGroup: InsertGroup | null = null
+    let lastKeptId: string | null = null
+    for (const op of ops) {
+      if (op.kind === "keep") {
+        lastKeptId = oldTextBlocks[op.oldIdx].id
+        currentGroup = null
+      } else if (op.kind === "delete") {
+        currentGroup = null
+      } else {
+        if (currentGroup === null) {
+          currentGroup = { after: lastKeptId, payloads: [] }
+          insertGroups.push(currentGroup)
+        }
+        currentGroup.payloads.push(newBlocks[op.newIdx])
+      }
+    }
+
+    // 7. delete と insert は別ブロックを触るので並走可。並列度 10 で実行。
+    type Task = () => Promise<unknown>
+    const tasks: Task[] = []
+    for (const bid of idsToDelete) {
+      tasks.push(() => notion.blocks.delete({ block_id: bid }))
+    }
+    for (const g of insertGroups) {
+      tasks.push(() => notion.blocks.children.append({
         block_id: id,
-        children: newBlocks as Parameters<typeof notion.blocks.children.append>[0]["children"],
-      })
+        children: g.payloads as Parameters<typeof notion.blocks.children.append>[0]["children"],
+        ...(g.after ? { after: g.after } : {}),
+      }))
+    }
+
+    const CONCURRENCY = 10
+    for (let i = 0; i < tasks.length; i += CONCURRENCY) {
+      const batch = tasks.slice(i, i + CONCURRENCY)
+      await Promise.all(batch.map((t) => t()))
     }
   } catch (e) {
     console.error("[updateTaskBlocks] Notion error:", e)
