@@ -248,6 +248,14 @@ option {
   color: var(--text);
 }
 
+/* <input type="date"> / <input type="time"> の webkit デフォルト装飾を抑制し、
+   .field / .field-sm の min-height や padding をネイティブ UI が上書きしないようにする */
+input[type="date"],
+input[type="time"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 /* CSS-based task filtering — no React state needed */
 .task-list[data-filter="active"] li:not([data-status="進行中"]):not([data-status="未着手"]) { display: none; }
 .task-list[data-filter="todo"]   li:not([data-status="未着手"])  { display: none; }
