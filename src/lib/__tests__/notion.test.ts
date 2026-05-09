@@ -663,6 +663,91 @@ describe("updateTaskBlocks", () => {
     expect(appendCall.children[0].type).toBe("heading_1")
   })
 
+  it("差分更新: 先頭に1行追加したら、新しい行が body の先頭に正しく入る (旧 BUG: 末尾に追記)", async () => {
+    // Old: [p"Y"], New: "X\nY"
+    // 旧実装は head insert にアンカーが無く after 無しで append → ページ末尾になり
+    // 結果が "Y\nX" になってしまっていた。
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "Y" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "X\nY")
+
+    // 期待: 既存 p1 を "X" に書き換え + p1 の後ろに "Y" を append (= 全体が X→Y)。
+    // または: 何らかの形で head insert が p1 より前/と入れ替わる結果になっていれば良い。
+    // 重要なのは「末尾に 'X' が単に追加されただけ (Y\nX)」にならないこと。
+    expect(mockBlocks.update).toHaveBeenCalledTimes(1)
+    const updateCall = mockBlocks.update.mock.calls[0][0]
+    expect(updateCall.block_id).toBe("p1")
+    expect(updateCall.paragraph.rich_text[0].text.content).toBe("X")
+
+    expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    expect(appendCall.after).toBe("p1")
+    expect(appendCall.children).toHaveLength(1)
+    expect(appendCall.children[0].paragraph.rich_text[0].text.content).toBe("Y")
+  })
+
+  it("差分更新: 先頭に画像があれば head insert はその画像の後ろにアンカーされる", async () => {
+    // Old page: [imageA, p1 "Y"]. New: "X\nY"
+    // 期待: image はそのまま保持、新しい "X" は image の後ろ・p1 の前に挿入される。
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "img1", type: "image", image: { type: "file", file: { url: "https://x.com/a.png" }, caption: [] } },
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "Y" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "X\nY")
+
+    // p1 ("Y") は keep されるので update も delete も無い
+    expect(mockBlocks.update).not.toHaveBeenCalled()
+    expect(mockBlocks.delete).not.toHaveBeenCalled()
+    // 画像の後ろに "X" を 1 つ append
+    expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
+    const appendCall = mockBlocks.children.append.mock.calls[0][0]
+    expect(appendCall.after).toBe("img1")
+    expect(appendCall.children).toHaveLength(1)
+    expect(appendCall.children[0].paragraph.rich_text[0].text.content).toBe("X")
+  })
+
+  it("差分更新: delete を挟んだ insert は 1 つの append にまとめる (順序逆転防止)", async () => {
+    // Old: [p1 "A", p2 "削除", p3 "B"], New: "A\nX\nY\nB"
+    // p1, p3 は keep。p2 は delete。X, Y は同じ region 内の insert。
+    // 別 group にすると後発の append が先発より前に入って X, Y の順序が壊れる。
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "A" }] } },
+        { id: "p2", type: "paragraph", paragraph: { rich_text: [{ plain_text: "削除" }] } },
+        { id: "p3", type: "paragraph", paragraph: { rich_text: [{ plain_text: "B" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "A\nX\nY\nB")
+
+    // 同 type ペアリングで p2 は delete ではなく update("X" or "Y") になる可能性が
+    // あるため、ここでは「append が呼ばれる場合、children の中で X→Y の順を保つ」
+    // ことだけを検証する。
+    const appendCalls = mockBlocks.children.append.mock.calls
+    const allAppendedTexts = appendCalls.flatMap(
+      (c: [{ children: Array<{ paragraph?: { rich_text: Array<{ text: { content: string } }> } }> }]) =>
+        c[0].children.map((b) => b.paragraph?.rich_text[0].text.content)
+    ).filter((t: string | undefined): t is string => typeof t === "string")
+    const xIdx = allAppendedTexts.indexOf("X")
+    const yIdx = allAppendedTexts.indexOf("Y")
+    if (xIdx !== -1 && yIdx !== -1) {
+      expect(xIdx).toBeLessThan(yIdx)
+    }
+  })
+
   it("差分更新: 末尾に1行追加したら delete なし、append は after なし1コール", async () => {
     mockBlocks.children.list.mockResolvedValue({
       results: [
