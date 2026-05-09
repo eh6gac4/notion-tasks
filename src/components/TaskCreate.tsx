@@ -6,6 +6,7 @@ import { createTaskAction } from "@/app/actions"
 import { buildDue } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
+import { useTasksRefresh } from "./TasksRefreshContext"
 import type { TaskStatus, TaskPriority } from "@/types/task"
 
 function SubmitButton() {
@@ -33,6 +34,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
   const [dueTime, setDueTime] = useState("")
   const [, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
+  const refreshTasks = useTasksRefresh()
 
   useEffect(() => {
     if (!open) return
@@ -69,6 +71,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
         body,
       })
       handleClose()
+      refreshTasks()
     })
   }
 

@@ -4,7 +4,7 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks } from "@/lib/notion"
+import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions } from "@/lib/notion"
 import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
@@ -51,6 +51,12 @@ export async function updateTaskAction(id: string, input: UpdateTaskInput) {
 export async function refreshTasksAction() {
   await requireAuth()
   updateTag("tasks")
+}
+
+export async function fetchInitialDataAction(): Promise<{ tasks: Task[]; tagOptions: string[] }> {
+  await requireAuth()
+  const [tasks, tagOptions] = await Promise.all([getTasks(), getTagOptions()])
+  return { tasks, tagOptions }
 }
 
 export async function getCompletedTasksAction(): Promise<Task[]> {

@@ -1,34 +1,33 @@
 "use client"
 
 import { useState, useTransition, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
 import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
 import { TaskBoard } from "./TaskBoard"
 import { TaskDetail } from "./TaskDetail"
 import { TaskCreate } from "./TaskCreate"
 import { TaskFilterSheet } from "./TaskFilterSheet"
 import { TaskSortSheet } from "./TaskSortSheet"
-import { setAdvancedFilterAction, setSortAction, refreshTasksAction } from "@/app/actions"
+import { setAdvancedFilterAction, setSortAction, refreshTasksAction, fetchInitialDataAction } from "@/app/actions"
 import { isAdvancedFilterActive } from "@/constants/filters"
 import { isSortActive } from "@/lib/task-sort"
+import { TasksRefreshProvider } from "./TasksRefreshContext"
 
 export function TaskManager({
-  tasks,
-  tagOptions,
+  tasks: seedTasks,
+  tagOptions: seedTagOptions,
   initialAdvancedFilter,
   initialSort,
   initialTaskId,
 }: {
-  tasks: Task[]
-  tagOptions: string[]
+  tasks?: Task[]
+  tagOptions?: string[]
   initialAdvancedFilter: AdvancedFilter
   initialSort: SortConfig
   initialTaskId?: string | null
 }) {
-  // E2E 用にハイドレーション完了を <html data-hydrated="1"> でマーキングする
-  useEffect(() => {
-    document.documentElement.dataset.hydrated = "1"
-  }, [])
+  const [tasks, setTasks] = useState<Task[]>(seedTasks ?? [])
+  const [tagOptions, setTagOptions] = useState<string[]>(seedTagOptions ?? [])
+  const isSeeded = seedTasks !== undefined
 
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
   const [sort, setSort] = useState<SortConfig>(initialSort)
@@ -54,10 +53,20 @@ export function TaskManager({
   // 選択中タスクは現在の tasks から検索
   const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null
 
+  // 初回ロード: 画面 (header / toolbar / board の枠) を即時表示してからデータを取得する。
+  // 親から tasks が seed されている場合 (テスト等) は fetch をスキップする。
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "1"
+    if (isSeeded) return
+    startTransition(async () => {
+      const data = await fetchInitialDataAction()
+      setTasks(data.tasks)
+      setTagOptions(data.tagOptions)
+    })
+  }, [isSeeded])
+
   // ─── Refresh on visibility change ─────────────────────────────────────────
-  // updateTag だけではサーバーキャッシュを無効化するのみで RSC 再描画はトリガ
-  // されないことがあるため、router.refresh() で明示的にツリーを再取得する。
-  const router = useRouter()
+  // タブ復帰時はキャッシュを無効化してから再取得する。
   const isPendingRef = useRef(false)
   useEffect(() => { isPendingRef.current = isPending }, [isPending])
   useEffect(() => {
@@ -66,14 +75,28 @@ export function TaskManager({
       if (isPendingRef.current) return
       startTransition(async () => {
         await refreshTasksAction()
-        router.refresh()
+        const data = await fetchInitialDataAction()
+        setTasks(data.tasks)
+        setTagOptions(data.tagOptions)
       })
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [router])
+  }, [])
+
+  // 手動リフレッシュ + 子コンポーネント (TaskCreate / TaskItem / TaskDetail) からの
+  // ミューテーション後リフレッシュで共通利用。サーバーキャッシュを無効化してから再取得する。
+  const refresh = () => {
+    startTransition(async () => {
+      await refreshTasksAction()
+      const data = await fetchInitialDataAction()
+      setTasks(data.tasks)
+      setTagOptions(data.tagOptions)
+    })
+  }
 
   return (
+    <TasksRefreshProvider value={refresh}>
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* ローディングバー */}
       <div
@@ -155,7 +178,7 @@ export function TaskManager({
         <button
           data-testid="refresh-button"
           disabled={isPending}
-          onClick={() => startTransition(async () => { await refreshTasksAction(); router.refresh() })}
+          onClick={refresh}
           className="flex-shrink-0 w-9 h-9 rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--accent)] flex items-center justify-center hover:border-[var(--accent)] active:scale-95 disabled:opacity-40 transition-colors"
           aria-label="再読み込み"
         >
@@ -214,5 +237,6 @@ export function TaskManager({
         onClose={() => setSortSheetOpen(false)}
       />
     </div>
+    </TasksRefreshProvider>
   )
 }
