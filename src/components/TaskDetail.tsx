@@ -319,15 +319,15 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="field w-full text-base mb-4"
+          className="field-sm w-full text-base mb-4"
           aria-label="タイトル"
         />
 
         {/* Editable fields */}
         <div className="space-y-4">
           <Row label="Status">
-            <div className="relative inline-flex">
-              <span className={`inline-flex items-center h-7 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+            <div className="relative inline-flex items-center">
+              <span className={`inline-flex items-center h-9 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
                 {editStatus}
               </span>
               <select
@@ -348,7 +348,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
-              className="field text-sm"
+              className="field-sm text-sm"
             >
               <option value="">未設定</option>
               <option value="high">🚨 High</option>
@@ -366,7 +366,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
             />
           </Row>
 
-          <Row label="タグ">
+          <Row label="タグ" block>
             <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} />
           </Row>
 
@@ -399,14 +399,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         </div>
 
         {/* 本文 */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <p className="font-pixel text-xs text-[var(--text-dim)] tracking-widest uppercase">本文</p>
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-4 min-h-9">
+            <span className="font-pixel text-xs text-[var(--text-faint)] tracking-wide uppercase">本文</span>
             {!isLoadingBlocks && !isEditingBlocks && (
               <button
                 type="button"
                 onClick={startEditingBlocks}
-                className="font-pixel text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
+                className="font-pixel inline-flex items-center h-9 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
               >
                 編集
               </button>
@@ -414,7 +414,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           </div>
 
           {blocksLoadError && !isEditingBlocks && (
-            <p className="mb-2 text-xs text-[var(--status-cancel)]">{blocksLoadError}</p>
+            <p className="mb-4 text-xs text-[var(--status-cancel)]">{blocksLoadError}</p>
           )}
 
           {isLoadingBlocks ? (
@@ -433,10 +433,10 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   el.style.height = "auto"
                   el.style.height = `${el.scrollHeight}px`
                 }}
-                className="field w-full resize-none min-h-[120px] font-mono"
+                className="field-sm w-full resize-none min-h-[120px] font-mono"
                 placeholder="Markdownで入力（# 見出し、- リスト など）"
               />
-              <div className="flex gap-2 mt-2 justify-end">
+              <div className="flex gap-2 mt-4 justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -459,7 +459,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                 </button>
               </div>
               {blocksSaveError && (
-                <p className="mt-2 text-xs text-[var(--status-cancel)]">{blocksSaveError}</p>
+                <p className="mt-4 text-xs text-[var(--status-cancel)]">{blocksSaveError}</p>
               )}
             </div>
           ) : blocks ? (
@@ -470,13 +470,16 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         </div>
 
         {/* コメント */}
-        <div className="mt-6">
-          <p className="font-pixel text-xs text-[var(--text-dim)] mb-3 tracking-widest uppercase">
-            コメント{comments.length > 0 && <span className="ml-2 text-[var(--text-faint)]">({comments.length})</span>}
-          </p>
+        <div className="mt-4">
+          <div className="flex items-center mb-4 min-h-9">
+            <span className="font-pixel text-xs text-[var(--text-faint)] tracking-wide uppercase">コメント</span>
+            {comments.length > 0 && (
+              <span className="ml-2 text-xs text-[var(--text-faint)]">({comments.length})</span>
+            )}
+          </div>
 
           {commentsLoadError && (
-            <p className="mb-2 text-xs text-[var(--status-cancel)]">{commentsLoadError}</p>
+            <p className="mb-4 text-xs text-[var(--status-cancel)]">{commentsLoadError}</p>
           )}
 
           {isLoadingComments ? (
@@ -484,7 +487,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           ) : (
-            <div className="space-y-3 mb-4">
+            <div className="space-y-4 mb-4">
               {comments.length === 0 && (
                 <p className="text-xs text-[var(--text-faint)] italic">コメントなし</p>
               )}
@@ -494,7 +497,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   className="rounded-lg px-4 py-3"
                   style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
                 >
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-4">
                     <span className="text-xs text-[var(--accent)]">{c.author}</span>
                     <span className="text-xs text-[var(--text-faint)]">·</span>
                     <span className="text-xs text-[var(--text-faint)]">
@@ -518,9 +521,9 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               }}
               placeholder="コメントを追加…"
               rows={2}
-              className="field w-full resize-none min-h-[64px]"
+              className="field-sm w-full resize-none min-h-[64px]"
             />
-            <div className="flex justify-end mt-2">
+            <div className="flex justify-end mt-4">
               <button
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
@@ -532,7 +535,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               </button>
             </div>
             {commentPostError && (
-              <p className="mt-1 text-xs text-[var(--status-cancel)]">{commentPostError}</p>
+              <p className="mt-4 text-xs text-[var(--status-cancel)]">{commentPostError}</p>
             )}
           </div>
         </div>
@@ -542,7 +545,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-pixel mt-6 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
           style={{ border: "1px solid var(--border-strong)" }}
         >
           Open in Notion →
@@ -552,10 +555,22 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({
+  label,
+  children,
+  block = false,
+}: {
+  label: string
+  children: React.ReactNode
+  block?: boolean
+}) {
   return (
-    <div className="flex gap-3 items-center">
-      <span className="font-pixel text-xs text-[var(--text-faint)] w-16 flex-shrink-0 tracking-wide uppercase">{label}</span>
+    <div className={`flex gap-4 ${block ? "items-start" : "items-center min-h-9"}`}>
+      <span
+        className={`font-pixel text-xs text-[var(--text-faint)] w-20 flex-shrink-0 tracking-wide uppercase ${block ? "pt-2" : ""}`}
+      >
+        {label}
+      </span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )

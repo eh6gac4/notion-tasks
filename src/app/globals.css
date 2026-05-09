@@ -129,6 +129,25 @@ body::before {
   }
   .field::placeholder { color: var(--text-faint); }
 
+  /* コンパクト (36px) フィールド: タスク詳細で密度を上げるため */
+  .field-sm {
+    background-color: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--field-radius);
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field-sm:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .field-sm::placeholder { color: var(--text-faint); }
+
   /* ツールバー用アイコンボタン (WCAG 44px タップ) */
   .icon-btn {
     width: var(--tap-min);
