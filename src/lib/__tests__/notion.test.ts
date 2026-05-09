@@ -14,6 +14,7 @@ const { mockPages, mockDataSources, mockBlocks } = vi.hoisted(() => ({
   mockBlocks: {
     children: { list: vi.fn(), append: vi.fn() },
     delete: vi.fn(),
+    update: vi.fn(),
   },
 }))
 
@@ -541,11 +542,13 @@ describe("updateTaskBlocks", () => {
     mockBlocks.children.list.mockReset()
     mockBlocks.children.append.mockReset()
     mockBlocks.delete.mockReset()
+    mockBlocks.update.mockReset()
     mockBlocks.children.append.mockResolvedValue({})
     mockBlocks.delete.mockResolvedValue({})
+    mockBlocks.update.mockResolvedValue({})
   })
 
-  it("image ブロックは delete されず、それ以外は delete される", async () => {
+  it("image ブロックは delete されず、それ以外は最小限の操作で更新される", async () => {
     mockBlocks.children.list.mockResolvedValue({
       results: [
         { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "古い本文" }] } },
@@ -559,8 +562,13 @@ describe("updateTaskBlocks", () => {
     await updateTaskBlocks("page-1", "新しい本文")
 
     const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
-    expect(deletedIds).toEqual(["p1", "p2"])
+    // 同 type (paragraph→paragraph) なので p1 は update に置換、p2 は不要なので delete
+    expect(deletedIds).toEqual(["p2"])
     expect(deletedIds).not.toContain("img1")
+    expect(mockBlocks.update).toHaveBeenCalledTimes(1)
+    const updateCall = mockBlocks.update.mock.calls[0][0]
+    expect(updateCall.block_id).toBe("p1")
+    expect(updateCall.paragraph.rich_text[0].text.content).toBe("新しい本文")
   })
 
   it("markdown 中の画像行は append されない（既存画像と二重にならない）", async () => {
@@ -615,7 +623,7 @@ describe("updateTaskBlocks", () => {
     expect(mockBlocks.children.append).not.toHaveBeenCalled()
   })
 
-  it("差分更新: 中間の1行を変更したら、その1ブロックのみ delete + insert", async () => {
+  it("差分更新: 中間の1行を同 type で書き換えたら blocks.update 1コールのみ", async () => {
     mockBlocks.children.list.mockResolvedValue({
       results: [
         { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "本文1" }] } },
@@ -628,14 +636,31 @@ describe("updateTaskBlocks", () => {
 
     await updateTaskBlocks("page-1", "本文1\n本文2変更\n本文3")
 
-    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
-    expect(deletedIds).toEqual(["p2"])
+    expect(mockBlocks.delete).not.toHaveBeenCalled()
+    expect(mockBlocks.children.append).not.toHaveBeenCalled()
+    expect(mockBlocks.update).toHaveBeenCalledTimes(1)
+    const updateCall = mockBlocks.update.mock.calls[0][0]
+    expect(updateCall.block_id).toBe("p2")
+    expect(updateCall.paragraph.rich_text[0].text.content).toBe("本文2変更")
+  })
 
+  it("差分更新: 同位置だが type が異なる置換は delete + insert になる", async () => {
+    mockBlocks.children.list.mockResolvedValue({
+      results: [
+        { id: "p1", type: "paragraph", paragraph: { rich_text: [{ plain_text: "ただの段落" }] } },
+      ],
+      has_more: false,
+      next_cursor: null,
+    })
+
+    await updateTaskBlocks("page-1", "# ただの段落")
+
+    expect(mockBlocks.update).not.toHaveBeenCalled()
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    expect(deletedIds).toEqual(["p1"])
     expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
     const appendCall = mockBlocks.children.append.mock.calls[0][0]
-    expect(appendCall.after).toBe("p1")
-    expect(appendCall.children).toHaveLength(1)
-    expect(appendCall.children[0].paragraph.rich_text[0].text.content).toBe("本文2変更")
+    expect(appendCall.children[0].type).toBe("heading_1")
   })
 
   it("差分更新: 末尾に1行追加したら delete なし、append は after なし1コール", async () => {

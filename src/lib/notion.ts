@@ -471,6 +471,7 @@ function newBlockDiffKey(block: object): string {
 
 type DiffOp =
   | { kind: "keep"; oldIdx: number; newIdx: number }
+  | { kind: "update"; oldIdx: number; newIdx: number }
   | { kind: "delete"; oldIdx: number }
   | { kind: "insert"; newIdx: number }
 
@@ -502,6 +503,65 @@ function lcsDiff(oldKeys: string[], newKeys: string[]): DiffOp[] {
     }
   }
   return ops.reverse()
+}
+
+// 同じ region (= keep に挟まれた delete/insert の連続) 内で、
+// 順序が同じ位置にある delete[k] / insert[k] を、type が一致するときに
+// blocks.update へ置き換える。ブロック ID と紐づくコメント/メンションを保つ
+// ためで、API コール数も 1 (delete) + 1 (insert) → 1 (update) に減る。
+// 順序ペアリング (d[k] ↔ i[k]) を厳守することで、ブロック並びの取り違えを防ぐ。
+function pairUpdatesInPlace(
+  ops: DiffOp[],
+  oldTextBlocks: BlockObjectResponse[],
+  newBlocks: object[]
+): DiffOp[] {
+  const result: DiffOp[] = []
+  let i = 0
+  while (i < ops.length) {
+    if (ops[i].kind === "keep") {
+      result.push(ops[i])
+      i++
+      continue
+    }
+    const regionStart = i
+    while (i < ops.length && ops[i].kind !== "keep") i++
+    const region = ops.slice(regionStart, i)
+
+    const deletes: { regionIdx: number; oldIdx: number }[] = []
+    const inserts: { regionIdx: number; newIdx: number }[] = []
+    region.forEach((o, idx) => {
+      if (o.kind === "delete") deletes.push({ regionIdx: idx, oldIdx: o.oldIdx })
+      else if (o.kind === "insert") inserts.push({ regionIdx: idx, newIdx: o.newIdx })
+    })
+
+    const pairedDelete = new Set<number>()
+    const pairedInsert = new Set<number>()
+    const updates = new Map<number, { oldIdx: number; newIdx: number }>()
+    const minLen = Math.min(deletes.length, inserts.length)
+    for (let k = 0; k < minLen; k++) {
+      const oldType = (oldTextBlocks[deletes[k].oldIdx] as { type: string }).type
+      const newType = (newBlocks[inserts[k].newIdx] as { type: string }).type
+      if (oldType === newType) {
+        pairedDelete.add(deletes[k].regionIdx)
+        pairedInsert.add(inserts[k].regionIdx)
+        updates.set(deletes[k].regionIdx, {
+          oldIdx: deletes[k].oldIdx,
+          newIdx: inserts[k].newIdx,
+        })
+      }
+    }
+
+    region.forEach((o, idx) => {
+      if (pairedInsert.has(idx)) return
+      if (pairedDelete.has(idx)) {
+        const u = updates.get(idx)!
+        result.push({ kind: "update", oldIdx: u.oldIdx, newIdx: u.newIdx })
+      } else {
+        result.push(o)
+      }
+    })
+  }
+  return result
 }
 
 export async function updateTaskBlocks(id: string, markdown: string): Promise<void> {
@@ -539,7 +599,10 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
     // 4. ブロック単位の安定キーで LCS 差分。同じ内容のブロックは何もしない。
     const oldKeys = oldTextBlocks.map(oldBlockDiffKey)
     const newKeys = newBlocks.map(newBlockDiffKey)
-    const ops = lcsDiff(oldKeys, newKeys)
+    const rawOps = lcsDiff(oldKeys, newKeys)
+
+    // 4-2. 同位置・同 type の delete+insert を blocks.update に置換
+    const ops = pairUpdatesInPlace(rawOps, oldTextBlocks, newBlocks)
 
     // 5. delete 対象を集める
     const idsToDelete: string[] = []
@@ -547,32 +610,44 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
       if (op.kind === "delete") idsToDelete.push(oldTextBlocks[op.oldIdx].id)
     }
 
-    // 6. insert は連続するものを1コールにまとめ、直前の keep ブロック ID を after に指定。
-    //    keep が無いまま insert する場合は after なし（= ページ末尾に追加）。
+    // 6. insert は連続するものを1コールにまとめ、直前の keep/update ブロック ID を after に指定。
+    //    update は元のブロック ID を保つので、anchor として keep と同等に扱える。
+    //    keep/update が無いまま insert する場合は after なし（= ページ末尾に追加）。
     type InsertGroup = { after: string | null; payloads: object[] }
     const insertGroups: InsertGroup[] = []
     let currentGroup: InsertGroup | null = null
-    let lastKeptId: string | null = null
+    let lastAnchorId: string | null = null
     for (const op of ops) {
-      if (op.kind === "keep") {
-        lastKeptId = oldTextBlocks[op.oldIdx].id
+      if (op.kind === "keep" || op.kind === "update") {
+        lastAnchorId = oldTextBlocks[op.oldIdx].id
         currentGroup = null
       } else if (op.kind === "delete") {
         currentGroup = null
       } else {
         if (currentGroup === null) {
-          currentGroup = { after: lastKeptId, payloads: [] }
+          currentGroup = { after: lastAnchorId, payloads: [] }
           insertGroups.push(currentGroup)
         }
         currentGroup.payloads.push(newBlocks[op.newIdx])
       }
     }
 
-    // 7. delete と insert は別ブロックを触るので並走可。並列度 10 で実行。
+    // 7. delete / update / insert は別ブロックを触るので並走可。並列度 10 で実行。
     type Task = () => Promise<unknown>
     const tasks: Task[] = []
     for (const bid of idsToDelete) {
       tasks.push(() => notion.blocks.delete({ block_id: bid }))
+    }
+    for (const op of ops) {
+      if (op.kind !== "update") continue
+      const oldBlock = oldTextBlocks[op.oldIdx]
+      const newBlock = newBlocks[op.newIdx] as Record<string, unknown>
+      const type = newBlock.type as string
+      const data = newBlock[type]
+      tasks.push(() => notion.blocks.update({
+        block_id: oldBlock.id,
+        [type]: data,
+      } as Parameters<typeof notion.blocks.update>[0]))
     }
     for (const g of insertGroups) {
       tasks.push(() => notion.blocks.children.append({
