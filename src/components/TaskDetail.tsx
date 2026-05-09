@@ -323,28 +323,26 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           aria-label="タイトル"
         />
 
-        {/* Status */}
-        <div className="mb-4">
-          <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">Status</p>
-          <div className="relative inline-flex">
-            <span className={`inline-flex items-center h-7 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
-              {editStatus}
-            </span>
-            <select
-              value={editStatus}
-              onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
-              className="absolute inset-0 w-full h-full cursor-pointer"
-              style={{ opacity: 0.001 }}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         {/* Editable fields */}
         <div className="space-y-4">
+          <Row label="Status">
+            <div className="relative inline-flex">
+              <span className={`inline-flex items-center h-7 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+                {editStatus}
+              </span>
+              <select
+                value={editStatus}
+                onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
+                className="absolute inset-0 w-full h-full cursor-pointer"
+                style={{ opacity: 0.001 }}
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+          </Row>
+
           <Row label="Priority">
             <select
               data-testid="priority-select"
