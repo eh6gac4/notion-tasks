@@ -28,11 +28,14 @@ test.describe("ボード", () => {
       }
     })
 
-    test("ボードに 6 カラムが描画される", async () => {
+    test("ボードに 5 カラムが描画される (進行中/未着手 はマージ)", async () => {
+      // 各 status 名が必ずいずれかのカラムに含まれる (進行中/未着手 は同一カラム)
       const expected = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
       for (const status of expected) {
-        await expect(page.locator(COLUMN(status))).toBeVisible()
+        await expect(page.locator(COLUMN(status)).first()).toBeVisible()
       }
+      const count = await page.locator("[data-testid='board-column']").count()
+      expect(count).toBe(5)
     })
 
     test("少なくとも1つのタスクが描画される", async () => {
@@ -128,19 +131,19 @@ test.describe("ボード", () => {
     })
 
     test("カードの ⋮ → ステータス変更で他カラムへ移動する", async ({ page }) => {
-      // 「未着手」カラムの先頭タスクを「進行中」に移動する
-      const todoCol = page.locator(COLUMN("未着手"))
-      const card = todoCol.locator(TASK_ITEM).first()
+      // 進行中/未着手は同一カラムなので、別カラムへの遷移を 確認中 で検証する
+      const wipCol = page.locator(COLUMN("未着手"))
+      const card = wipCol.locator(TASK_ITEM).first()
       const title = await card.locator("[data-testid='task-title']").innerText()
       expect(title.length).toBeGreaterThan(0)
 
       const select = card.locator("select[aria-label='ステータスを変更']")
-      await select.selectOption("進行中")
+      await select.selectOption("確認中")
 
-      // 同名のカードが「進行中」カラムに移動していることを確認
-      const movedCard = page.locator(`${COLUMN("進行中")} ${TASK_ITEM}`, { hasText: title })
+      // 同名のカードが「確認中」カラムに移動していることを確認
+      const movedCard = page.locator(`${COLUMN("確認中")} ${TASK_ITEM}`, { hasText: title })
       await expect(movedCard).toBeVisible({ timeout: 5_000 })
-      await expect(todoCol.locator(TASK_ITEM, { hasText: title })).toHaveCount(0, { timeout: 5_000 })
+      await expect(wipCol.locator(TASK_ITEM, { hasText: title })).toHaveCount(0, { timeout: 5_000 })
     })
   })
 })

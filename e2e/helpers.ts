@@ -4,8 +4,9 @@ import { expect } from "@playwright/test"
 export const BOARD = "[data-testid='task-board']"
 export const TASK_ITEM = "[data-testid='task-item']"
 
+// status 名で部分一致 (進行中/未着手 などまとめたカラムも引けるよう *= で)
 export function COLUMN(status: string) {
-  return `[data-testid='board-column'][data-status='${status}']`
+  return `[data-testid='board-column'][data-status*='${status}']`
 }
 
 export const AUTH_FILE = "e2e/.auth/user.json"

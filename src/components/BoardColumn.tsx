@@ -18,14 +18,20 @@ const STATUS_ACCENT: Record<TaskStatus, string> = {
 }
 
 export function BoardColumn({
-  status,
+  columnKey,
+  title,
+  statuses,
+  accentStatus,
   tasks,
   searchQuery,
   advancedFilter,
   sort,
   onSelect,
 }: {
-  status: TaskStatus
+  columnKey: string
+  title: string
+  statuses: TaskStatus[]
+  accentStatus: TaskStatus
   tasks: Task[]
   searchQuery: string
   advancedFilter: AdvancedFilter
@@ -36,10 +42,12 @@ export function BoardColumn({
   // 入ったタイミングで一度だけ fetch する (ページ初期化を軽くする目的)。
   // ただし tasks prop が既に該当ステータスのタスクを含む場合
   // (= テスト/明示的 fetch 済み) はそれをそのまま使い、lazy load はスキップする。
-  const isLazyStatus = status === "完了" || status === "中止"
+  const lazyStatus: TaskStatus | null =
+    statuses.length === 1 && (statuses[0] === "完了" || statuses[0] === "中止") ? statuses[0] : null
+  const isLazyStatus = lazyStatus !== null
   const propLazyTasks = useMemo(
-    () => (isLazyStatus ? tasks.filter((t) => t.status === status) : []),
-    [isLazyStatus, status, tasks]
+    () => (isLazyStatus ? tasks.filter((t) => t.status === lazyStatus) : []),
+    [isLazyStatus, lazyStatus, tasks]
   )
   const propsHasLazy = propLazyTasks.length > 0
   const [lazyTasks, setLazyTasks] = useState<Task[] | null>(null)
@@ -54,7 +62,7 @@ export function BoardColumn({
     const el = sectionRef.current
     if (!el) return
     if (typeof IntersectionObserver === "undefined") return
-    const fetcher = status === "完了" ? getCompletedTasksAction : getCancelledTasksAction
+    const fetcher = lazyStatus === "完了" ? getCompletedTasksAction : getCancelledTasksAction
     const obs = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return
       obs.disconnect()
@@ -66,7 +74,7 @@ export function BoardColumn({
     }, { threshold: 0.05 })
     obs.observe(el)
     return () => obs.disconnect()
-  }, [isLazyStatus, propsHasLazy, lazyTasks, status])
+  }, [isLazyStatus, propsHasLazy, lazyTasks, lazyStatus])
 
   // タブ復帰時に lazy state をクリアして、再びカラムが見えたら fetch しなおす。
   // (TaskManager 側の router.refresh() ではローカル state は消えないので個別に対応)
@@ -87,14 +95,23 @@ export function BoardColumn({
     if (isLazyStatus) {
       source = propsHasLazy ? propLazyTasks : (lazyTasks ?? [])
     } else {
-      source = tasks.filter((t) => t.status === status)
+      source = tasks.filter((t) => t.status !== null && statuses.includes(t.status))
     }
     const byAdvanced = applyAdvancedFilter(source, advancedFilter)
     const bySearch = q === "" ? byAdvanced : byAdvanced.filter((t) => t.title.toLowerCase().includes(q))
-    return applySort(bySearch, sort)
-  }, [isLazyStatus, propsHasLazy, propLazyTasks, lazyTasks, tasks, status, advancedFilter, q, sort])
+    const sorted = applySort(bySearch, sort)
+    // 複数 status を束ねるカラムでは status の並び (statuses 配列の順) で
+    // グルーピング再ソートする。Array.sort は安定なので、各グループ内では
+    // applySort の結果を維持する。
+    if (statuses.length <= 1) return sorted
+    return [...sorted].sort((a, b) => {
+      const ai = a.status ? statuses.indexOf(a.status) : statuses.length
+      const bi = b.status ? statuses.indexOf(b.status) : statuses.length
+      return ai - bi
+    })
+  }, [isLazyStatus, propsHasLazy, propLazyTasks, lazyTasks, tasks, statuses, advancedFilter, q, sort])
 
-  const accent = STATUS_ACCENT[status]
+  const accent = STATUS_ACCENT[accentStatus]
   const isLazyPending = isLazyStatus && !propsHasLazy && lazyTasks === null
   const showLazyLoading = isLazyPending && !hasLoadError
   const showLazyError = isLazyPending && hasLoadError
@@ -103,7 +120,8 @@ export function BoardColumn({
     <section
       ref={sectionRef}
       data-testid="board-column"
-      data-status={status}
+      data-column-key={columnKey}
+      data-status={statuses.join(",")}
       className="flex-shrink-0 w-[360px] h-full flex flex-col snap-start"
       style={{ scrollSnapAlign: "start" }}
     >
@@ -116,7 +134,7 @@ export function BoardColumn({
           style={{ backgroundColor: accent }}
         />
         <span className="font-pixel text-xs tracking-widest uppercase" style={{ color: accent }}>
-          {status}
+          {title}
         </span>
         <span className="font-pixel text-[11px] text-[var(--text-faint)] tabular-nums">
           {isLazyPending ? "" : filtered.length}
