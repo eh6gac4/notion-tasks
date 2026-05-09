@@ -602,7 +602,33 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
     const rawOps = lcsDiff(oldKeys, newKeys)
 
     // 4-2. 同位置・同 type の delete+insert を blocks.update に置換
-    const ops = pairUpdatesInPlace(rawOps, oldTextBlocks, newBlocks)
+    let ops = pairUpdatesInPlace(rawOps, oldTextBlocks, newBlocks)
+
+    // 4-3. 「先頭への insert」は anchor が無いと append が末尾に行ってしまい、
+    //      新しい行が body の最後に追記されてしまうため、対策する:
+    //      - 先頭テキストブロックより前の最後の image を anchor 候補として使う
+    //      - その image も無いなら、後続の keep/update を全て delete に降格させる
+    //        (= 旧来の delete-all + append-all に局所的にフォールバック)。
+    //        update へのペアリング最適化は再適用するので、典型ケースの API
+    //        コール数は大きく増えない。
+    const firstTextId = oldTextBlocks[0]?.id
+    let leadingImageAnchor: string | null = null
+    if (firstTextId) {
+      for (const b of oldBlocks) {
+        if (b.id === firstTextId) break
+        if ((b as { type: string }).type === "image") leadingImageAnchor = b.id
+      }
+    }
+    const firstAnchorIdx = ops.findIndex((o) => o.kind === "keep" || o.kind === "update")
+    const hasHeadInsert = firstAnchorIdx > 0 &&
+      ops.slice(0, firstAnchorIdx).some((o) => o.kind === "insert")
+    if (hasHeadInsert && leadingImageAnchor === null) {
+      const fallback: DiffOp[] = [
+        ...oldTextBlocks.map((_, i) => ({ kind: "delete" as const, oldIdx: i })),
+        ...newBlocks.map((_, i) => ({ kind: "insert" as const, newIdx: i })),
+      ]
+      ops = pairUpdatesInPlace(fallback, oldTextBlocks, newBlocks)
+    }
 
     // 5. delete 対象を集める
     const idsToDelete: string[] = []
@@ -612,24 +638,27 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
 
     // 6. insert は連続するものを1コールにまとめ、直前の keep/update ブロック ID を after に指定。
     //    update は元のブロック ID を保つので、anchor として keep と同等に扱える。
-    //    keep/update が無いまま insert する場合は after なし（= ページ末尾に追加）。
+    //    delete を挟んでも anchor は変わらない (削除されたブロックは anchor に
+    //    使えないし、間に keep/update が無いなら新しい group を作る必要も無い:
+    //    複数 group が同一 anchor を共有すると並列実行で順序が逆転するため
+    //    1 group にまとめておく)。
+    //    冒頭の anchor は leadingImageAnchor (= 先頭画像) で初期化する。
     type InsertGroup = { after: string | null; payloads: object[] }
     const insertGroups: InsertGroup[] = []
     let currentGroup: InsertGroup | null = null
-    let lastAnchorId: string | null = null
+    let lastAnchorId: string | null = leadingImageAnchor
     for (const op of ops) {
       if (op.kind === "keep" || op.kind === "update") {
         lastAnchorId = oldTextBlocks[op.oldIdx].id
         currentGroup = null
-      } else if (op.kind === "delete") {
-        currentGroup = null
-      } else {
+      } else if (op.kind === "insert") {
         if (currentGroup === null) {
           currentGroup = { after: lastAnchorId, payloads: [] }
           insertGroups.push(currentGroup)
         }
         currentGroup.payloads.push(newBlocks[op.newIdx])
       }
+      // delete: anchor / group は変えない
     }
 
     // 7. delete / update / insert は別ブロックを触るので並走可。並列度 10 で実行。
