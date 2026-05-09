@@ -123,9 +123,9 @@ async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
   }
 }
 
-// 初回レンダで取得するステータス。完了は件数が多くなりがちなので、
-// 完了カラムが画面に出たときに別途 fetch するようにし、初回コストを下げる。
-const INITIAL_STATUSES: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断", "中止"]
+// 初回レンダで取得するステータス。完了/中止は件数が多くなりがちなので、
+// 該当カラムが画面に出たときに別途 fetch するようにし、初回コストを下げる。
+const INITIAL_STATUSES: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断"]
 
 export function getTasks(options?: {
   statuses?: TaskStatus[]

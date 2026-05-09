@@ -353,12 +353,13 @@ describe("getTasks", () => {
     expect(statuses).toContain("進行中")
   })
 
-  it("デフォルトでは完了ステータスは取得しない (lazy load 用)", async () => {
+  it("デフォルトでは完了/中止ステータスは取得しない (lazy load 用)", async () => {
     mockDataSources.query.mockResolvedValue({ results: [] })
     await getTasks()
     const call = mockDataSources.query.mock.calls[0][0]
     const statuses = call.filter.or.map((f: { status: { equals: string } }) => f.status.equals)
     expect(statuses).not.toContain("完了")
+    expect(statuses).not.toContain("中止")
   })
 
   it("statuses: ['完了'] を明示すると完了のみ取得する", async () => {
@@ -367,6 +368,14 @@ describe("getTasks", () => {
     const call = mockDataSources.query.mock.calls[0][0]
     const statuses = call.filter.or.map((f: { status: { equals: string } }) => f.status.equals)
     expect(statuses).toEqual(["完了"])
+  })
+
+  it("statuses: ['中止'] を明示すると中止のみ取得する", async () => {
+    mockDataSources.query.mockResolvedValue({ results: [] })
+    await getTasks({ statuses: ["中止"] })
+    const call = mockDataSources.query.mock.calls[0][0]
+    const statuses = call.filter.or.map((f: { status: { equals: string } }) => f.status.equals)
+    expect(statuses).toEqual(["中止"])
   })
 
   it("statuses オプションで任意のフィルターを渡せる", async () => {
