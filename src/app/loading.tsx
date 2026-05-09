@@ -21,7 +21,7 @@ export default function Loading() {
         {[...Array(3)].map((_, col) => (
           <div key={col} className="w-[360px] flex-shrink-0 flex flex-col">
             <div className="px-3 py-3 border-b border-[var(--border)] flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-2)]" />
+              <div className="w-2 h-2 rounded-full bg-[var(--surface-2)]" />
               <div className="h-3 w-16 bg-[var(--surface-2)] rounded animate-pulse" />
             </div>
             <div className="px-3 py-3 flex flex-col gap-2">

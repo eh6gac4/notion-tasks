@@ -15,11 +15,12 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="font-pixel w-full rounded-lg py-4 text-sm tracking-widest uppercase font-semibold disabled:opacity-40 transition-all"
+      className="font-pixel w-full rounded-lg py-3 text-sm tracking-widest uppercase font-semibold disabled:opacity-40 transition-all"
       style={{
         backgroundColor: "var(--accent)",
         color: "var(--bg)",
         boxShadow: pending ? "none" : "0 0 8px rgba(220,20,60,0.4)",
+        minHeight: "var(--tap-min)",
       }}
     >
       {pending ? "CREATING..." : "CREATE TASK"}
@@ -100,7 +101,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
           <div className="absolute inset-0 bg-black/70" onClick={handleClose} />
 
           <div
-            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain"
+            className="relative rounded-t-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain"
             style={{
               backgroundColor: "var(--surface)",
               borderTop: "1px solid var(--border-strong)",
@@ -108,9 +109,9 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
             }}
           >
             {/* Handle */}
-            <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: "var(--border-strong)" }} />
+            <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ backgroundColor: "var(--border-strong)" }} />
 
-            <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-5 accent-glow-text-sm">
+            <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
               ✦ New Task
             </h2>
 
@@ -121,24 +122,21 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 placeholder="TASK NAME (required)"
                 required
                 autoFocus
-                className="w-full rounded-lg border border-[var(--border-strong)] px-4 py-4 text-sm text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
-                style={{ transition: "border-color 0.2s" }}
+                className="field w-full"
               />
 
               <textarea
                 name="body"
                 placeholder="BODY (optional)"
                 rows={3}
-                className="w-full rounded-lg border border-[var(--border-strong)] px-4 py-4 text-sm text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)] resize-none"
-                style={{ transition: "border-color 0.2s" }}
+                className="field w-full resize-none min-h-[88px]"
               />
 
               <div className="grid grid-cols-2 gap-3">
                 <select
                   name="status"
                   defaultValue="未着手"
-                  className="rounded-lg px-3 py-4 text-sm bg-[var(--bg)] text-[var(--text)] focus:outline-none"
-                  style={{ border: "1px solid var(--border-strong)" }}
+                  className="field w-full"
                 >
                   {(["未着手", "進行中", "確認中"] as TaskStatus[]).map((s) => (
                     <option key={s} value={s}>{s}</option>
@@ -147,8 +145,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
                 <select
                   name="priority"
                   defaultValue=""
-                  className="rounded-lg px-3 py-4 text-sm bg-[var(--bg)] text-[var(--text)] focus:outline-none"
-                  style={{ border: "1px solid var(--border-strong)" }}
+                  className="field w-full"
                 >
                   <option value="">Priority</option>
                   <option value="high">🚨 High</option>

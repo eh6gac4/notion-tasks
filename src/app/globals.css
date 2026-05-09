@@ -41,6 +41,16 @@
   --cyber-text-faint:   var(--text-faint);
   --cyber-accent:       var(--accent);
   --cyber-accent-dark:  var(--accent-dark);
+
+  /* タップ領域 / フィールド共通スペック */
+  --tap-min:       44px;
+  --field-h:       44px;
+  --field-px:      16px;
+  --field-py:      12px;
+  --field-radius:  10px;
+
+  /* カード hover 時のエレベーション */
+  --elev-card-hover: 0 0 0 1px var(--border-accent), 0 0 16px rgba(220, 20, 60, 0.18);
 }
 
 body {
@@ -99,6 +109,60 @@ body::before {
   .cyber-border-bright { border: 1px solid var(--border-accent); }
   .cyber-surface   { background-color: var(--surface); }
   .cyber-surface-2 { background-color: var(--surface-2); }
+
+  /* 共通フィールド (input / textarea / select で共有) */
+  .field {
+    background-color: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--field-radius);
+    padding: var(--field-py) var(--field-px);
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: var(--field-h);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .field::placeholder { color: var(--text-faint); }
+
+  /* ツールバー用アイコンボタン (WCAG 44px タップ) */
+  .icon-btn {
+    width: var(--tap-min);
+    height: var(--tap-min);
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  .icon-btn:hover    { border-color: var(--accent); }
+  .icon-btn:active   { transform: scale(0.95); }
+  .icon-btn:disabled { opacity: 0.4; }
+
+  /* TaskItem 用 hover グロー */
+  .card-glow-hover { transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
+  .card-glow-hover:hover { box-shadow: var(--elev-card-hover); }
+}
+
+/* 進行中タスクのアクセント縁取り (TaskItem 外枠の data-status を参照) */
+[data-testid="task-item"][data-status="進行中"] {
+  border-color: var(--border-accent);
+  box-shadow: 0 0 0 1px rgba(220, 20, 60, 0.2);
+}
+
+/* モバイルのみカラム幅を peek (横スワイプの存在を示唆) */
+@media (max-width: 480px) {
+  [data-testid="board-column"] {
+    width: 88vw;
+    max-width: 360px;
+  }
 }
 
 @keyframes dot-pulse {

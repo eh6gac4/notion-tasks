@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import type { SortConfig, SortDirection, SortKey } from "@/types/task"
 import { DEFAULT_SORT } from "@/lib/task-sort"
+import { PILL_BUTTON_CLASS } from "@/constants/styles"
 
 const KEY_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "default",  label: "デフォルト" },
@@ -78,7 +79,7 @@ export function TaskSortSheet({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
       <div
-        className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
+        className="relative rounded-t-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
@@ -89,7 +90,7 @@ export function TaskSortSheet({
           <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
-        <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-5 accent-glow-text-sm">
+        <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
           ✦ Sort By
         </h2>
 
@@ -106,7 +107,7 @@ export function TaskSortSheet({
                     data-testid={`sort-key-${opt.value}`}
                     aria-pressed={active}
                     onClick={() => setKey(opt.value)}
-                    className="font-pixel px-3 py-2 rounded-full text-xs transition-colors"
+                    className={PILL_BUTTON_CLASS}
                     style={active ? ACTIVE_STYLE : INACTIVE_STYLE}
                   >
                     {opt.label}
@@ -134,7 +135,7 @@ export function TaskSortSheet({
                     aria-pressed={active}
                     disabled={directionDisabled}
                     onClick={() => setDirection(opt.value)}
-                    className="font-pixel px-3 py-2 rounded-full text-xs transition-colors"
+                    className={PILL_BUTTON_CLASS}
                     style={style}
                   >
                     {opt.label}
@@ -150,7 +151,7 @@ export function TaskSortSheet({
             type="button"
             onClick={handleReset}
             className="font-pixel flex-1 rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors tracking-widest uppercase"
-            style={{ border: "1px solid var(--border-strong)" }}
+            style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
           >
             リセット
           </button>
@@ -162,6 +163,7 @@ export function TaskSortSheet({
               backgroundColor: "var(--accent)",
               color: "var(--bg)",
               boxShadow: "0 0 8px rgba(220,20,60,0.4)",
+              minHeight: "var(--tap-min)",
             }}
           >
             適用

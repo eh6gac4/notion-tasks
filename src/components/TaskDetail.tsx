@@ -297,7 +297,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
       <div
         ref={panelRef}
         data-testid="task-detail"
-        className="relative rounded-t-2xl px-5 pt-4 pb-10 max-h-[85svh] overflow-y-auto"
+        className="relative rounded-t-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
@@ -319,8 +319,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="w-full rounded-lg border border-[var(--border-strong)] px-4 py-3 text-base text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)] mb-4"
-          style={{ transition: "border-color 0.2s" }}
+          className="field w-full text-base mb-4"
           aria-label="タイトル"
         />
 
@@ -328,7 +327,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         <div className="mb-4">
           <p className="font-pixel text-xs text-[var(--text-dim)] mb-2 tracking-widest uppercase">Status</p>
           <div className="relative inline-flex">
-            <span className={`px-3 py-1 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+            <span className={`inline-flex items-center h-7 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
               {editStatus}
             </span>
             <select
@@ -351,8 +350,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
-              className="rounded-lg px-3 py-2 text-sm bg-[var(--bg)] text-[var(--text)] focus:outline-none"
-              style={{ border: "1px solid var(--border-strong)" }}
+              className="field text-sm"
             >
               <option value="">未設定</option>
               <option value="high">🚨 High</option>
@@ -437,8 +435,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   el.style.height = "auto"
                   el.style.height = `${el.scrollHeight}px`
                 }}
-                className="w-full rounded-lg px-4 py-3 text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-[var(--accent)] resize-none min-h-[120px] font-mono"
-                style={{ border: "1px solid var(--border-strong)" }}
+                className="field w-full resize-none min-h-[120px] font-mono"
                 placeholder="Markdownで入力（# 見出し、- リスト など）"
               />
               <div className="flex gap-2 mt-2 justify-end">
@@ -448,7 +445,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                     setBlocksSaveError(null)
                     setIsEditingBlocks(false)
                   }}
-                  className="px-4 py-2 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
                   style={{ border: "1px solid var(--border-strong)" }}
                 >
                   キャンセル
@@ -457,7 +454,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                   type="button"
                   disabled={isSavingBlocks}
                   onClick={handleSaveBlocks}
-                  className="px-4 py-2 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
                   style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
@@ -523,15 +520,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               }}
               placeholder="コメントを追加…"
               rows={2}
-              className="w-full rounded-lg px-4 py-3 text-sm text-[var(--text)] bg-[var(--bg)] focus:outline-none focus:border-[var(--accent)] resize-none"
-              style={{ border: "1px solid var(--border-strong)" }}
+              className="field w-full resize-none min-h-[64px]"
             />
             <div className="flex justify-end mt-2">
               <button
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
                 onClick={handlePostComment}
-                className="px-4 py-2 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
+                className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
                 style={{ backgroundColor: "var(--accent)" }}
               >
                 {isPostingComment ? "投稿中…" : "投稿"}
@@ -560,8 +556,8 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3">
-      <span className="font-pixel text-xs text-[var(--text-faint)] w-16 flex-shrink-0 pt-1 tracking-wide uppercase">{label}</span>
+    <div className="flex gap-3 items-center">
+      <span className="font-pixel text-xs text-[var(--text-faint)] w-16 flex-shrink-0 tracking-wide uppercase">{label}</span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
