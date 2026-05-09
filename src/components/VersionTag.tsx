@@ -1,15 +1,20 @@
 // 左下に固定表示するビルド情報。デプロイ確認用に
-// `v0.1.0 · a1b2c3d · 05/09 16:45` 形式で出す。
+// `v0.1.0 · a1b2c3d · 05/09 16:45 JST` 形式で出す。
 // dev 環境では先頭に `[DEV]` を付ける。
+//
+// 表示は常に JST (Asia/Tokyo) に固定する。Cloudflare Workers (UTC) で SSR
+// された結果とブラウザ側 (任意 TZ) のクライアント描画を一致させて
+// hydration mismatch を防ぐ目的も兼ねる。
 function formatBuildTime(iso: string | undefined): string {
   if (!iso) return ""
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ""
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mi = String(d.getMinutes()).padStart(2, "0")
-  return `${mm}/${dd} ${hh}:${mi}`
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000)
+  const mm = String(jst.getUTCMonth() + 1).padStart(2, "0")
+  const dd = String(jst.getUTCDate()).padStart(2, "0")
+  const hh = String(jst.getUTCHours()).padStart(2, "0")
+  const mi = String(jst.getUTCMinutes()).padStart(2, "0")
+  return `${mm}/${dd} ${hh}:${mi} JST`
 }
 
 export function VersionTag() {
