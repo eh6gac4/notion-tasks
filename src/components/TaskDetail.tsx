@@ -319,7 +319,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           value={editTitle}
           onChange={(e) => setEditTitle(e.target.value)}
           onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="field w-full text-base mb-4"
+          className="field-sm w-full text-base mb-4"
           aria-label="タイトル"
         />
 
@@ -327,7 +327,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         <div className="space-y-4">
           <Row label="Status">
             <div className="relative inline-flex items-center">
-              <span className={`inline-flex items-center h-11 px-4 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+              <span className={`inline-flex items-center h-9 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
                 {editStatus}
               </span>
               <select
@@ -348,7 +348,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               data-testid="priority-select"
               value={editPriority}
               onChange={(e) => handlePriorityChange(e.target.value as TaskPriority | "")}
-              className="field text-sm"
+              className="field-sm text-sm"
             >
               <option value="">未設定</option>
               <option value="high">🚨 High</option>
@@ -362,11 +362,12 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
               date={editDate}
               time={editTime}
               onChange={handleDueChange}
+              size="compact"
             />
           </Row>
 
-          <Row label="タグ">
-            <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} size="lg" />
+          <Row label="タグ" block>
+            <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} />
           </Row>
 
           {task.source && (
@@ -401,11 +402,11 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         <div className="mt-4">
           <Row label="本文" block>
             {!isLoadingBlocks && !isEditingBlocks && (
-              <div className="flex justify-end mb-4 -mt-3">
+              <div className="flex justify-end mb-4 -mt-2">
                 <button
                   type="button"
                   onClick={startEditingBlocks}
-                  className="font-pixel inline-flex items-center min-h-11 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
+                  className="font-pixel inline-flex items-center min-h-9 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
                 >
                   編集
                 </button>
@@ -432,7 +433,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                     el.style.height = "auto"
                     el.style.height = `${el.scrollHeight}px`
                   }}
-                  className="field w-full resize-none min-h-[120px] font-mono"
+                  className="field-sm w-full resize-none min-h-[120px] font-mono"
                   placeholder="Markdownで入力（# 見出し、- リスト など）"
                 />
                 <div className="flex gap-2 mt-4 justify-end">
@@ -442,7 +443,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                       setBlocksSaveError(null)
                       setIsEditingBlocks(false)
                     }}
-                    className="inline-flex items-center justify-center h-11 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+                    className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
                     style={{ border: "1px solid var(--border-strong)" }}
                   >
                     キャンセル
@@ -451,7 +452,7 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                     type="button"
                     disabled={isSavingBlocks}
                     onClick={handleSaveBlocks}
-                    className="inline-flex items-center justify-center h-11 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
+                    className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
                     style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
                   >
                     {isSavingBlocks ? "保存中…" : "保存"}
@@ -519,14 +520,14 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
                 }}
                 placeholder="コメントを追加…"
                 rows={2}
-                className="field w-full resize-none min-h-[64px]"
+                className="field-sm w-full resize-none min-h-[64px]"
               />
               <div className="flex justify-end mt-4">
                 <button
                   type="button"
                   disabled={isPostingComment || !commentInput.trim()}
                   onClick={handlePostComment}
-                  className="inline-flex items-center justify-center h-11 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
                   style={{ backgroundColor: "var(--accent)" }}
                 >
                   {isPostingComment ? "投稿中…" : "投稿"}
@@ -564,9 +565,9 @@ function Row({
   block?: boolean
 }) {
   return (
-    <div className={`flex gap-4 ${block ? "items-start" : "items-center min-h-11"}`}>
+    <div className={`flex gap-4 ${block ? "items-start" : "items-center min-h-9"}`}>
       <span
-        className={`font-pixel text-xs text-[var(--text-faint)] w-20 flex-shrink-0 tracking-wide uppercase ${block ? "pt-3" : ""}`}
+        className={`font-pixel text-xs text-[var(--text-faint)] w-20 flex-shrink-0 tracking-wide uppercase ${block ? "pt-2" : ""}`}
       >
         {label}
       </span>
