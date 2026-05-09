@@ -135,7 +135,7 @@ body::before {
     color: var(--text);
     border: 1px solid var(--border-strong);
     border-radius: var(--field-radius);
-    padding: 8px 12px;
+    padding: 6px 12px;
     font-size: 14px;
     line-height: 1.4;
     min-height: 36px;
