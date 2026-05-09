@@ -6,8 +6,9 @@ export type AppSettings = {
   debugVisible: boolean
 }
 
-// 既存挙動を維持するため、初期値は debug 表示 ON。
-const DEFAULT_SETTINGS: AppSettings = { debugVisible: true }
+// 通常利用時はデバッグ UI を見せたくないので、初期値は OFF。
+// ユーザーが設定で ON にした場合は localStorage で永続化される。
+const DEFAULT_SETTINGS: AppSettings = { debugVisible: false }
 const STORAGE_KEY = "app-settings"
 
 type SettingsContextValue = {
