@@ -1,15 +1,15 @@
 "use client"
 
-import { useOptimistic, useTransition, useRef, useState } from "react"
+import { useOptimistic, useTransition, useRef, useState, type CSSProperties } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
-import { STATUS_OPTIONS, PRIORITY_STYLES } from "@/constants/styles"
+import { STATUS_OPTIONS, STATUS_ACCENT, PRIORITY_STYLES } from "@/constants/styles"
 import { formatDueShort, isOverdue } from "@/lib/due-date"
 import { useTasksRefresh } from "./TasksRefreshContext"
 
-// ボード上の1カード。カラム自体が現ステータスを示すが、status pill + ▾ を
-// カード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンス
-// を持たせる。pill 全体に透明 select を被せ、ネイティブのドロップダウンを開く。
+// ボード上の1カード。カラム自体が現ステータスを示すが、ステータスのカラードット
+// をカード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンスを
+// 持たせる。32×32 ヒットエリアに透明 select を被せ、ネイティブの dropdown を開く。
 export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
@@ -37,21 +37,20 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
         >
           {task.title}
         </p>
-        <div className="relative flex-shrink-0 -mt-1">
+        <div
+          data-testid="task-status-trigger"
+          className="relative w-8 h-8 flex-shrink-0 inline-flex items-center justify-center status-dot-trigger cursor-pointer"
+          title={status ?? "未着手"}
+        >
           <span
-            data-testid="task-status-button"
             aria-hidden="true"
-            className={`font-pixel inline-flex items-center gap-1 px-3 h-8 rounded text-[11px] tracking-wider uppercase border transition-colors ${
-              isDoing
-                ? "bg-[var(--accent)] text-[var(--bg)] border-transparent accent-glow-sm"
-                : "bg-[var(--surface-2)] border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--border-accent)]"
-            }`}
-          >
-            <span>{status ?? "未着手"}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </span>
+            data-testid="task-status-dot"
+            className={`status-dot${
+              status === "アーカイブ済み" ? " status-dot--faint" : ""
+            }${isDoing ? " animate-dot-pulse" : ""}`}
+            style={{ "--status-color": STATUS_ACCENT[status ?? "未着手"] } as CSSProperties}
+          />
+          <span className="sr-only">{status ?? "未着手"}</span>
           <select
             ref={selectRef}
             defaultValue={status ?? "未着手"}

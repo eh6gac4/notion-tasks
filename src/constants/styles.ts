@@ -16,6 +16,18 @@ export const STATUS_STYLES: Record<TaskStatus, string> = {
   "アーカイブ済み": "font-pixel bg-transparent text-[var(--text-faint)] border border-[var(--border)]",
 }
 
+// 各ステータスのアクセントカラー (CSS 変数参照)。BoardColumn のヘッダドットと
+// TaskItem のステータスドットで共通利用する Single Source of Truth。
+export const STATUS_ACCENT: Record<TaskStatus, string> = {
+  "未着手":         "var(--status-todo)",
+  "進行中":         "var(--status-doing)",
+  "確認中":         "var(--status-review)",
+  "一時中断":       "var(--status-pause)",
+  "完了":           "var(--status-done)",
+  "中止":           "var(--status-cancel)",
+  "アーカイブ済み": "var(--text-faint)",
+}
+
 export const PRIORITY_STYLES: Record<TaskPriority, { label: string; color: string }> = {
   high:   { label: "🚨 High", color: "font-pixel text-[var(--accent)] font-semibold" },
   medium: { label: "⚠️ Med",  color: "font-pixel text-[var(--status-review)]" },

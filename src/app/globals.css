@@ -149,6 +149,29 @@ body::before {
   /* TaskItem 用 hover グロー */
   .card-glow-hover { transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
   .card-glow-hover:hover { box-shadow: var(--elev-card-hover); }
+
+  /* TaskItem ステータス・カラードット (--status-color をインライン注入して色を流し込む) */
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    background-color: var(--status-color);
+    box-shadow:
+      0 0 6px var(--status-color),
+      0 0 12px color-mix(in srgb, var(--status-color) 35%, transparent);
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  .status-dot--faint {
+    box-shadow: 0 0 4px var(--status-color);
+    opacity: 0.55;
+  }
+  .status-dot-trigger:hover .status-dot {
+    transform: scale(1.15);
+    box-shadow:
+      0 0 0 1px var(--status-color),
+      0 0 8px var(--status-color),
+      0 0 16px color-mix(in srgb, var(--status-color) 45%, transparent);
+  }
 }
 
 /* 進行中タスクのアクセント縁取り (TaskItem 外枠の data-status を参照) */
