@@ -455,9 +455,9 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
       cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined
     } while (cursor)
 
-    // Notion API のレート上限は 3 req/s 想定。3 件ずつバッチで並列削除して
-    // 直列 await による N+1 ラウンドトリップを潰す。
-    const BATCH = 3
+    // Notion API は 3 req/s 平均だがバースト許容。10 並列まで広げて
+    // 削除のラウンドトリップ数を抑える。
+    const BATCH = 10
     for (let i = 0; i < idsToDelete.length; i += BATCH) {
       const batch = idsToDelete.slice(i, i + BATCH)
       await Promise.all(batch.map((bid) => notion.blocks.delete({ block_id: bid })))
