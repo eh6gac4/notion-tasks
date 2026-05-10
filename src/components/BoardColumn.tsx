@@ -148,7 +148,18 @@ export function BoardColumn({
         ) : (
           <ul className="flex flex-col gap-2">
             {filtered.map((task) => (
-              <li key={task.id}>
+              <li
+                key={task.id}
+                // content-visibility: auto は viewport 外要素の paint/layout を skip して
+                // 大量カード時のスクロール jank を抑える。ただし off-screen 要素の innerText が
+                // 取れなくなる副作用があり、e2e flaky を生んだため、件数が膨らみがちな
+                // 「完了/中止」カラムのみに限定する (lazyStatus でガード)。
+                style={
+                  isLazyStatus
+                    ? { contentVisibility: "auto", containIntrinsicSize: "auto 88px" }
+                    : undefined
+                }
+              >
                 <TaskItem task={task} onSelect={onSelect} />
               </li>
             ))}

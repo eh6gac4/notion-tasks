@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef } from "react"
+import { useState, useTransition, useEffect, useRef, useCallback } from "react"
 import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
 import { TaskBoard } from "./TaskBoard"
 import { TaskDetail } from "./TaskDetail"
@@ -86,14 +86,16 @@ export function TaskManager({
 
   // 手動リフレッシュ + 子コンポーネント (TaskCreate / TaskItem / TaskDetail) からの
   // ミューテーション後リフレッシュで共通利用。サーバーキャッシュを無効化してから再取得する。
-  const refresh = () => {
+  // useCallback で参照を安定化させ、TasksRefreshProvider の value を介した
+  // TaskItem の React.memo を破らないようにする。
+  const refresh = useCallback(() => {
     startTransition(async () => {
       await refreshTasksAction()
       const data = await fetchInitialDataAction()
       setTasks(data.tasks)
       setTagOptions(data.tagOptions)
     })
-  }
+  }, [])
 
   return (
     <TasksRefreshProvider value={refresh}>
