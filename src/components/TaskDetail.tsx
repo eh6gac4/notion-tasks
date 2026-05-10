@@ -314,14 +314,32 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
         )}
 
         {/* Title — blur で保存 */}
-        <input
-          type="text"
-          value={editTitle}
-          onChange={(e) => setEditTitle(e.target.value)}
-          onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
-          className="field-sm w-full text-base mb-4"
-          aria-label="タイトル"
-        />
+        <div className="flex items-center gap-3 mb-4">
+          {task.icon && (
+            task.icon.type === "emoji" ? (
+              <span
+                aria-hidden="true"
+                className="flex-shrink-0 text-2xl leading-none"
+              >
+                {task.icon.emoji}
+              </span>
+            ) : (
+              <img
+                src={task.icon.url}
+                alt=""
+                className="flex-shrink-0 w-7 h-7 rounded object-cover"
+              />
+            )
+          )}
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onBlur={() => { if (editTitle.trim()) save({ title: editTitle }) }}
+            className="field-sm flex-1 min-w-0 text-base"
+            aria-label="タイトル"
+          />
+        </div>
 
         {/* Editable fields */}
         <div className="space-y-4">

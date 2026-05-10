@@ -34,6 +34,22 @@ export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task;
       onClick={() => onSelect(task.id)}
     >
       <div className="flex items-start gap-3 px-4 pt-3 pb-2">
+        {task.icon && (
+          task.icon.type === "emoji" ? (
+            <span
+              aria-hidden="true"
+              className="flex-shrink-0 text-base leading-snug"
+            >
+              {task.icon.emoji}
+            </span>
+          ) : (
+            <img
+              src={task.icon.url}
+              alt=""
+              className="flex-shrink-0 w-4 h-4 mt-1 rounded object-cover"
+            />
+          )
+        )}
         <p
           data-testid="task-title"
           className="flex-1 min-w-0 text-sm text-[var(--text)] leading-snug font-medium break-words"
