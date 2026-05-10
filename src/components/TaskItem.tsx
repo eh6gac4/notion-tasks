@@ -1,6 +1,6 @@
 "use client"
 
-import { useOptimistic, useTransition, useRef, useState, type CSSProperties } from "react"
+import { memo, useOptimistic, useTransition, useRef, useState, type CSSProperties } from "react"
 import type { Task, TaskStatus } from "@/types/task"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_ACCENT, PRIORITY_STYLES } from "@/constants/styles"
@@ -10,7 +10,10 @@ import { useTasksRefresh } from "./TasksRefreshContext"
 // ボード上の1カード。カラム自体が現ステータスを示すが、ステータスのカラードット
 // をカード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンスを
 // 持たせる。32×32 ヒットエリアに透明 select を被せ、ネイティブの dropdown を開く。
-export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
+//
+// memo: 検索打鍵 / フィルタ・ソート切替 / refresh 後に親で tasks 配列が新しく
+// なるが、要素の参照 (task) が変わらない限り再 render を skip。多数カードの jank 軽減。
+export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -114,4 +117,4 @@ export function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string
       )}
     </div>
   )
-}
+})
