@@ -8,6 +8,14 @@ import { applySort } from "@/lib/task-sort"
 import { STATUS_ACCENT } from "@/constants/styles"
 import { getCompletedTasksAction, getCancelledTasksAction } from "@/app/actions"
 
+// 完了/中止カラムは件数が膨らみがち。全件を一気に DOM 投入すると React の
+// reconciliation と paint が重くなりスクロール jank の原因になるため、
+// クライアント側で chunk render する (初期 INCREMENTAL_INITIAL 件、リスト末尾
+// 付近で +INCREMENTAL_STEP 件ずつ追加)。データ自体はメモリに全件あるので
+// 検索/フィルタ/ソートはこれまで通りすべてに掛かる。
+const INCREMENTAL_INITIAL = 50
+const INCREMENTAL_STEP = 50
+
 export function BoardColumn({
   columnKey,
   title,
@@ -107,6 +115,39 @@ export function BoardColumn({
   const showLazyLoading = isLazyPending && !hasLoadError
   const showLazyError = isLazyPending && hasLoadError
 
+  // incremental render (lazyStatus のみ): 表示件数を chunk ずつ増やす
+  const [displayCount, setDisplayCount] = useState(INCREMENTAL_INITIAL)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLLIElement>(null)
+
+  // filtered (検索/フィルタ/ソートで参照が変わる) のたびに先頭からやり直す
+  useEffect(() => {
+    if (!isLazyStatus) return
+    setDisplayCount(INCREMENTAL_INITIAL)
+  }, [isLazyStatus, filtered])
+
+  const visible = isLazyStatus ? filtered.slice(0, displayCount) : filtered
+  const hasMore = isLazyStatus && displayCount < filtered.length
+
+  // 末尾 sentinel が見えたら次の chunk をロード。スクロール親 (overflow-y-auto) を
+  // root にする。rootMargin: 200px で下端到達前に先読みして体感を滑らかに。
+  useEffect(() => {
+    if (!hasMore) return
+    const sentinel = sentinelRef.current
+    const root = scrollContainerRef.current
+    if (!sentinel || !root) return
+    if (typeof IntersectionObserver === "undefined") return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return
+        setDisplayCount((c) => Math.min(c + INCREMENTAL_STEP, filtered.length))
+      },
+      { root, rootMargin: "200px", threshold: 0 }
+    )
+    obs.observe(sentinel)
+    return () => obs.disconnect()
+  }, [hasMore, filtered.length])
+
   return (
     <section
       ref={sectionRef}
@@ -132,7 +173,7 @@ export function BoardColumn({
         </span>
       </header>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
         {showLazyLoading ? (
           <p className="font-pixel text-center text-[var(--text-faint)] text-[11px] py-6 tracking-widest">
             — LOADING —
@@ -147,7 +188,7 @@ export function BoardColumn({
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {filtered.map((task) => (
+            {visible.map((task) => (
               <li
                 key={task.id}
                 // content-visibility: auto は viewport 外要素の paint/layout を skip して
@@ -163,6 +204,9 @@ export function BoardColumn({
                 <TaskItem task={task} onSelect={onSelect} />
               </li>
             ))}
+            {hasMore && (
+              <li ref={sentinelRef} aria-hidden="true" className="h-1" />
+            )}
           </ul>
         )}
       </div>
