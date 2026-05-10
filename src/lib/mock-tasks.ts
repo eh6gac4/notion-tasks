@@ -167,6 +167,45 @@ const INITIAL_TASKS: Task[] = [
   },
 ]
 
+// 完了/中止カラムのスクロールパフォーマンス検証用に大量ダミーを生成。
+// dev モード (mock store) のみで使われる。
+function generateBulkTasks(
+  count: number,
+  status: "完了" | "中止",
+  prefix: string
+): Task[] {
+  const tags = ["Tech", "Operation", "Network", "Blog", "Finance"]
+  const priorities: Array<"high" | "medium" | "low" | null> = ["high", "medium", "low", null]
+  const result: Task[] = []
+  for (let i = 1; i <= count; i++) {
+    const idx = i - 1
+    result.push({
+      id: `mock-${prefix}-${String(i).padStart(3, "0")}`,
+      url: `https://notion.so/mock-${prefix}-${i}`,
+      title: `[BULK] ${status}タスク #${String(i).padStart(3, "0")}`,
+      status,
+      priority: priorities[idx % priorities.length],
+      due: idx % 4 === 0 ? "2026-04-15" : null,
+      tags: idx % 5 === 0 ? [] : [tags[idx % tags.length]],
+      assignees: [],
+      source: null,
+      sourceUrl: null,
+      parentTaskIds: [],
+      childTaskIds: [],
+      prevTaskIds: [],
+      nextTaskIds: [],
+      createdTime: now,
+      lastEditedTime: now,
+    })
+  }
+  return result
+}
+
+INITIAL_TASKS.push(
+  ...generateBulkTasks(100, "完了", "done"),
+  ...generateBulkTasks(100, "中止", "cancel")
+)
+
 let store: Task[] = INITIAL_TASKS.map((t) => ({ ...t }))
 let nextId = 100
 
