@@ -62,11 +62,21 @@ function extractSourceUrl(props: PageObjectResponse["properties"]): string | nul
   return p?.url ?? null
 }
 
-function extractIcon(icon: PageObjectResponse["icon"]): TaskIcon | null {
+function extractIcon(
+  icon: PageObjectResponse["icon"],
+  pageId: string,
+  lastEditedTime: string,
+): TaskIcon | null {
   if (!icon) return null
   if (icon.type === "emoji") return { type: "emoji", emoji: icon.emoji }
+  // file (Notion S3 署名 URL) はリクエストごとに署名が変わりブラウザキャッシュが
+  // 効かないため、pageId をキーにした安定 proxy URL に置き換える。
+  // v に last_edited_time を載せることで、ページ更新時にキャッシュが自然に切れる。
+  if (icon.type === "file") {
+    return { type: "url", url: `/api/icon/${pageId}?v=${encodeURIComponent(lastEditedTime)}` }
+  }
+  // external は Notion 提供 CDN や任意 URL。すでにブラウザキャッシュが効くのでそのまま。
   if (icon.type === "external") return { type: "url", url: icon.external.url }
-  if (icon.type === "file") return { type: "url", url: icon.file.url }
   return null
 }
 
@@ -76,7 +86,7 @@ function pageToTask(page: PageObjectResponse): Task {
     id: page.id,
     url: page.url,
     title:        extractTitle(props),
-    icon:         extractIcon(page.icon),
+    icon:         extractIcon(page.icon, page.id, page.last_edited_time),
     status:       extractStatus(props),
     priority:     extractPriority(props),
     due:          extractDueDate(props),

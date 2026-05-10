@@ -48,6 +48,8 @@ function makePage(overrides: {
   childIds?: { id: string }[]
   prevIds?: { id: string }[]
   nextIds?: { id: string }[]
+  icon?: PageObjectResponse["icon"]
+  lastEditedTime?: string
 } = {}): PageObjectResponse {
   const d = {
     id: "page-1",
@@ -64,6 +66,8 @@ function makePage(overrides: {
     childIds: [],
     prevIds: [],
     nextIds: [],
+    icon: null,
+    lastEditedTime: "2024-01-02T00:00:00.000Z",
     ...overrides,
   }
   return {
@@ -71,9 +75,9 @@ function makePage(overrides: {
     id: d.id,
     url: d.url,
     created_time: "2024-01-01T00:00:00.000Z",
-    last_edited_time: "2024-01-02T00:00:00.000Z",
+    last_edited_time: d.lastEditedTime,
     cover: null,
-    icon: null,
+    icon: d.icon,
     parent: { type: "database_id", database_id: "db-1" },
     archived: false,
     in_trash: false,
@@ -319,6 +323,56 @@ describe("getTask", () => {
     mockPages.retrieve.mockResolvedValue(page)
     const task = await getTask("id-1")
     expect(task?.parentTaskIds).toEqual([])
+  })
+
+  // --- extractIcon の検証 ---
+
+  it("icon が null の場合 task.icon は null", async () => {
+    mockPages.retrieve.mockResolvedValue(makePage({ icon: null }))
+    const task = await getTask("id-1")
+    expect(task?.icon).toBeNull()
+  })
+
+  it("emoji icon はそのまま返す", async () => {
+    mockPages.retrieve.mockResolvedValue(
+      makePage({ icon: { type: "emoji", emoji: "🌐" } as unknown as PageObjectResponse["icon"] })
+    )
+    const task = await getTask("id-1")
+    expect(task?.icon).toEqual({ type: "emoji", emoji: "🌐" })
+  })
+
+  it("file icon は /api/icon proxy URL に書き換えられる (署名 URL を直接渡さない)", async () => {
+    mockPages.retrieve.mockResolvedValue(
+      makePage({
+        id: "abc-123",
+        lastEditedTime: "2024-05-01T12:00:00.000Z",
+        icon: {
+          type: "file",
+          file: { url: "https://prod-files-secure.s3.us-west-2.amazonaws.com/x?X-Amz-Signature=abc" },
+        } as unknown as PageObjectResponse["icon"],
+      })
+    )
+    const task = await getTask("abc-123")
+    expect(task?.icon).toEqual({
+      type: "url",
+      url: "/api/icon/abc-123?v=2024-05-01T12%3A00%3A00.000Z",
+    })
+  })
+
+  it("external icon は元 URL のまま返す (既に CDN にある想定)", async () => {
+    mockPages.retrieve.mockResolvedValue(
+      makePage({
+        icon: {
+          type: "external",
+          external: { url: "https://www.notion.so/icons/database_blue.svg" },
+        } as unknown as PageObjectResponse["icon"],
+      })
+    )
+    const task = await getTask("id-1")
+    expect(task?.icon).toEqual({
+      type: "url",
+      url: "https://www.notion.so/icons/database_blue.svg",
+    })
   })
 })
 
