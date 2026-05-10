@@ -1,6 +1,6 @@
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse, CommentObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { Task, TaskComment, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { Task, TaskComment, TaskIcon, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
 import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions } from "@/lib/mock-tasks"
@@ -62,12 +62,21 @@ function extractSourceUrl(props: PageObjectResponse["properties"]): string | nul
   return p?.url ?? null
 }
 
+function extractIcon(icon: PageObjectResponse["icon"]): TaskIcon | null {
+  if (!icon) return null
+  if (icon.type === "emoji") return { type: "emoji", emoji: icon.emoji }
+  if (icon.type === "external") return { type: "url", url: icon.external.url }
+  if (icon.type === "file") return { type: "url", url: icon.file.url }
+  return null
+}
+
 function pageToTask(page: PageObjectResponse): Task {
   const props = page.properties
   return {
     id: page.id,
     url: page.url,
     title:        extractTitle(props),
+    icon:         extractIcon(page.icon),
     status:       extractStatus(props),
     priority:     extractPriority(props),
     due:          extractDueDate(props),

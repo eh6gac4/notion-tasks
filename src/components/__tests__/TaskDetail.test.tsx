@@ -33,6 +33,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     id: "t1",
     url: "https://notion.so/t1",
     title: "テストタスク",
+    icon: null,
     status: "未着手",
     priority: null,
     due: null,
