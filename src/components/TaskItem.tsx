@@ -33,7 +33,7 @@ export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task;
       className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
       onClick={() => onSelect(task.id)}
     >
-      <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+      <div className={`flex items-center gap-2 px-4 pt-3 ${hasMeta || updateError ? "pb-2" : "pb-3"}`}>
         {task.icon && (
           task.icon.type === "emoji" ? (
             <span
