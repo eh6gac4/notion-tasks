@@ -173,7 +173,7 @@ export function BoardColumn({
         </span>
       </header>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-11">
         {showLazyLoading ? (
           <p className="font-pixel text-center text-[var(--text-faint)] text-[11px] py-6 tracking-widest">
             — LOADING —
