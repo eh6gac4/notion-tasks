@@ -174,6 +174,25 @@ const INITIAL_TASKS: Task[] = [
     createdTime: now,
     lastEditedTime: now,
   },
+  {
+    id: "mock-10",
+    url: "https://notion.so/mock-10",
+    title: "【DEV】タイトルしかないタスク",
+    icon: null,
+    status: "未着手",
+    priority: null,
+    due: null,
+    tags: [],
+    assignees: [],
+    source: null,
+    sourceUrl: null,
+    parentTaskIds: [],
+    childTaskIds: [],
+    prevTaskIds: [],
+    nextTaskIds: [],
+    createdTime: now,
+    lastEditedTime: now,
+  },
 ]
 
 // 完了/中止カラムのスクロールパフォーマンス検証用に大量ダミーを生成。
