@@ -13,7 +13,7 @@ import { useTasksRefresh } from "./TasksRefreshContext"
 //
 // memo: 検索打鍵 / フィルタ・ソート切替 / refresh 後に親で tasks 配列が新しく
 // なるが、要素の参照 (task) が変わらない限り再 render を skip。多数カードの jank 軽減。
-export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task; onSelect: (id: string) => void }) {
+export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task; onSelect: (task: Task) => void }) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -31,7 +31,7 @@ export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task;
       data-task-id={task.id}
       data-status={status ?? "未着手"}
       className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
-      onClick={() => onSelect(task.id)}
+      onClick={() => onSelect(task)}
     >
       <div className={`flex items-center gap-2 px-4 ${hasMeta || updateError ? "pt-2 pb-2" : "pt-3 pb-3"}`}>
         {task.icon && (

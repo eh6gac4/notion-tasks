@@ -35,7 +35,7 @@ export function BoardColumn({
   searchQuery: string
   advancedFilter: AdvancedFilter
   sort: SortConfig
-  onSelect: (id: string) => void
+  onSelect: (task: Task) => void
 }) {
   // 完了/中止カラムは初回ページ取得から除外しているため、カラムが viewport に
   // 入ったタイミングで一度だけ fetch する (ページ初期化を軽くする目的)。
