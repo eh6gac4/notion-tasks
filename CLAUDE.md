@@ -20,6 +20,8 @@ docker compose up -d --build --force-recreate
 
 コード変更後はコンテナを再起動して動作を確認する。
 
+**普段は dev サーバーを停止しておく。** port 3000 を占有すると他プロジェクトで使えなくなるため、動作確認が必要なときだけ起動し、確認が終わったら `docker compose down` で停止する。アイドル時・タスク完了後もコンテナを残さない。
+
 ## 3. コミット前テスト
 
 **ユニットテスト**（先に実行）
@@ -31,8 +33,10 @@ source ~/.nvm/nvm.sh && npm run test:unit
 **Playwright テスト**（コンテナ停止が必要。Playwright が自動で再生成するため競合を防ぐ）
 
 ```
-docker compose down && source ~/.nvm/nvm.sh && npx playwright test && docker compose up -d --build --force-recreate
+docker compose down && source ~/.nvm/nvm.sh && npx playwright test
 ```
+
+テスト後はサーバーを停止したままにする（再起動しない）。
 
 ## 4. コミット・プッシュ・PR 作成
 

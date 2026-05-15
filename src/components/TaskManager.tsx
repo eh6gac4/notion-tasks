@@ -34,6 +34,9 @@ export function TaskManager({
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sortSheetOpen, setSortSheetOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(initialTaskId ?? null)
+  // 完了/中止は BoardColumn 内で lazy fetch されるため、親 tasks に存在しない。
+  // 選択時に Task オブジェクトを直接受け取って fallback として保持する。
+  const [externalSelectedTask, setExternalSelectedTask] = useState<Task | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const advancedActive = isAdvancedFilterActive(advancedFilter)
   const sortActive = isSortActive(sort)
@@ -50,8 +53,22 @@ export function TaskManager({
     prevIsPendingRef.current = isPending
   }, [isPending])
 
-  // 選択中タスクは現在の tasks から検索
-  const selectedTask = selectedTaskId ? tasks.find((t) => t.id === selectedTaskId) ?? null : null
+  // 選択中タスクはまず現在の tasks から検索 (refresh 後の最新を反映するため)、
+  // 見つからなければ externalSelectedTask (lazy load 経由で渡された Task) を使う。
+  const selectedTask = selectedTaskId
+    ? tasks.find((t) => t.id === selectedTaskId) ??
+      (externalSelectedTask?.id === selectedTaskId ? externalSelectedTask : null)
+    : null
+
+  function handleSelect(task: Task) {
+    setSelectedTaskId(task.id)
+    setExternalSelectedTask(task)
+  }
+
+  function handleCloseDetail() {
+    setSelectedTaskId(null)
+    setExternalSelectedTask(null)
+  }
 
   // 初回ロード: 画面 (header / toolbar / board の枠) を即時表示してからデータを取得する。
   // 親から tasks が seed されている場合 (テスト等) は fetch をスキップする。
@@ -210,13 +227,13 @@ export function TaskManager({
           searchQuery={searchQuery}
           advancedFilter={advancedFilter}
           sort={sort}
-          onSelect={setSelectedTaskId}
+          onSelect={handleSelect}
         />
       </main>
 
       <TaskCreate tagOptions={tagOptions} />
       {selectedTask && (
-        <TaskDetail task={selectedTask} tagOptions={tagOptions} onClose={() => setSelectedTaskId(null)} />
+        <TaskDetail task={selectedTask} tagOptions={tagOptions} onClose={handleCloseDetail} />
       )}
       <TaskFilterSheet
         open={filterSheetOpen}

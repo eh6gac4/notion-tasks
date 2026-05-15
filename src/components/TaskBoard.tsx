@@ -28,7 +28,7 @@ export const TaskBoard = forwardRef<
     searchQuery: string
     advancedFilter: AdvancedFilter
     sort: SortConfig
-    onSelect: (id: string) => void
+    onSelect: (task: Task) => void
   }
 >(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, onSelect }, ref) {
   return (
