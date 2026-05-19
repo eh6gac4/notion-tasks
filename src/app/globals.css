@@ -56,7 +56,7 @@
 body {
   color: var(--text);
   background-color: var(--bg);
-  font-family: var(--font-dot-gothic), ui-monospace, "Courier New", monospace;
+  font-family: var(--font-pixel-mplus), ui-monospace, "Courier New", monospace;
 }
 
 /* CRT スキャンライン overlay — レトロ CRT 質感を全面に薄く重ねる */
@@ -78,7 +78,7 @@ body::before {
 /* グロー系ユーティリティ — 局所適用前提に強度を抑制 */
 @layer utilities {
   .font-pixel {
-    font-family: var(--font-dot-gothic), monospace;
+    font-family: var(--font-pixel-mplus), monospace;
     letter-spacing: 0.04em;
   }
   .accent-glow {

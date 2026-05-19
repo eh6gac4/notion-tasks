@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { DotGothic16 } from "next/font/google"
+import localFont from "next/font/local"
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 import { SplashScreen } from "@/components/SplashScreen"
 import { DebugUI } from "@/components/DebugUI"
@@ -7,12 +7,22 @@ import { SettingsProvider } from "@/components/SettingsContext"
 import { splashStartupImages } from "@/constants/splash"
 import "./globals.css"
 
-const dotGothic = DotGothic16({
-  weight: "400",
-  subsets: ["latin"],
+const pixelMplus = localFont({
+  src: [
+    {
+      path: "./fonts/PixelMplus12-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/PixelMplus12-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   display: "swap",
   preload: false,
-  variable: "--font-dot-gothic",
+  variable: "--font-pixel-mplus",
 })
 
 export const metadata: Metadata = {
@@ -35,8 +45,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" className={`h-full ${dotGothic.variable}`} suppressHydrationWarning>
-      <body className={`h-full antialiased ${dotGothic.className}`}>
+    <html lang="ja" className={`h-full ${pixelMplus.variable}`} suppressHydrationWarning>
+      <body className={`h-full antialiased ${pixelMplus.className}`}>
         {/* キーフレームをインライン定義してCSSファイル読み込み前からアニメーションを有効化 */}
         {/* eslint-disable-next-line react/no-danger */}
         <style dangerouslySetInnerHTML={{ __html: "@keyframes _ss{to{transform:rotate(360deg)}}" }} />
