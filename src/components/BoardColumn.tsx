@@ -5,6 +5,7 @@ import type { AdvancedFilter, SortConfig, Task, TaskStatus } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { applyAdvancedFilter } from "@/constants/filters"
 import { applySort } from "@/lib/task-sort"
+import { buildNestedOrder } from "@/lib/task-tree"
 import { STATUS_ACCENT } from "@/constants/styles"
 import { getCompletedTasksAction, getCancelledTasksAction } from "@/app/actions"
 
@@ -110,6 +111,10 @@ export function BoardColumn({
     })
   }, [isLazyStatus, propsHasLazy, propLazyTasks, lazyTasks, tasks, statuses, advancedFilter, q, sort])
 
+  // サブタスクを親タスクの直下にインデント表示するため、列を木構造順に並べ替える。
+  // 親が同じ列に居なければ子はルートとして残るので、一覧から消えることはない。
+  const nested = useMemo(() => buildNestedOrder(filtered), [filtered])
+
   const accent = STATUS_ACCENT[accentStatus]
   const isLazyPending = isLazyStatus && !propsHasLazy && lazyTasks === null
   const showLazyLoading = isLazyPending && !hasLoadError
@@ -124,10 +129,10 @@ export function BoardColumn({
   useEffect(() => {
     if (!isLazyStatus) return
     setDisplayCount(INCREMENTAL_INITIAL)
-  }, [isLazyStatus, filtered])
+  }, [isLazyStatus, nested])
 
-  const visible = isLazyStatus ? filtered.slice(0, displayCount) : filtered
-  const hasMore = isLazyStatus && displayCount < filtered.length
+  const visible = isLazyStatus ? nested.slice(0, displayCount) : nested
+  const hasMore = isLazyStatus && displayCount < nested.length
 
   // 末尾 sentinel が見えたら次の chunk をロード。スクロール親 (overflow-y-auto) を
   // root にする。rootMargin: 200px で下端到達前に先読みして体感を滑らかに。
@@ -188,9 +193,10 @@ export function BoardColumn({
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {visible.map((task) => (
+            {visible.map(({ task, depth }) => (
               <li
                 key={task.id}
+                data-subtask-depth={depth}
                 // content-visibility: auto は viewport 外要素の paint/layout を skip して
                 // 大量カード時のスクロール jank を抑える。ただし off-screen 要素の innerText が
                 // 取れなくなる副作用があり、e2e flaky を生んだため、件数が膨らみがちな
@@ -201,7 +207,18 @@ export function BoardColumn({
                     : undefined
                 }
               >
-                <TaskItem task={task} onSelect={onSelect} />
+                {depth > 0 ? (
+                  // サブタスク: 親の下に 16px インデント + 左ガイド線で階層を示す
+                  // (16px / pl-3=12px は 4px グリッド準拠)。
+                  <div
+                    className="border-l border-[var(--border-strong)] pl-3"
+                    style={{ marginLeft: depth * 16 }}
+                  >
+                    <TaskItem task={task} onSelect={onSelect} />
+                  </div>
+                ) : (
+                  <TaskItem task={task} onSelect={onSelect} />
+                )}
               </li>
             ))}
             {hasMore && (
