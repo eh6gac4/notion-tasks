@@ -4,7 +4,7 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions } from "@/lib/notion"
+import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions } from "@/lib/notion"
 import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
@@ -67,6 +67,13 @@ export async function getCompletedTasksAction(): Promise<Task[]> {
 export async function getCancelledTasksAction(): Promise<Task[]> {
   await requireAuth()
   return getTasks({ statuses: ["中止"] })
+}
+
+export async function getTasksByIdsAction(ids: string[]): Promise<Task[]> {
+  await requireAuth()
+  if (ids.length === 0) return []
+  const tasks = await Promise.all(ids.map((id) => getTask(id)))
+  return tasks.filter((t): t is Task => t !== null)
 }
 
 export async function getTaskBlocksAction(id: string): Promise<string> {

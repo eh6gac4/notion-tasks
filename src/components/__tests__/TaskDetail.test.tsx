@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { TaskDetail } from "@/components/TaskDetail"
-import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction } from "@/app/actions"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTasksByIdsAction } from "@/app/actions"
 import type { Task } from "@/types/task"
 
 const TAG_OPTIONS = ["Network", "Blog", "Operation", "Finance", "Tech", "買い物🛍️"]
@@ -10,6 +10,7 @@ vi.mock("@/app/actions", () => ({
   updateTaskAction: vi.fn().mockResolvedValue(undefined),
   getTaskBlocksAction: vi.fn().mockResolvedValue(""),
   updateTaskBlocksAction: vi.fn().mockResolvedValue(undefined),
+  getTasksByIdsAction: vi.fn().mockResolvedValue([]),
 }))
 
 // requestAnimationFrame を同期実行してアニメーション初期化を完了させる
@@ -22,6 +23,7 @@ beforeEach(() => {
   vi.mocked(updateTaskAction).mockResolvedValue(undefined)
   vi.mocked(getTaskBlocksAction).mockResolvedValue("")
   vi.mocked(updateTaskBlocksAction).mockResolvedValue(undefined)
+  vi.mocked(getTasksByIdsAction).mockResolvedValue([])
 })
 
 afterEach(() => {
@@ -167,14 +169,15 @@ describe("TaskDetail レンダリング", () => {
     expect(link.closest("a")).toHaveAttribute("href", "https://example.com")
   })
 
-  it("子タスク数を表示する", () => {
-    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ childTaskIds: ["c1", "c2"] })} onClose={() => {}} />)
-    expect(screen.getByText("2件")).toBeInTheDocument()
+  it("サブタスクセクションと追加ボタンを常に表示する", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+    expect(screen.getByTestId("subtask-section")).toBeInTheDocument()
+    expect(screen.getByTestId("subtask-add-button")).toBeInTheDocument()
   })
 
-  it("親タスク数を表示する", () => {
-    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ parentTaskIds: ["p1"] })} onClose={() => {}} />)
-    expect(screen.getByText("1件")).toBeInTheDocument()
+  it("子タスクが無いとき「なし」を表示する", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+    expect(screen.getByText("なし")).toBeInTheDocument()
   })
 
   it("Notion リンクが正しい href を持つ", () => {
@@ -546,5 +549,100 @@ describe("TaskDetail スワイプ動作", () => {
     fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 50 }] })
 
     expect(onClose).not.toHaveBeenCalled()
+  })
+})
+
+describe("TaskDetail サブタスク", () => {
+  it("allTasks の reverse-lookup で子タスクを一覧表示する", () => {
+    const parent = makeTask({ id: "p", title: "親タスク" })
+    const child = makeTask({ id: "c", title: "子タスクA", parentTaskIds: ["p"] })
+
+    render(
+      <TaskDetail
+        tagOptions={TAG_OPTIONS}
+        task={parent}
+        allTasks={[parent, child]}
+        onClose={() => {}}
+      />,
+    )
+
+    const items = screen.getAllByTestId("subtask-item")
+    expect(items).toHaveLength(1)
+    expect(screen.getByText("子タスクA")).toBeInTheDocument()
+  })
+
+  it("childTaskIds に有り reverse-lookup にも有る子は重複表示しない", () => {
+    const parent = makeTask({ id: "p", title: "親", childTaskIds: ["c"] })
+    const child = makeTask({ id: "c", title: "子タスクA", parentTaskIds: ["p"] })
+
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={parent} allTasks={[parent, child]} onClose={() => {}} />,
+    )
+
+    expect(screen.getAllByTestId("subtask-item")).toHaveLength(1)
+  })
+
+  it("子タスク行タップで onSelectTask がその子で呼ばれる", () => {
+    const parent = makeTask({ id: "p", title: "親" })
+    const child = makeTask({ id: "c", title: "子タスクA", parentTaskIds: ["p"] })
+    const onSelectTask = vi.fn()
+
+    render(
+      <TaskDetail
+        tagOptions={TAG_OPTIONS}
+        task={parent}
+        allTasks={[parent, child]}
+        onSelectTask={onSelectTask}
+        onClose={() => {}}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId("subtask-item"))
+    expect(onSelectTask).toHaveBeenCalledWith(child)
+  })
+
+  it("親タスク行タップで onSelectTask がその親で呼ばれる", () => {
+    const parent = makeTask({ id: "p", title: "親タスク" })
+    const child = makeTask({ id: "c", title: "子", parentTaskIds: ["p"] })
+    const onSelectTask = vi.fn()
+
+    render(
+      <TaskDetail
+        tagOptions={TAG_OPTIONS}
+        task={child}
+        allTasks={[parent, child]}
+        onSelectTask={onSelectTask}
+        onClose={() => {}}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-task-item"))
+    expect(onSelectTask).toHaveBeenCalledWith(parent)
+  })
+
+  it("allTasks に無い子 ID は getTasksByIdsAction で補完表示する", async () => {
+    const fetched = makeTask({ id: "remote-c", title: "完了済み子タスク", status: "完了" })
+    vi.mocked(getTasksByIdsAction).mockResolvedValueOnce([fetched])
+
+    render(
+      <TaskDetail
+        tagOptions={TAG_OPTIONS}
+        task={makeTask({ id: "p", childTaskIds: ["remote-c"] })}
+        allTasks={[]}
+        onClose={() => {}}
+      />,
+    )
+
+    expect(await screen.findByText("完了済み子タスク")).toBeInTheDocument()
+    expect(vi.mocked(getTasksByIdsAction)).toHaveBeenCalledWith(["remote-c"])
+  })
+
+  it("サブタスク追加ボタンで子タスク作成フォームが開く", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+
+    expect(screen.queryByText("✦ New Subtask")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId("subtask-add-button"))
+    expect(screen.getByText("✦ New Subtask")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /ADD SUBTASK/i })).toBeInTheDocument()
   })
 })

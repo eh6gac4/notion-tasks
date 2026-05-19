@@ -1,19 +1,75 @@
 "use client"
 
-import { useTransition, useState, useEffect, useRef } from "react"
+import { useTransition, useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
 import type { Task, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
-import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction } from "@/app/actions"
-import { STATUS_OPTIONS, STATUS_STYLES } from "@/constants/styles"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction } from "@/app/actions"
+import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles"
+import { TaskFormSheet } from "./TaskFormSheet"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
 import { useTasksRefresh } from "./TasksRefreshContext"
 
-export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptions: string[]; onClose: () => void }) {
+export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () => {}, onClose }: {
+  task: Task
+  tagOptions: string[]
+  allTasks?: Task[]
+  onSelectTask?: (task: Task) => void
+  onClose: () => void
+}) {
   const [, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
   const refreshTasks = useTasksRefresh()
+
+  // 子/親タスク解決: in-memory の allTasks から引き、欠落 ID (完了/中止など
+  // lazy fetch 未取得) は getTasksByIdsAction で補完する。
+  const [extraTasks, setExtraTasks] = useState<Record<string, Task>>({})
+  const [subtaskFormOpen, setSubtaskFormOpen] = useState(false)
+
+  const taskById = useMemo(() => {
+    const m = new Map<string, Task>()
+    for (const t of allTasks) m.set(t.id, t)
+    for (const t of Object.values(extraTasks)) m.set(t.id, t)
+    return m
+  }, [allTasks, extraTasks])
+
+  const childIds = useMemo(() => {
+    const s = new Set<string>(task.childTaskIds)
+    for (const t of allTasks) if (t.parentTaskIds.includes(task.id)) s.add(t.id)
+    s.delete(task.id)
+    return [...s]
+  }, [task.id, task.childTaskIds, allTasks])
+
+  const parentIds = task.parentTaskIds
+
+  const childTasks = childIds
+    .map((id) => taskById.get(id))
+    .filter((t): t is Task => t !== undefined)
+  const parentTasks = parentIds
+    .map((id) => taskById.get(id))
+    .filter((t): t is Task => t !== undefined)
+
+  useEffect(() => {
+    const need = [...childIds, ...parentIds].filter((id) => !taskById.has(id))
+    if (need.length === 0) return
+    let cancelled = false
+    try {
+      Promise.resolve(getTasksByIdsAction(need))
+        .then((res) => {
+          if (cancelled || res.length === 0) return
+          setExtraTasks((prev) => {
+            const next = { ...prev }
+            for (const t of res) next[t.id] = t
+            return next
+          })
+        })
+        .catch(() => {})
+    } catch {
+      // action 未提供 (テスト等) — 無視
+    }
+    return () => { cancelled = true }
+  }, [childIds, parentIds, taskById])
 
   const [editTitle, setEditTitle] = useState(task.title)
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
@@ -403,17 +459,37 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
             </Row>
           )}
 
-          {task.childTaskIds.length > 0 && (
-            <Row label="子タスク">
-              <span className="text-sm text-[var(--text)]">{task.childTaskIds.length}件</span>
+          {parentTasks.length > 0 && (
+            <Row label="親タスク" block>
+              <div className="flex flex-col gap-2">
+                {parentTasks.map((p) => (
+                  <RelatedTaskRow key={p.id} task={p} testid="parent-task-item" onClick={() => onSelectTask(p)} />
+                ))}
+              </div>
             </Row>
           )}
 
-          {task.parentTaskIds.length > 0 && (
-            <Row label="親タスク">
-              <span className="text-sm text-[var(--text)]">{task.parentTaskIds.length}件</span>
+          <div data-testid="subtask-section">
+            <Row label="サブタスク" block>
+              <div className="flex flex-col gap-2">
+                {childTasks.map((c) => (
+                  <RelatedTaskRow key={c.id} task={c} testid="subtask-item" onClick={() => onSelectTask(c)} />
+                ))}
+                {childTasks.length === 0 && (
+                  <span className="text-sm text-[var(--text-faint)]">なし</span>
+                )}
+                <button
+                  type="button"
+                  data-testid="subtask-add-button"
+                  onClick={() => setSubtaskFormOpen(true)}
+                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                  style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+                >
+                  + サブタスク追加
+                </button>
+              </div>
             </Row>
-          )}
+          </div>
         </div>
 
         {/* 本文 */}
@@ -569,7 +645,51 @@ export function TaskDetail({ task, tagOptions, onClose }: { task: Task; tagOptio
           Open in Notion →
         </a>
       </div>
+
+      <TaskFormSheet
+        open={subtaskFormOpen}
+        onClose={() => setSubtaskFormOpen(false)}
+        tagOptions={tagOptions}
+        parentTaskId={task.id}
+        heading="✦ New Subtask"
+        submitLabel="ADD SUBTASK"
+      />
     </div>
+  )
+}
+
+function RelatedTaskRow({
+  task,
+  onClick,
+  testid,
+}: {
+  task: Task
+  onClick: () => void
+  testid: string
+}) {
+  return (
+    <button
+      type="button"
+      data-testid={testid}
+      data-task-id={task.id}
+      onClick={onClick}
+      className="flex items-center gap-2 w-full text-left rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
+      style={{ minHeight: "var(--tap-min)" }}
+    >
+      {task.icon && (
+        task.icon.type === "emoji" ? (
+          <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{task.icon.emoji}</span>
+        ) : (
+          <img src={task.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded object-cover" />
+        )
+      )}
+      <span className="flex-1 min-w-0 text-sm text-[var(--text)] break-words">{task.title}</span>
+      <span
+        aria-hidden="true"
+        className="status-dot flex-shrink-0"
+        style={{ "--status-color": STATUS_ACCENT[task.status ?? "未着手"] } as CSSProperties}
+      />
+    </button>
   )
 }
 

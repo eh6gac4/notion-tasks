@@ -74,3 +74,78 @@ test.describe("タスク詳細ボトムシート", () => {
     await expect(page.locator(TASK_DETAIL)).not.toBeVisible({ timeout: 5_000 })
   })
 })
+
+test.describe("サブタスク", () => {
+  test.describe.configure({ mode: "serial" })
+
+  let context: BrowserContext
+  let page: Page
+
+  const PARENT_TITLE = "【DEV】技術ブログ記事を書く"
+  const CHILD_TITLE = "【DEV】ドラフト作成"
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext({ storageState: AUTH_FILE })
+    page = await context.newPage()
+    await resetAndOpenHome(page)
+  })
+
+  test.afterAll(async () => {
+    await context.close()
+  })
+
+  async function openTaskDetail(title: string) {
+    await page
+      .locator(`${BOARD} ${TASK_ITEM} [data-testid='task-title']`, { hasText: title })
+      .first()
+      .click()
+    await expect(page.locator(TASK_DETAIL)).toBeVisible({ timeout: 5_000 })
+    await expect(page.locator('input[aria-label="タイトル"]')).toHaveValue(title, { timeout: 5_000 })
+  }
+
+  async function closeDetailIfOpen() {
+    const detail = page.locator(TASK_DETAIL)
+    if (await detail.isVisible().catch(() => false)) {
+      await page.locator(TASK_DETAIL_BACKDROP).click({ position: { x: 10, y: 10 } })
+      await detail.waitFor({ state: "hidden", timeout: 5_000 })
+    }
+  }
+
+  test.beforeEach(async () => {
+    await closeDetailIfOpen()
+  })
+
+  test("親タスク詳細にサブタスク一覧が表示される", async () => {
+    await openTaskDetail(PARENT_TITLE)
+    const section = page.locator("[data-testid='subtask-section']")
+    await expect(section).toBeVisible()
+    await expect(
+      section.locator("[data-testid='subtask-item']", { hasText: CHILD_TITLE }),
+    ).toBeVisible()
+  })
+
+  test("サブタスクをタップすると子タスクの詳細に切り替わり、親に戻れる", async () => {
+    await openTaskDetail(PARENT_TITLE)
+    await page.locator("[data-testid='subtask-item']", { hasText: CHILD_TITLE }).click()
+    await expect(page.locator('input[aria-label="タイトル"]')).toHaveValue(CHILD_TITLE, { timeout: 5_000 })
+
+    await page.locator("[data-testid='parent-task-item']", { hasText: PARENT_TITLE }).click()
+    await expect(page.locator('input[aria-label="タイトル"]')).toHaveValue(PARENT_TITLE, { timeout: 5_000 })
+  })
+
+  test("サブタスク追加で新しい子タスクが一覧に出る", async () => {
+    await openTaskDetail(PARENT_TITLE)
+
+    await page.locator("[data-testid='subtask-add-button']").click()
+    await expect(page.getByText("✦ New Subtask")).toBeVisible({ timeout: 5_000 })
+
+    const newTitle = `E2E サブタスク ${Date.now()}`
+    await page.getByPlaceholder(/TASK NAME/).fill(newTitle)
+    await page.getByRole("button", { name: /ADD SUBTASK/i }).click()
+
+    await expect(page.getByText("✦ New Subtask")).not.toBeVisible({ timeout: 5_000 })
+    await expect(
+      page.locator("[data-testid='subtask-item']", { hasText: newTitle }),
+    ).toBeVisible({ timeout: 10_000 })
+  })
+})
