@@ -233,7 +233,14 @@ export function TaskManager({
 
       <TaskCreate tagOptions={tagOptions} />
       {selectedTask && (
-        <TaskDetail task={selectedTask} tagOptions={tagOptions} onClose={handleCloseDetail} />
+        <TaskDetail
+          key={selectedTask.id}
+          task={selectedTask}
+          tagOptions={tagOptions}
+          allTasks={tasks}
+          onSelectTask={handleSelect}
+          onClose={handleCloseDetail}
+        />
       )}
       <TaskFilterSheet
         open={filterSheetOpen}

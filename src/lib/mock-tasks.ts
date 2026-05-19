@@ -290,6 +290,14 @@ export function createMockTask(input: CreateTaskInput): Task {
     lastEditedTime: ts,
   }
   store.push(task)
+  // Notion のシンクド・リレーション挙動を模倣: 子の親を設定したら
+  // 親側の childTaskIds にも反映する。
+  if (input.parentTaskId) {
+    const parent = store.find((t) => t.id === input.parentTaskId)
+    if (parent && !parent.childTaskIds.includes(task.id)) {
+      parent.childTaskIds = [...parent.childTaskIds, task.id]
+    }
+  }
   if (input.body?.trim()) mockBlockStore.set(task.id, input.body)
   return task
 }
