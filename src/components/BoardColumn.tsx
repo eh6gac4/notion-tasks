@@ -8,6 +8,7 @@ import { applySort } from "@/lib/task-sort"
 import { buildNestedOrder } from "@/lib/task-tree"
 import { STATUS_ACCENT } from "@/constants/styles"
 import { getCompletedTasksAction, getCancelledTasksAction } from "@/app/actions"
+import { CyberLoader } from "./CyberLoader"
 
 // 完了/中止カラムは件数が膨らみがち。全件を一気に DOM 投入すると React の
 // reconciliation と paint が重くなりスクロール jank の原因になるため、
@@ -180,9 +181,12 @@ export function BoardColumn({
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-11">
         {showLazyLoading ? (
-          <p className="font-pixel text-center text-[var(--text-faint)] text-[11px] py-6 tracking-widest">
-            — LOADING —
-          </p>
+          <div
+            data-testid="board-column-loader"
+            className="flex justify-center py-8"
+          >
+            <CyberLoader />
+          </div>
         ) : showLazyError ? (
           <p className="font-pixel text-center text-[var(--status-cancel)] text-[11px] py-6 tracking-widest">
             — LOAD FAILED —

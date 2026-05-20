@@ -1,3 +1,5 @@
+import { CyberLoader } from "@/components/CyberLoader"
+
 export default function Loading() {
   return (
     <div className="flex flex-col h-full">
@@ -8,7 +10,9 @@ export default function Loading() {
         </div>
       </header>
 
-      <div className="h-0.5 bg-[var(--accent)] animate-pulse w-2/3" style={{ boxShadow: "0 0 6px rgba(220,20,60,0.45)" }} />
+      <div className="flex justify-center items-center h-8 bg-[var(--bg)] border-b border-[var(--border)]">
+        <CyberLoader size="sm" />
+      </div>
 
       <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 py-3 flex items-center gap-2">
         <div className="flex-1 h-9 bg-[var(--surface)] rounded-lg animate-pulse" />

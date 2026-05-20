@@ -222,6 +222,17 @@ body::before {
   100% { background-position: 100% 0; }
 }
 
+@keyframes equalizer-bar {
+  0%, 100% {
+    transform: scaleY(0.2);
+    box-shadow: 0 0 4px rgba(220, 20, 60, 0.35);
+  }
+  50% {
+    transform: scaleY(1);
+    box-shadow: 0 0 6px var(--accent), 0 0 12px rgba(220, 20, 60, 0.45);
+  }
+}
+
 @layer utilities {
   .animate-dot-pulse {
     animation: dot-pulse 1.8s ease-in-out infinite;
@@ -234,6 +245,15 @@ body::before {
     background: linear-gradient(90deg, var(--accent) 0%, #ff6688 40%, #ffffff 50%, #ff6688 60%, var(--accent) 100%);
     background-size: 200% 100%;
     animation: shimmer-bar 1.2s linear infinite;
+  }
+  /* イコライザー型ローダー (CyberLoader 用): 縦バーが scaleY で脈動 */
+  .equalizer-bar {
+    display: inline-block;
+    background-color: var(--accent);
+    transform-origin: bottom;
+    transform: scaleY(0.2);
+    animation: equalizer-bar 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    border-radius: 1px;
   }
 }
 
