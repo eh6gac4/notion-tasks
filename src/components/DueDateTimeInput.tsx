@@ -27,6 +27,11 @@ export function DueDateTimeInput({
     size === "compact" ? "px-3" : "px-4"
   }`
 
+  // モバイル (iOS Safari の wheel picker など) ではネイティブ <input type="date">
+  // から値を空に戻す手段が露出していないため、明示的なクリアボタンを置く。
+  // date が無い時は同時に time も無効になるので表示しない。
+  const clearBtnClass = size === "compact" ? "icon-btn-sm" : "icon-btn"
+
   return (
     <div className="flex gap-2 items-center">
       <div className="relative flex-1 min-w-0">
@@ -55,6 +60,31 @@ export function DueDateTimeInput({
         />
         {!time && <span className={placeholderClass}>時刻</span>}
       </div>
+      {date && (
+        <button
+          type="button"
+          onClick={() => onChange("", "")}
+          aria-label="期限をクリア"
+          data-testid="due-clear-button"
+          className={clearBtnClass}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

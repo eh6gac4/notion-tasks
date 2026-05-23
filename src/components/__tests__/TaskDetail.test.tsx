@@ -311,6 +311,19 @@ describe("TaskDetail フィールド変更", () => {
     expect(screen.getByLabelText("期限の時刻")).toBeDisabled()
   })
 
+  it("クリアボタン押下で due: null が送られる (モバイル native picker の代替)", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "期限をクリア" }))
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { due: null })
+    })
+    expect(screen.queryByRole("button", { name: "期限をクリア" })).not.toBeInTheDocument()
+  })
+
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
