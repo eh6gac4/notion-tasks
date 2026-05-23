@@ -165,6 +165,25 @@ body::before {
   .icon-btn:active   { transform: scale(0.95); }
   .icon-btn:disabled { opacity: 0.4; }
 
+  /* TaskDetail など密度優先の場面で使う 36×36 のコンパクトアイコンボタン。
+     WCAG 44px は満たさないが .field-sm (36px) と高さを揃えるために許容。 */
+  .icon-btn-sm {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background-color: var(--surface);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .icon-btn-sm:hover    { border-color: var(--accent); }
+  .icon-btn-sm:active   { transform: scale(0.95); }
+  .icon-btn-sm:disabled { opacity: 0.4; }
+
   /* TaskItem 用 hover グロー */
   .card-glow-hover { transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
   .card-glow-hover:hover { box-shadow: var(--elev-card-hover); }
