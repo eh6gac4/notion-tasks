@@ -311,17 +311,18 @@ describe("TaskDetail フィールド変更", () => {
     expect(screen.getByLabelText("期限の時刻")).toBeDisabled()
   })
 
-  it("クリアボタン押下で due: null が送られる (モバイル native picker の代替)", async () => {
+  it("時刻クリアボタンで時刻だけ消えて日付は残る (モバイル native picker の代替)", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
 
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
-    fireEvent.click(screen.getByRole("button", { name: "期限をクリア" }))
+    fireEvent.click(screen.getByRole("button", { name: "時刻をクリア" }))
 
     await waitFor(() => {
-      expect(mock).toHaveBeenCalledWith("t1", { due: null })
+      expect(mock).toHaveBeenCalledWith("t1", { due: "2026-04-30" })
     })
-    expect(screen.queryByRole("button", { name: "期限をクリア" })).not.toBeInTheDocument()
+    // クリア後はボタン自体も消える (time === "" のため)
+    expect(screen.queryByRole("button", { name: "時刻をクリア" })).not.toBeInTheDocument()
   })
 
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {
