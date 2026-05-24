@@ -325,6 +325,20 @@ describe("TaskDetail フィールド変更", () => {
     expect(screen.queryByRole("button", { name: "時刻をクリア" })).not.toBeInTheDocument()
   })
 
+  it("日付クリアボタンで日付・時刻の両方が消えて due は null", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1", due: "2026-04-30T18:00:00.000+09:00" })} onClose={() => {}} />)
+    fireEvent.click(screen.getByRole("button", { name: "日付をクリア" }))
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { due: null })
+    })
+    expect(screen.queryByRole("button", { name: "日付をクリア" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "時刻をクリア" })).not.toBeInTheDocument()
+  })
+
   it("タイトル blur で updateTaskAction が呼ばれる", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()
