@@ -1,12 +1,17 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
+	"main": "./worker-entry.ts",
 	"name": "notion-tasks",
 	"compatibility_date": "2026-04-21",
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"
 	],
+	"triggers": {
+		// バックログ → 未着手 の自動昇格 (3 日以内 due)。
+		// 毎日 0:00 UTC = JST 09:00。1 日 1 回で十分なしきい値 (3 日)。
+		"crons": ["0 0 * * *"]
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"

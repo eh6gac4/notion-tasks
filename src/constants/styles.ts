@@ -1,12 +1,13 @@
 import type { TaskPriority, TaskStatus } from "@/types/task"
 
 export const STATUS_OPTIONS: TaskStatus[] = [
-  "未着手", "進行中", "確認中", "一時中断", "完了", "中止",
+  "バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止",
 ]
 
 // セマンティック・ステータス: 「進行中」のみ accent + グローでサイバー DNA を残す。
 // 他は意味色のみで表現し、視覚ノイズを抑える。
 export const STATUS_STYLES: Record<TaskStatus, string> = {
+  "バックログ":   "font-pixel bg-transparent text-[var(--text-faint)] border border-[var(--border)]",
   "未着手":       "font-pixel bg-transparent text-[var(--status-todo)] border border-[var(--border-strong)]",
   "進行中":       "font-pixel bg-[var(--accent)] text-[var(--bg)] border border-[var(--accent)] accent-glow-sm",
   "確認中":       "font-pixel bg-transparent text-[var(--status-review)] border border-[rgba(245,158,11,0.45)]",
@@ -19,6 +20,7 @@ export const STATUS_STYLES: Record<TaskStatus, string> = {
 // 各ステータスのアクセントカラー (CSS 変数参照)。BoardColumn のヘッダドットと
 // TaskItem のステータスドットで共通利用する Single Source of Truth。
 export const STATUS_ACCENT: Record<TaskStatus, string> = {
+  "バックログ":     "var(--text-faint)",
   "未着手":         "var(--status-todo)",
   "進行中":         "var(--status-doing)",
   "確認中":         "var(--status-review)",

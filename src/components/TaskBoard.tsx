@@ -13,12 +13,14 @@ export type ColumnSpec = {
 }
 
 // 進行中・未着手は同じカラムにまとめて表示する (進行中が上)。
+// バックログは left-most。「未着手にする前の待機列」のメンタルモデルで Kanban 流の左→右進行に合わせる。
 const COLUMNS: ColumnSpec[] = [
-  { key: "wip",    statuses: ["進行中", "未着手"], title: "進行中 / 未着手", accentStatus: "進行中" },
-  { key: "review", statuses: ["確認中"],           title: "確認中",            accentStatus: "確認中" },
-  { key: "pause",  statuses: ["一時中断"],         title: "一時中断",          accentStatus: "一時中断" },
-  { key: "done",   statuses: ["完了"],             title: "完了",              accentStatus: "完了" },
-  { key: "cancel", statuses: ["中止"],             title: "中止",              accentStatus: "中止" },
+  { key: "backlog", statuses: ["バックログ"],         title: "バックログ",         accentStatus: "バックログ" },
+  { key: "wip",     statuses: ["進行中", "未着手"],   title: "進行中 / 未着手",    accentStatus: "進行中" },
+  { key: "review",  statuses: ["確認中"],             title: "確認中",             accentStatus: "確認中" },
+  { key: "pause",   statuses: ["一時中断"],           title: "一時中断",           accentStatus: "一時中断" },
+  { key: "done",    statuses: ["完了"],               title: "完了",               accentStatus: "完了" },
+  { key: "cancel",  statuses: ["中止"],               title: "中止",               accentStatus: "中止" },
 ]
 
 export const TaskBoard = forwardRef<
