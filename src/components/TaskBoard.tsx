@@ -1,6 +1,6 @@
 "use client"
 
-import { forwardRef } from "react"
+import { forwardRef, useCallback, useLayoutEffect, useRef } from "react"
 import type { AdvancedFilter, SortConfig, Task, TaskStatus } from "@/types/task"
 import { BoardColumn } from "./BoardColumn"
 
@@ -14,6 +14,8 @@ export type ColumnSpec = {
 
 // 進行中・未着手は同じカラムにまとめて表示する (進行中が上)。
 // バックログは left-most。「未着手にする前の待機列」のメンタルモデルで Kanban 流の左→右進行に合わせる。
+// 起動時の初期スクロール位置は WIP カラム (進行中/未着手) に合わせる: バックログは
+// 退避用で初期ロード対象外のため、可視領域から外して不要な lazy fetch を避ける狙いも兼ねる。
 const COLUMNS: ColumnSpec[] = [
   { key: "backlog", statuses: ["バックログ"],         title: "バックログ",         accentStatus: "バックログ" },
   { key: "wip",     statuses: ["進行中", "未着手"],   title: "進行中 / 未着手",    accentStatus: "進行中" },
@@ -22,6 +24,7 @@ const COLUMNS: ColumnSpec[] = [
   { key: "done",    statuses: ["完了"],               title: "完了",               accentStatus: "完了" },
   { key: "cancel",  statuses: ["中止"],               title: "中止",               accentStatus: "中止" },
 ]
+const INITIAL_FOCUS_COLUMN_KEY = "wip"
 
 export const TaskBoard = forwardRef<
   HTMLDivElement,
@@ -33,9 +36,32 @@ export const TaskBoard = forwardRef<
     onSelect: (task: Task) => void
   }
 >(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, onSelect }, ref) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      containerRef.current = node
+      if (typeof ref === "function") ref(node)
+      else if (ref) ref.current = node
+    },
+    [ref],
+  )
+
+  // 起動時のスクロール位置を WIP カラムに合わせる。バックログは左端だが「退避列」で、
+  // 開いた直後にユーザーが見たいのは進行中/未着手のため。paint 前に scrollLeft を当てて
+  // 一瞬左端 (バックログ) が見えるチラつきを防ぐ。
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const focus = container.querySelector<HTMLElement>(
+      `[data-column-key="${INITIAL_FOCUS_COLUMN_KEY}"]`,
+    )
+    if (!focus) return
+    container.scrollLeft = focus.offsetLeft
+  }, [])
+
   return (
     <div
-      ref={ref}
+      ref={setRefs}
       data-testid="task-board"
       className="flex h-full overflow-x-auto overflow-y-hidden divide-x divide-[var(--border-strong)]"
       style={{ scrollSnapType: "x mandatory", overscrollBehaviorX: "contain" }}
