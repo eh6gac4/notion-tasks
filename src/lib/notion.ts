@@ -227,7 +227,7 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
 
   if (input.title !== undefined)    properties[NOTION_PROPS.TITLE]      = { title: [{ text: { content: input.title } }] }
   if (input.status !== undefined)   properties[NOTION_PROPS.STATUS]     = { status: { name: input.status } }
-  if (input.priority !== undefined) properties[NOTION_PROPS.PRIORITY]   = { select: { name: input.priority } }
+  if (input.priority !== undefined) properties[NOTION_PROPS.PRIORITY]   = input.priority ? { select: { name: input.priority } } : { select: null }
   if (input.due !== undefined)      properties[NOTION_PROPS.DUE]        = input.due ? { date: { start: input.due } } : { date: null }
   if (input.tags !== undefined)     properties[NOTION_PROPS.TAG]        = { multi_select: input.tags.map((t) => ({ name: t })) }
   if (input.source !== undefined)   properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }

@@ -39,7 +39,7 @@ export type Task = {
 export type CreateTaskInput = {
   title: string
   status?: TaskStatus
-  priority?: TaskPriority
+  priority?: TaskPriority | null
   due?: string | null
   tags?: string[]
   body?: string

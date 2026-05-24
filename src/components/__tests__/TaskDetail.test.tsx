@@ -224,6 +224,19 @@ describe("TaskDetail フィールド変更", () => {
     })
   })
 
+  it("Priority を「未設定」にすると priority: null で更新される", async () => {
+    const mock = vi.mocked(updateTaskAction)
+    mock.mockClear()
+
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1", priority: "high" })} onClose={() => {}} />)
+    const selects = screen.getAllByRole("combobox")
+    fireEvent.change(selects[1], { target: { value: "" } })
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith("t1", { priority: null })
+    })
+  })
+
   it("タグトグルで updateTaskAction が即時呼ばれる", async () => {
     const mock = vi.mocked(updateTaskAction)
     mock.mockClear()

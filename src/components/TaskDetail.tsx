@@ -326,7 +326,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
 
   function handlePriorityChange(next: TaskPriority | "") {
     setEditPriority(next)
-    save({ priority: next || undefined })
+    save({ priority: next || null })
   }
 
   function handleDueChange(date: string, time: string) {
