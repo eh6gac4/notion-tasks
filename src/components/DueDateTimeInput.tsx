@@ -27,10 +27,11 @@ export function DueDateTimeInput({
     size === "compact" ? "px-3" : "px-4"
   }`
 
-  // モバイル (iOS Safari の wheel picker など) では <input type="time"> から値を
-  // 空に戻す手段が露出していないため、時刻のみを消す明示的なクリアボタンを置く。
-  // 日付はそのまま残す (日付なしの時刻は意味を持たない / 「期限なし」にしたい場合は
-  // 日付側を変更する)。
+  // モバイル (iOS Safari の wheel picker など) では <input type="date"> / <input
+  // type="time"> から値を空に戻す手段が露出していないため、各入力の右隣に明示的な
+  // クリアボタンを置く。日付ボタンは date 入力の native onChange と同じく
+  // 日付・時刻の両方を消す (日付なしの時刻は意味を持たないため)。
+  // 時刻ボタンは時刻のみを消し、日付は残す。
   const clearBtnClass = size === "compact" ? "icon-btn-sm" : "icon-btn"
 
   return (
@@ -48,6 +49,14 @@ export function DueDateTimeInput({
         />
         {!date && <span className={placeholderClass}>日付</span>}
       </div>
+      {date && (
+        <ClearButton
+          ariaLabel="日付をクリア"
+          testId="due-date-clear-button"
+          onClick={() => onChange("", "")}
+          className={clearBtnClass}
+        />
+      )}
       <div className="relative flex-1 min-w-0">
         <input
           type="time"
@@ -62,30 +71,51 @@ export function DueDateTimeInput({
         {!time && <span className={placeholderClass}>時刻</span>}
       </div>
       {time && (
-        <button
-          type="button"
+        <ClearButton
+          ariaLabel="時刻をクリア"
+          testId="due-time-clear-button"
           onClick={() => onChange(date, "")}
-          aria-label="時刻をクリア"
-          data-testid="due-time-clear-button"
           className={clearBtnClass}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        />
       )}
     </div>
+  )
+}
+
+function ClearButton({
+  ariaLabel,
+  testId,
+  onClick,
+  className,
+}: {
+  ariaLabel: string
+  testId: string
+  onClick: () => void
+  className: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      data-testid={testId}
+      className={className}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
   )
 }
