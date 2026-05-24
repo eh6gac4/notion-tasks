@@ -3,7 +3,7 @@ import type { SortConfig, SortDirection, SortKey, Task, TaskStatus } from "@/typ
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 } as const
 
 export const STATUS_ORDER: TaskStatus[] = [
-  "未着手", "進行中", "確認中", "一時中断", "完了", "中止", "アーカイブ済み",
+  "バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止", "アーカイブ済み",
 ]
 
 export const DEFAULT_SORT: SortConfig = { key: "default", direction: "asc" }

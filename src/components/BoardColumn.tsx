@@ -7,8 +7,24 @@ import { applyAdvancedFilter } from "@/constants/filters"
 import { applySort } from "@/lib/task-sort"
 import { buildNestedOrder } from "@/lib/task-tree"
 import { STATUS_ACCENT } from "@/constants/styles"
-import { getCompletedTasksAction, getCancelledTasksAction } from "@/app/actions"
+import { getCompletedTasksAction, getCancelledTasksAction, getBacklogTasksAction } from "@/app/actions"
 import { CyberLoader } from "./CyberLoader"
+
+// 列が viewport に入ってから fetch する重い (or 低頻度な) ステータス。
+// 完了/中止 は件数が多く、バックログ は「退避してたまに見る」想定なので初回ロードから外す。
+const LAZY_STATUSES: ReadonlySet<TaskStatus> = new Set(["完了", "中止", "バックログ"])
+
+// 注: action 参照は遅延 (関数呼び出し時) に解決する。module-load 時に LAZY_STATUSES の
+// バリュー側で dereference すると、テストの vi.mock("@/app/actions", ...) が
+// すべての action を列挙していない場合に import が失敗する。
+function getLazyFetcher(status: TaskStatus): (() => Promise<Task[]>) | null {
+  switch (status) {
+    case "完了":     return getCompletedTasksAction
+    case "中止":     return getCancelledTasksAction
+    case "バックログ": return getBacklogTasksAction
+    default:         return null
+  }
+}
 
 // 完了/中止カラムは件数が膨らみがち。全件を一気に DOM 投入すると React の
 // reconciliation と paint が重くなりスクロール jank の原因になるため、
@@ -39,12 +55,12 @@ export function BoardColumn({
   sort: SortConfig
   onSelect: (task: Task) => void
 }) {
-  // 完了/中止カラムは初回ページ取得から除外しているため、カラムが viewport に
+  // 完了/中止/バックログ カラムは初回ページ取得から除外しているため、カラムが viewport に
   // 入ったタイミングで一度だけ fetch する (ページ初期化を軽くする目的)。
   // ただし tasks prop が既に該当ステータスのタスクを含む場合
   // (= テスト/明示的 fetch 済み) はそれをそのまま使い、lazy load はスキップする。
   const lazyStatus: TaskStatus | null =
-    statuses.length === 1 && (statuses[0] === "完了" || statuses[0] === "中止") ? statuses[0] : null
+    statuses.length === 1 && LAZY_STATUSES.has(statuses[0]) ? statuses[0] : null
   const isLazyStatus = lazyStatus !== null
   const propLazyTasks = useMemo(
     () => (isLazyStatus ? tasks.filter((t) => t.status === lazyStatus) : []),
@@ -63,7 +79,8 @@ export function BoardColumn({
     const el = sectionRef.current
     if (!el) return
     if (typeof IntersectionObserver === "undefined") return
-    const fetcher = lazyStatus === "完了" ? getCompletedTasksAction : getCancelledTasksAction
+    const fetcher = getLazyFetcher(lazyStatus)
+    if (!fetcher) return
     const obs = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return
       obs.disconnect()
@@ -203,8 +220,8 @@ export function BoardColumn({
                 data-subtask-depth={depth}
                 // content-visibility: auto は viewport 外要素の paint/layout を skip して
                 // 大量カード時のスクロール jank を抑える。ただし off-screen 要素の innerText が
-                // 取れなくなる副作用があり、e2e flaky を生んだため、件数が膨らみがちな
-                // 「完了/中止」カラムのみに限定する (lazyStatus でガード)。
+                // 取れなくなる副作用があり、e2e flaky を生んだため、lazy load 系カラム
+                // (完了/中止/バックログ) のみに限定する (lazyStatus でガード)。
                 style={
                   isLazyStatus
                     ? { contentVisibility: "auto", containIntrinsicSize: "auto 88px" }

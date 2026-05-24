@@ -1,4 +1,5 @@
 export type TaskStatus =
+  | "バックログ"
   | "未着手"
   | "進行中"
   | "確認中"

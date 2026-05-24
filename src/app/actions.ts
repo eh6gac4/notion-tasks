@@ -69,6 +69,11 @@ export async function getCancelledTasksAction(): Promise<Task[]> {
   return getTasks({ statuses: ["中止"] })
 }
 
+export async function getBacklogTasksAction(): Promise<Task[]> {
+  await requireAuth()
+  return getTasks({ statuses: ["バックログ"] })
+}
+
 export async function getTasksByIdsAction(ids: string[]): Promise<Task[]> {
   await requireAuth()
   if (ids.length === 0) return []
