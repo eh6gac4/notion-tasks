@@ -49,6 +49,9 @@ export const TaskBoard = forwardRef<
   // 起動時のスクロール位置を WIP カラムに合わせる。バックログは左端だが「退避列」で、
   // 開いた直後にユーザーが見たいのは進行中/未着手のため。paint 前に scrollLeft を当てて
   // 一瞬左端 (バックログ) が見えるチラつきを防ぐ。
+  // ただし viewport が広く maxScroll < バックログ幅 のときは scrollLeft がクランプされて
+  // バックログが左端で半分だけ見える「見切れ」状態になる。その場合は scroll を当てず
+  // 全カラムを左から自然に並べる (PC 等の広い画面で発生)。
   useLayoutEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -56,6 +59,8 @@ export const TaskBoard = forwardRef<
       `[data-column-key="${INITIAL_FOCUS_COLUMN_KEY}"]`,
     )
     if (!focus) return
+    const maxScroll = container.scrollWidth - container.clientWidth
+    if (maxScroll < focus.offsetLeft) return
     container.scrollLeft = focus.offsetLeft
   }, [])
 
