@@ -49,3 +49,25 @@ export function buildNestedOrder(tasks: Task[]): NestedTaskNode[] {
 
   return out
 }
+
+// collapsed な親タスクの子孫を nested リストから除去する。
+// nested は DFS 順なので、depth が増えている連続区間が子孫に対応する。
+export function filterCollapsed(
+  nested: NestedTaskNode[],
+  collapsedParents: Set<string>
+): NestedTaskNode[] {
+  const result: NestedTaskNode[] = []
+  let skipAboveDepth: number | null = null
+
+  for (const node of nested) {
+    if (skipAboveDepth !== null) {
+      if (node.depth > skipAboveDepth) continue
+      skipAboveDepth = null
+    }
+    result.push(node)
+    if (collapsedParents.has(node.task.id)) {
+      skipAboveDepth = node.depth
+    }
+  }
+  return result
+}

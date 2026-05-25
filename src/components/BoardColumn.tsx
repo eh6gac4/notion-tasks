@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { AdvancedFilter, SortConfig, Task, TaskStatus } from "@/types/task"
 import { TaskItem } from "./TaskItem"
 import { applyAdvancedFilter } from "@/constants/filters"
 import { applySort } from "@/lib/task-sort"
-import { buildNestedOrder } from "@/lib/task-tree"
+import { buildNestedOrder, filterCollapsed } from "@/lib/task-tree"
 import { STATUS_ACCENT } from "@/constants/styles"
 import { getCompletedTasksAction, getCancelledTasksAction, getBacklogTasksAction } from "@/app/actions"
 import { CyberLoader } from "./CyberLoader"
@@ -133,6 +133,30 @@ export function BoardColumn({
   // 親が同じ列に居なければ子はルートとして残るので、一覧から消えることはない。
   const nested = useMemo(() => buildNestedOrder(filtered), [filtered])
 
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set())
+
+  const handleToggleCollapse = useCallback((taskId: string) => {
+    setCollapsedParents((prev) => {
+      const next = new Set(prev)
+      next.has(taskId) ? next.delete(taskId) : next.add(taskId)
+      return next
+    })
+  }, [])
+
+  // 同カラム内に直接の子を持つ親 ID のセット（トグルボタン表示判定用）
+  const parentIdsWithChildren = useMemo(() => {
+    const set = new Set<string>()
+    for (let i = 0; i < nested.length - 1; i++) {
+      if (nested[i + 1].depth > nested[i].depth) set.add(nested[i].task.id)
+    }
+    return set
+  }, [nested])
+
+  const nestedFiltered = useMemo(
+    () => (collapsedParents.size === 0 ? nested : filterCollapsed(nested, collapsedParents)),
+    [nested, collapsedParents]
+  )
+
   const accent = STATUS_ACCENT[accentStatus]
   const isLazyPending = isLazyStatus && !propsHasLazy && lazyTasks === null
   const showLazyLoading = isLazyPending && !hasLoadError
@@ -147,10 +171,10 @@ export function BoardColumn({
   useEffect(() => {
     if (!isLazyStatus) return
     setDisplayCount(INCREMENTAL_INITIAL)
-  }, [isLazyStatus, nested])
+  }, [isLazyStatus, nestedFiltered])
 
-  const visible = isLazyStatus ? nested.slice(0, displayCount) : nested
-  const hasMore = isLazyStatus && displayCount < nested.length
+  const visible = isLazyStatus ? nestedFiltered.slice(0, displayCount) : nestedFiltered
+  const hasMore = isLazyStatus && displayCount < nestedFiltered.length
 
   // 末尾 sentinel が見えたら次の chunk をロード。スクロール親 (overflow-y-auto) を
   // root にする。rootMargin: 200px で下端到達前に先読みして体感を滑らかに。
@@ -235,10 +259,22 @@ export function BoardColumn({
                     className="border-l border-[var(--border-strong)] pl-3"
                     style={{ marginLeft: depth * 16 }}
                   >
-                    <TaskItem task={task} onSelect={onSelect} />
+                    <TaskItem
+                      task={task}
+                      onSelect={onSelect}
+                      isCollapsible={parentIdsWithChildren.has(task.id)}
+                      isCollapsed={collapsedParents.has(task.id)}
+                      onToggleCollapse={handleToggleCollapse}
+                    />
                   </div>
                 ) : (
-                  <TaskItem task={task} onSelect={onSelect} />
+                  <TaskItem
+                    task={task}
+                    onSelect={onSelect}
+                    isCollapsible={parentIdsWithChildren.has(task.id)}
+                    isCollapsed={collapsedParents.has(task.id)}
+                    onToggleCollapse={handleToggleCollapse}
+                  />
                 )}
               </li>
             ))}
