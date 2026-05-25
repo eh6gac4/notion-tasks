@@ -13,7 +13,19 @@ import { useTasksRefresh } from "./TasksRefreshContext"
 //
 // memo: 検索打鍵 / フィルタ・ソート切替 / refresh 後に親で tasks 配列が新しく
 // なるが、要素の参照 (task) が変わらない限り再 render を skip。多数カードの jank 軽減。
-export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task; onSelect: (task: Task) => void }) {
+export const TaskItem = memo(function TaskItem({
+  task,
+  onSelect,
+  isCollapsible = false,
+  isCollapsed = false,
+  onToggleCollapse,
+}: {
+  task: Task
+  onSelect: (task: Task) => void
+  isCollapsible?: boolean
+  isCollapsed?: boolean
+  onToggleCollapse?: (taskId: string) => void
+}) {
   const [, startTransition] = useTransition()
   const [optimisticStatus, setOptimisticStatus] = useOptimistic(task.status)
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -122,9 +134,18 @@ export const TaskItem = memo(function TaskItem({ task, onSelect }: { task: Task;
               +{task.tags.length - 2}
             </span>
           )}
-          {task.childTaskIds.length > 0 && (
+          {isCollapsible ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleCollapse?.(task.id) }}
+              className="font-pixel text-[11px] text-[var(--text-faint)] flex items-center gap-1"
+              aria-label={isCollapsed ? "サブタスクを展開" : "サブタスクを折りたたむ"}
+            >
+              <span aria-hidden="true">{isCollapsed ? "▶" : "▼"}</span>
+              <span>子{task.childTaskIds.length}件</span>
+            </button>
+          ) : task.childTaskIds.length > 0 ? (
             <span className="text-[11px] text-[var(--text-faint)]">子{task.childTaskIds.length}件</span>
-          )}
+          ) : null}
         </div>
       )}
 
