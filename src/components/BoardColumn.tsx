@@ -133,7 +133,25 @@ export function BoardColumn({
   // 親が同じ列に居なければ子はルートとして残るので、一覧から消えることはない。
   const nested = useMemo(() => buildNestedOrder(filtered), [filtered])
 
-  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set())
+  const storageKey = `subtask-collapsed-${columnKey}`
+
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set()
+    try {
+      const raw = localStorage.getItem(storageKey)
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+    } catch {
+      return new Set()
+    }
+  })
+
+  useEffect(() => {
+    if (collapsedParents.size === 0) {
+      localStorage.removeItem(storageKey)
+    } else {
+      localStorage.setItem(storageKey, JSON.stringify([...collapsedParents]))
+    }
+  }, [collapsedParents, storageKey])
 
   const handleToggleCollapse = useCallback((taskId: string) => {
     setCollapsedParents((prev) => {
