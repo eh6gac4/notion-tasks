@@ -348,5 +348,23 @@ export function updateMockTask(id: string, input: UpdateTaskInput): Task | null 
     ...(input.sourceUrl !== undefined && { sourceUrl: input.sourceUrl }),
     lastEditedTime: ts,
   }
+  // 双方向 relation の同期模倣: 旧親の childTaskIds から自分を抜き、新親に追加する。
+  if (input.parentTaskId !== undefined) {
+    const prevParents = store[idx].parentTaskIds
+    for (const pid of prevParents) {
+      const p = store.find((t) => t.id === pid)
+      if (p) p.childTaskIds = p.childTaskIds.filter((c) => c !== id)
+    }
+    store[idx] = {
+      ...store[idx],
+      parentTaskIds: input.parentTaskId ? [input.parentTaskId] : [],
+    }
+    if (input.parentTaskId) {
+      const parent = store.find((t) => t.id === input.parentTaskId)
+      if (parent && !parent.childTaskIds.includes(id)) {
+        parent.childTaskIds = [...parent.childTaskIds, id]
+      }
+    }
+  }
   return store[idx]
 }

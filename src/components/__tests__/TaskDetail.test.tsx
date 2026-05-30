@@ -687,3 +687,121 @@ describe("TaskDetail サブタスク", () => {
     expect(screen.getByRole("button", { name: /ADD SUBTASK/i })).toBeInTheDocument()
   })
 })
+
+describe("TaskDetail 親タスク変更", () => {
+  it("親なし状態では「+ 親タスクを設定」ボタンが出る", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+    const button = screen.getByTestId("parent-set-button")
+    expect(button).toHaveTextContent("+ 親タスクを設定")
+  })
+
+  it("親あり状態では「親タスクを変更」ボタンが出る", () => {
+    const parent = makeTask({ id: "p", title: "親" })
+    const child = makeTask({ id: "c", parentTaskIds: ["p"] })
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={child} allTasks={[parent, child]} onClose={() => {}} />,
+    )
+    expect(screen.getByTestId("parent-set-button")).toHaveTextContent("親タスクを変更")
+  })
+
+  it("候補選択で updateTaskAction が parentTaskId 付きで呼ばれる", async () => {
+    const self = makeTask({ id: "self" })
+    const candidate = makeTask({ id: "cand", title: "候補タスク" })
+
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={self} allTasks={[self, candidate]} onClose={() => {}} />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    expect(screen.getByTestId("parent-picker-modal")).toBeInTheDocument()
+
+    const candidateButton = screen.getByText("候補タスク").closest("button")!
+    await act(async () => {
+      fireEvent.click(candidateButton)
+    })
+
+    await waitFor(() => {
+      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("self", { parentTaskId: "cand" })
+    })
+  })
+
+  it("親を解除すると updateTaskAction が parentTaskId: null で呼ばれる", async () => {
+    const parent = makeTask({ id: "p", title: "親" })
+    const child = makeTask({ id: "c", parentTaskIds: ["p"] })
+
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={child} allTasks={[parent, child]} onClose={() => {}} />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("parent-picker-clear"))
+    })
+
+    await waitFor(() => {
+      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("c", { parentTaskId: null })
+    })
+  })
+
+  it("自タスクは候補に出ない", () => {
+    const self = makeTask({ id: "self", title: "自分自身のタスク" })
+    const other = makeTask({ id: "o", title: "他人のタスク" })
+
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={self} allTasks={[self, other]} onClose={() => {}} />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0]).toHaveAttribute("data-task-id", "o")
+  })
+
+  it("自タスクの子・孫は候補に出ない（循環防止）", () => {
+    const self = makeTask({ id: "p" })
+    const child = makeTask({ id: "c", title: "子", parentTaskIds: ["p"] })
+    const grandchild = makeTask({ id: "g", title: "孫", parentTaskIds: ["c"] })
+    const other = makeTask({ id: "o", title: "他人" })
+
+    render(
+      <TaskDetail
+        tagOptions={TAG_OPTIONS}
+        task={self}
+        allTasks={[self, child, grandchild, other]}
+        onClose={() => {}}
+      />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0]).toHaveAttribute("data-task-id", "o")
+  })
+
+  it("タイトル検索で候補が絞り込まれる", () => {
+    const self = makeTask({ id: "self" })
+    const tasks = [
+      self,
+      makeTask({ id: "a", title: "買い物リスト" }),
+      makeTask({ id: "b", title: "ブログ執筆" }),
+      makeTask({ id: "c", title: "買い替え検討" }),
+    ]
+
+    render(
+      <TaskDetail tagOptions={TAG_OPTIONS} task={self} allTasks={tasks} onClose={() => {}} />,
+    )
+
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    fireEvent.change(screen.getByTestId("parent-picker-search"), { target: { value: "買い" } })
+
+    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    expect(candidates).toHaveLength(2)
+    expect(candidates.map((c) => c.getAttribute("data-task-id"))).toEqual(["a", "c"])
+  })
+
+  it("親なしのとき「親を解除」ボタンは出ない", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} allTasks={[]} onClose={() => {}} />)
+    fireEvent.click(screen.getByTestId("parent-set-button"))
+    expect(screen.queryByTestId("parent-picker-clear")).not.toBeInTheDocument()
+  })
+})

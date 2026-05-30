@@ -149,3 +149,86 @@ test.describe("サブタスク", () => {
     ).toBeVisible({ timeout: 10_000 })
   })
 })
+
+test.describe("親タスク変更", () => {
+  test.describe.configure({ mode: "serial" })
+
+  let context: BrowserContext
+  let page: Page
+
+  // 初期データのうち、独立した 2 タスクを使う。
+  const TARGET_TITLE = "【DEV】ルーターのファームウェア更新"
+  const NEW_PARENT_TITLE = "【DEV】サーバー監視ダッシュボード改善"
+
+  test.beforeAll(async ({ browser }) => {
+    context = await browser.newContext({ storageState: AUTH_FILE })
+    page = await context.newPage()
+    await resetAndOpenHome(page)
+  })
+
+  test.afterAll(async () => {
+    await context.close()
+  })
+
+  async function openTaskDetail(title: string) {
+    await page
+      .locator(`${BOARD} ${TASK_ITEM} [data-testid='task-title']`, { hasText: title })
+      .first()
+      .click()
+    await expect(page.locator(TASK_DETAIL)).toBeVisible({ timeout: 5_000 })
+    await expect(page.locator('input[aria-label="タイトル"]')).toHaveValue(title, { timeout: 5_000 })
+  }
+
+  async function closeDetailIfOpen() {
+    const detail = page.locator(TASK_DETAIL)
+    if (await detail.isVisible().catch(() => false)) {
+      await page.locator(TASK_DETAIL_BACKDROP).click({ position: { x: 10, y: 10 } })
+      await detail.waitFor({ state: "hidden", timeout: 5_000 })
+    }
+  }
+
+  test.beforeEach(async () => {
+    await closeDetailIfOpen()
+  })
+
+  test("親タスクを設定するとサブタスクとして反映される", async () => {
+    await openTaskDetail(TARGET_TITLE)
+
+    await page.locator("[data-testid='parent-set-button']").click()
+    await expect(page.locator("[data-testid='parent-picker-modal']")).toBeVisible({ timeout: 5_000 })
+
+    await page.locator("[data-testid='parent-picker-search']").fill("サーバー監視")
+    const candidate = page
+      .locator("[data-testid='parent-picker-candidate']", { hasText: NEW_PARENT_TITLE })
+      .first()
+    await candidate.click()
+
+    await expect(page.locator("[data-testid='parent-picker-modal']")).not.toBeVisible({ timeout: 5_000 })
+    await expect(
+      page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }),
+    ).toBeVisible({ timeout: 5_000 })
+
+    // 親側からサブタスクとして見えること
+    await page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }).click()
+    await expect(page.locator('input[aria-label="タイトル"]')).toHaveValue(NEW_PARENT_TITLE, { timeout: 5_000 })
+    await expect(
+      page.locator("[data-testid='subtask-item']", { hasText: TARGET_TITLE }),
+    ).toBeVisible({ timeout: 5_000 })
+  })
+
+  test("親を解除すると親タスク行が消える", async () => {
+    await openTaskDetail(TARGET_TITLE)
+
+    await expect(
+      page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }),
+    ).toBeVisible({ timeout: 5_000 })
+
+    await page.locator("[data-testid='parent-set-button']").click()
+    await page.locator("[data-testid='parent-picker-clear']").click()
+
+    await expect(page.locator("[data-testid='parent-picker-modal']")).not.toBeVisible({ timeout: 5_000 })
+    await expect(
+      page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }),
+    ).not.toBeVisible({ timeout: 5_000 })
+  })
+})

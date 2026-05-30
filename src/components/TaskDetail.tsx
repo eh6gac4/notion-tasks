@@ -5,6 +5,7 @@ import type { Task, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles"
 import { TaskFormSheet } from "./TaskFormSheet"
+import { ParentTaskPickerModal } from "./ParentTaskPickerModal"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
@@ -26,6 +27,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
   // lazy fetch 未取得) は getTasksByIdsAction で補完する。
   const [extraTasks, setExtraTasks] = useState<Record<string, Task>>({})
   const [subtaskFormOpen, setSubtaskFormOpen] = useState(false)
+  const [parentPickerOpen, setParentPickerOpen] = useState(false)
 
   const taskById = useMemo(() => {
     const m = new Map<string, Task>()
@@ -459,15 +461,22 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
             </Row>
           )}
 
-          {parentTasks.length > 0 && (
-            <Row label="親タスク" block>
-              <div className="flex flex-col gap-2">
-                {parentTasks.map((p) => (
-                  <RelatedTaskRow key={p.id} task={p} testid="parent-task-item" onClick={() => onSelectTask(p)} />
-                ))}
-              </div>
-            </Row>
-          )}
+          <Row label="親タスク" block>
+            <div className="flex flex-col gap-2">
+              {parentTasks.map((p) => (
+                <RelatedTaskRow key={p.id} task={p} testid="parent-task-item" onClick={() => onSelectTask(p)} />
+              ))}
+              <button
+                type="button"
+                data-testid="parent-set-button"
+                onClick={() => setParentPickerOpen(true)}
+                className="font-pixel flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+              >
+                {parentTasks.length > 0 ? "親タスクを変更" : "+ 親タスクを設定"}
+              </button>
+            </div>
+          </Row>
 
           <div data-testid="subtask-section">
             <Row label="サブタスク" block>
@@ -653,6 +662,14 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
         parentTaskId={task.id}
         heading="✦ New Subtask"
         submitLabel="ADD SUBTASK"
+      />
+
+      <ParentTaskPickerModal
+        open={parentPickerOpen}
+        onClose={() => setParentPickerOpen(false)}
+        currentTask={task}
+        allTasks={allTasks}
+        onSelect={(parentId) => save({ parentTaskId: parentId })}
       />
     </div>
   )

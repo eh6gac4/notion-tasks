@@ -49,7 +49,17 @@ export type CreateTaskInput = {
   parentTaskId?: string
 }
 
-export type UpdateTaskInput = Partial<Omit<CreateTaskInput, "title"> & { title: string }>
+export type UpdateTaskInput = {
+  title?: string
+  status?: TaskStatus
+  priority?: TaskPriority | null
+  due?: string | null
+  tags?: string[]
+  body?: string
+  source?: string
+  sourceUrl?: string
+  parentTaskId?: string | null
+}
 
 export type TaskComment = {
   id: string

@@ -232,6 +232,9 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
   if (input.tags !== undefined)     properties[NOTION_PROPS.TAG]        = { multi_select: input.tags.map((t) => ({ name: t })) }
   if (input.source !== undefined)   properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
   if (input.sourceUrl !== undefined) properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
+  if (input.parentTaskId !== undefined) properties[NOTION_PROPS.PARENT] = {
+    relation: input.parentTaskId ? [{ id: input.parentTaskId }] : [],
+  }
 
   const page = await notion.pages.update({
     page_id: id,
