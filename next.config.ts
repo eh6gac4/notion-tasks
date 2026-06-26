@@ -18,9 +18,6 @@ const buildTime = new Date().toISOString()
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.253"],
   devIndicators: false,
-  serverActions: {
-    bodySizeLimit: "21mb",
-  },
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_GIT_SHA: gitSha,
@@ -30,6 +27,9 @@ const nextConfig: NextConfig = {
     // Disable persistent Turbopack cache — Docker paths differ from host paths,
     // causing stale cache entries and PostCSS worker timeouts.
     turbopackFileSystemCacheForDev: false,
+    serverActions: {
+      bodySizeLimit: "21mb",
+    },
   },
   async headers() {
     return [
