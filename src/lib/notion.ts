@@ -780,32 +780,59 @@ export async function uploadTaskAttachment(pageId: string, file: File): Promise<
   }
 
   // 1. File Upload を作成
-  const upload = await notion.fileUploads.create({
-    mode: "single_part",
-    filename: file.name,
-    content_type: file.type || "application/octet-stream",
-  })
+  let upload: Awaited<ReturnType<typeof notion.fileUploads.create>>
+  try {
+    upload = await notion.fileUploads.create({
+      mode: "single_part",
+      filename: file.name,
+      content_type: file.type || "application/octet-stream",
+    })
+  } catch (e) {
+    console.error("[uploadTaskAttachment] fileUploads.create failed:", e)
+    throw e
+  }
 
   // 2. ファイルデータを送信
-  await notion.fileUploads.send({
-    file_upload_id: upload.id,
-    file: { filename: file.name, data: file },
-  })
+  // Workers ランタイムでは受信 multipart 由来の File がストリーム読み取り済みになり得るため、
+  // arrayBuffer() で実体化した後に新しい Blob として渡す。
+  try {
+    const buf = await file.arrayBuffer()
+    const blob = new Blob([buf], { type: file.type || "application/octet-stream" })
+    await notion.fileUploads.send({
+      file_upload_id: upload.id,
+      file: { filename: file.name, data: blob },
+    })
+  } catch (e) {
+    console.error("[uploadTaskAttachment] fileUploads.send failed:", e)
+    throw e
+  }
 
   // 3. 既存ファイルを取得して配列末尾に新しい file_upload を追加
-  const existing = await fetchExistingFilesForUpdate(pageId)
+  let existing: Awaited<ReturnType<typeof fetchExistingFilesForUpdate>>
+  try {
+    existing = await fetchExistingFilesForUpdate(pageId)
+  } catch (e) {
+    console.error("[uploadTaskAttachment] fetchExistingFilesForUpdate failed:", e)
+    throw e
+  }
   const updated = [
     ...existing,
     { type: "file_upload" as const, file_upload: { id: upload.id }, name: file.name },
   ]
 
   // 4. ページを更新
-  const page = await notion.pages.update({
-    page_id: pageId,
-    properties: {
-      [NOTION_PROPS.FILES]: { files: updated },
-    } as Parameters<typeof notion.pages.update>[0]["properties"],
-  })
+  let page: Awaited<ReturnType<typeof notion.pages.update>>
+  try {
+    page = await notion.pages.update({
+      page_id: pageId,
+      properties: {
+        [NOTION_PROPS.FILES]: { files: updated },
+      } as Parameters<typeof notion.pages.update>[0]["properties"],
+    })
+  } catch (e) {
+    console.error("[uploadTaskAttachment] pages.update failed:", e)
+    throw e
+  }
 
   return extractAttachments(
     (page as PageObjectResponse).properties,

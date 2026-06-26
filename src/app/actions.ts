@@ -4,6 +4,7 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
+import { isNotionClientError } from "@notionhq/client"
 import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
 import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
@@ -110,9 +111,17 @@ export async function uploadTaskAttachmentAction(
   await requireAuth()
   const file = formData.get("file")
   if (!(file instanceof File)) throw new Error("ファイルが見つかりません")
-  const attachments = await uploadTaskAttachment(taskId, file)
-  updateTag("tasks")
-  return attachments
+  try {
+    const attachments = await uploadTaskAttachment(taskId, file)
+    updateTag("tasks")
+    return attachments
+  } catch (e) {
+    console.error("[uploadTaskAttachmentAction] failed:", e)
+    if (isNotionClientError(e)) {
+      throw new Error(`Notion エラー: ${e.message}`)
+    }
+    throw e
+  }
 }
 
 export async function removeTaskAttachmentAction(
@@ -120,7 +129,15 @@ export async function removeTaskAttachmentAction(
   index: number,
 ): Promise<TaskAttachment[]> {
   await requireAuth()
-  const attachments = await removeTaskAttachment(taskId, index)
-  updateTag("tasks")
-  return attachments
+  try {
+    const attachments = await removeTaskAttachment(taskId, index)
+    updateTag("tasks")
+    return attachments
+  } catch (e) {
+    console.error("[removeTaskAttachmentAction] failed:", e)
+    if (isNotionClientError(e)) {
+      throw new Error(`Notion エラー: ${e.message}`)
+    }
+    throw e
+  }
 }
