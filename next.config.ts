@@ -18,6 +18,9 @@ const buildTime = new Date().toISOString()
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.1.253"],
   devIndicators: false,
+  serverActions: {
+    bodySizeLimit: "21mb",
+  },
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_GIT_SHA: gitSha,
