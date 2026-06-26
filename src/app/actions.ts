@@ -110,8 +110,9 @@ export async function uploadTaskAttachmentAction(
 ): Promise<TaskAttachment[]> {
   await requireAuth()
   const file = formData.get("file")
-  if (!(file instanceof File)) throw new Error("ファイルが見つかりません")
+  console.error("[uploadTaskAttachmentAction] file type:", typeof file, file?.constructor?.name, "isFile:", file instanceof File, "isBlob:", file instanceof Blob)
   try {
+    if (!(file instanceof File)) throw new Error(`ファイルが見つかりません (got ${file?.constructor?.name ?? typeof file})`)
     const attachments = await uploadTaskAttachment(taskId, file)
     updateTag("tasks")
     return attachments
