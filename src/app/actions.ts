@@ -4,8 +4,8 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions } from "@/lib/notion"
-import type { AdvancedFilter, SortConfig, Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
+import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -101,4 +101,26 @@ export async function createTaskCommentAction(id: string, text: string): Promise
   const session = await auth()
   if (!session?.user) redirect("/login")
   return createTaskComment(id, text, session.user.name ?? "Unknown")
+}
+
+export async function uploadTaskAttachmentAction(
+  taskId: string,
+  formData: FormData,
+): Promise<TaskAttachment[]> {
+  await requireAuth()
+  const file = formData.get("file")
+  if (!(file instanceof File)) throw new Error("ファイルが見つかりません")
+  const attachments = await uploadTaskAttachment(taskId, file)
+  updateTag("tasks")
+  return attachments
+}
+
+export async function removeTaskAttachmentAction(
+  taskId: string,
+  index: number,
+): Promise<TaskAttachment[]> {
+  await requireAuth()
+  const attachments = await removeTaskAttachment(taskId, index)
+  updateTag("tasks")
+  return attachments
 }

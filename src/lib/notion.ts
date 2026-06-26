@@ -1,9 +1,10 @@
 import { Client } from "@notionhq/client"
 import type { PageObjectResponse, BlockObjectResponse, PartialBlockObjectResponse, CommentObjectResponse } from "@notionhq/client/build/src/api-endpoints"
-import type { Task, TaskComment, TaskIcon, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { InternalOrExternalFileWithNameResponse } from "@notionhq/client/build/src/api-endpoints/common"
+import type { Task, TaskAttachment, TaskComment, TaskIcon, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
-import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions } from "@/lib/mock-tasks"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions, getMockTaskAttachments, addMockTaskAttachment, removeMockTaskAttachment } from "@/lib/mock-tasks"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
@@ -80,6 +81,31 @@ function extractIcon(
   return null
 }
 
+/** 画像ファイルとみなす拡張子 */
+const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i
+
+/**
+ * files プロパティから安定 proxy URL ベースの TaskAttachment[] を生成する。
+ * アイコンと同様に、Notion の署名付き S3 URL をキャッシュに乗せないよう
+ * /api/file/[pageId]/[index] 経由に変換する。
+ */
+function extractAttachments(
+  props: PageObjectResponse["properties"],
+  pageId: string,
+  lastEditedTime: string,
+): TaskAttachment[] {
+  const p = props[NOTION_PROPS.FILES] as {
+    type: "files"
+    files: InternalOrExternalFileWithNameResponse[]
+  } | undefined
+  if (!p?.files?.length) return []
+  return p.files.map((f, index) => ({
+    name: f.name,
+    url: `/api/file/${pageId}/${index}?v=${encodeURIComponent(lastEditedTime)}`,
+    isImage: IMAGE_EXT_RE.test(f.name),
+  }))
+}
+
 function pageToTask(page: PageObjectResponse): Task {
   const props = page.properties
   return {
@@ -100,6 +126,7 @@ function pageToTask(page: PageObjectResponse): Task {
     nextTaskIds:   extractRelationIds(props[NOTION_PROPS.NEXT]),
     createdTime:     page.created_time,
     lastEditedTime:  page.last_edited_time,
+    attachments:     extractAttachments(props, page.id, page.last_edited_time),
   }
 }
 
@@ -710,4 +737,104 @@ export async function updateTaskBlocks(id: string, markdown: string): Promise<vo
     console.error("[updateTaskBlocks] Notion error:", e)
     throw e
   }
+}
+
+// --- 添付ファイル ---
+
+/** single_part アップロードの上限 (20 MB) */
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
+/**
+ * 現在ページの files プロパティを取得し、
+ * InternalOrExternalFileWithNameRequest 形式に変換して返す。
+ * pages.update 時に既存ファイルを保持するために使う。
+ */
+async function fetchExistingFilesForUpdate(
+  pageId: string,
+): Promise<Array<{ type: "file"; name: string; file: { url: string } } | { type: "external"; name: string; external: { url: string } }>> {
+  const page = (await notion.pages.retrieve({ page_id: pageId })) as PageObjectResponse
+  const prop = page.properties[NOTION_PROPS.FILES] as {
+    type: "files"
+    files: InternalOrExternalFileWithNameResponse[]
+  } | undefined
+  if (!prop?.files?.length) return []
+  return prop.files.map((f) => {
+    if (f.type === "file") {
+      return { type: "file" as const, name: f.name, file: { url: (f as { type: "file"; file: { url: string } }).file.url } }
+    } else {
+      return { type: "external" as const, name: f.name, external: { url: (f as { type: "external"; external: { url: string } }).external.url } }
+    }
+  })
+}
+
+/**
+ * ファイルを Notion File Upload API でアップロードし、
+ * タスクの添付ファイルプロパティに追加する。
+ * 更新後の TaskAttachment[] を返す。
+ */
+export async function uploadTaskAttachment(pageId: string, file: File): Promise<TaskAttachment[]> {
+  if (isDevMode()) return addMockTaskAttachment(pageId, file)
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    throw new Error(`ファイルサイズが上限 (20 MB) を超えています: ${file.name}`)
+  }
+
+  // 1. File Upload を作成
+  const upload = await notion.fileUploads.create({
+    mode: "single_part",
+    filename: file.name,
+    content_type: file.type || "application/octet-stream",
+  })
+
+  // 2. ファイルデータを送信
+  await notion.fileUploads.send({
+    file_upload_id: upload.id,
+    file: { filename: file.name, data: file },
+  })
+
+  // 3. 既存ファイルを取得して配列末尾に新しい file_upload を追加
+  const existing = await fetchExistingFilesForUpdate(pageId)
+  const updated = [
+    ...existing,
+    { type: "file_upload" as const, file_upload: { id: upload.id }, name: file.name },
+  ]
+
+  // 4. ページを更新
+  const page = await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      [NOTION_PROPS.FILES]: { files: updated },
+    } as Parameters<typeof notion.pages.update>[0]["properties"],
+  })
+
+  return extractAttachments(
+    (page as PageObjectResponse).properties,
+    pageId,
+    (page as PageObjectResponse).last_edited_time,
+  )
+}
+
+/**
+ * 指定インデックスの添付ファイルを削除する。
+ * 残りのファイル配列を保持したまま pages.update する。
+ * 更新後の TaskAttachment[] を返す。
+ */
+export async function removeTaskAttachment(pageId: string, index: number): Promise<TaskAttachment[]> {
+  if (isDevMode()) return removeMockTaskAttachment(pageId, index)
+
+  const existing = await fetchExistingFilesForUpdate(pageId)
+  const updated = existing.filter((_, i) => i !== index)
+
+  const page = await notion.pages.update({
+    page_id: pageId,
+    properties: {
+      [NOTION_PROPS.FILES]: { files: updated },
+    } as Parameters<typeof notion.pages.update>[0]["properties"],
+  })
+
+  return extractAttachments(
+    (page as PageObjectResponse).properties,
+    pageId,
+    (page as PageObjectResponse).last_edited_time,
+  )
 }

@@ -19,6 +19,7 @@ function makeTask(overrides: Partial<Task>): Task {
     childTaskIds: [],
     prevTaskIds: [],
     nextTaskIds: [],
+    attachments: [],
     createdTime: "2024-01-01T00:00:00.000Z",
     lastEditedTime: "2024-01-01T00:00:00.000Z",
     ...overrides,
