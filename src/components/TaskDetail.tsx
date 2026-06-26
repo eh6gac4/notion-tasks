@@ -1,8 +1,8 @@
 "use client"
 
 import { useTransition, useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
-import type { Task, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
-import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction } from "@/app/actions"
+import type { Task, TaskAttachment, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
+import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction, uploadTaskAttachmentAction, removeTaskAttachmentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles"
 import { TaskFormSheet } from "./TaskFormSheet"
 import { ParentTaskPickerModal } from "./ParentTaskPickerModal"
@@ -96,6 +96,13 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
   const [commentInput, setCommentInput] = useState("")
   const [isPostingComment, setIsPostingComment] = useState(false)
   const [commentPostError, setCommentPostError] = useState<string | null>(null)
+
+  const [attachments, setAttachments] = useState<TaskAttachment[]>(task.attachments ?? [])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDeletingIndex, setIsDeletingIndex] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const touchStartYRef = useRef(0)
@@ -306,6 +313,37 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
       await updateTaskBlocksAction(task.id, newBlocks)
     } catch {
       setBlocks(blocks)
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ""
+    setUploadError(null)
+    setIsUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const updated = await uploadTaskAttachmentAction(task.id, fd)
+      setAttachments(updated)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "アップロードに失敗しました")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  async function handleDeleteAttachment(index: number) {
+    setIsDeletingIndex(index)
+    setUploadError(null)
+    try {
+      const updated = await removeTaskAttachmentAction(task.id, index)
+      setAttachments(updated)
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "削除に失敗しました")
+    } finally {
+      setIsDeletingIndex(null)
     }
   }
 
@@ -569,6 +607,113 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
             <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
           ) : (
             <p className="text-xs text-[var(--text-faint)] italic">本文なし</p>
+          )}
+        </div>
+
+        {/* 添付ファイル */}
+        <div className="mt-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="*/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <div className="flex items-center justify-between mb-4 min-h-9">
+            <div className="flex items-center">
+              <span className="font-pixel text-xs text-[var(--text-faint)] tracking-wide uppercase">添付ファイル</span>
+              {attachments.length > 0 && (
+                <span className="ml-2 text-xs text-[var(--text-faint)]">({attachments.length})</span>
+              )}
+            </div>
+            <button
+              type="button"
+              disabled={isUploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="font-pixel inline-flex items-center h-9 px-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase disabled:opacity-40 disabled:pointer-events-none"
+            >
+              追加
+            </button>
+          </div>
+
+          {isUploading && (
+            <div className="flex justify-center py-4">
+              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+            </div>
+          )}
+
+          {uploadError && (
+            <p className="mb-4 text-xs text-[var(--status-cancel)]">{uploadError}</p>
+          )}
+
+          {!isUploading && attachments.length === 0 && (
+            <p className="text-xs text-[var(--text-faint)] italic">添付ファイルなし</p>
+          )}
+
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {attachments.map((attachment, index) =>
+                attachment.isImage ? (
+                  <div key={index} className="relative flex flex-col items-center">
+                    <div className="relative">
+                      <a href={attachment.url} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name}
+                          className="w-16 h-16 rounded-lg object-cover"
+                          style={{ border: "1px solid var(--border)" }}
+                        />
+                      </a>
+                      <button
+                        type="button"
+                        disabled={isUploading || isDeletingIndex !== null}
+                        onClick={() => handleDeleteAttachment(index)}
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-[var(--text-dim)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-strong)" }}
+                      >
+                        {isDeletingIndex === index ? (
+                          <span className="w-3 h-3 rounded-full border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
+                        ) : (
+                          "×"
+                        )}
+                      </button>
+                    </div>
+                    <span className="text-[10px] truncate w-16 text-center text-[var(--text-faint)] mt-1">
+                      {attachment.name}
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2"
+                    style={{ border: "1px solid var(--border-strong)" }}
+                  >
+                    <a
+                      href={attachment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-[var(--text)] hover:text-[var(--accent)] transition-colors"
+                      download={attachment.name}
+                    >
+                      <span className="max-w-[160px] truncate">{attachment.name}</span>
+                      <span className="text-[var(--text-faint)]">→</span>
+                    </a>
+                    <button
+                      type="button"
+                      disabled={isUploading || isDeletingIndex !== null}
+                      onClick={() => handleDeleteAttachment(index)}
+                      className="flex items-center justify-center w-5 h-5 rounded text-[10px] text-[var(--text-faint)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                      {isDeletingIndex === index ? (
+                        <span className="w-3 h-3 rounded-full border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
+                      ) : (
+                        "×"
+                      )}
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
           )}
         </div>
 

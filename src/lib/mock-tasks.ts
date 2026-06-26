@@ -1,4 +1,4 @@
-import type { Task, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+import type { Task, TaskStatus, TaskComment, TaskAttachment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 const now = new Date().toISOString()
 
@@ -21,6 +21,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-2",
@@ -40,6 +41,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-3",
@@ -59,6 +61,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-4",
@@ -78,6 +81,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-5",
@@ -97,6 +101,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-6",
@@ -116,6 +121,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-7",
@@ -135,6 +141,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-8",
@@ -154,6 +161,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-9",
@@ -173,6 +181,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
   {
     id: "mock-10",
@@ -192,6 +201,7 @@ const INITIAL_TASKS: Task[] = [
     nextTaskIds: [],
     createdTime: now,
     lastEditedTime: now,
+    attachments: [],
   },
 ]
 
@@ -225,6 +235,7 @@ function generateBulkTasks(
       nextTaskIds: [],
       createdTime: now,
       lastEditedTime: now,
+      attachments: [],
     })
   }
   return result
@@ -288,6 +299,7 @@ export function createMockTask(input: CreateTaskInput): Task {
     nextTaskIds: [],
     createdTime: ts,
     lastEditedTime: ts,
+    attachments: [],
   }
   store.push(task)
   // Notion のシンクド・リレーション挙動を模倣: 子の親を設定したら
@@ -331,6 +343,36 @@ const SEED_TAG_OPTIONS = ["Network", "Blog", "Operation", "Finance", "Tech", "�
 export function getMockTagOptions(): string[] {
   const fromStore = store.flatMap((t) => t.tags)
   return Array.from(new Set([...SEED_TAG_OPTIONS, ...fromStore]))
+}
+
+// ---------- 添付ファイル (dev モック) ----------
+
+/** dev 環境でアップロードされた添付ファイルをタスクごとに保持する */
+const mockAttachmentStore = new Map<string, TaskAttachment[]>()
+
+export function getMockTaskAttachments(taskId: string): TaskAttachment[] {
+  return mockAttachmentStore.get(taskId) ?? []
+}
+
+export function addMockTaskAttachment(taskId: string, file: File): TaskAttachment[] {
+  const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|avif)$/i
+  const attachment: TaskAttachment = {
+    name: file.name,
+    // dev モックではオブジェクト URL の代わりに placeholder を使う
+    url: `/api/file/mock/${taskId}/${(mockAttachmentStore.get(taskId) ?? []).length}`,
+    isImage: IMAGE_EXT.test(file.name),
+  }
+  const existing = mockAttachmentStore.get(taskId) ?? []
+  const updated = [...existing, attachment]
+  mockAttachmentStore.set(taskId, updated)
+  return updated
+}
+
+export function removeMockTaskAttachment(taskId: string, index: number): TaskAttachment[] {
+  const existing = mockAttachmentStore.get(taskId) ?? []
+  const updated = existing.filter((_, i) => i !== index)
+  mockAttachmentStore.set(taskId, updated)
+  return updated
 }
 
 export function updateMockTask(id: string, input: UpdateTaskInput): Task | null {

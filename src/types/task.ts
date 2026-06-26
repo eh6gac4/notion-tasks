@@ -35,6 +35,7 @@ export type Task = {
   nextTaskIds: string[]
   createdTime: string
   lastEditedTime: string
+  attachments: TaskAttachment[]
 }
 
 export type CreateTaskInput = {
@@ -59,6 +60,15 @@ export type UpdateTaskInput = {
   source?: string
   sourceUrl?: string
   parentTaskId?: string | null
+}
+
+export type TaskAttachment = {
+  /** ファイル名 */
+  name: string
+  /** 安定 proxy URL (/api/file/[pageId]/[index]) */
+  url: string
+  /** 拡張子から判定した画像フラグ */
+  isImage: boolean
 }
 
 export type TaskComment = {

@@ -11,4 +11,5 @@ export const NOTION_PROPS = {
   CHILD:      "子タスク",
   PREV:       "前タスク",
   NEXT:       "次タスク",
+  FILES:      "添付ファイル",
 } as const
