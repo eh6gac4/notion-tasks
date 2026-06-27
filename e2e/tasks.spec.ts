@@ -28,14 +28,14 @@ test.describe("ボード", () => {
       }
     })
 
-    test("ボードに 6 カラムが描画される (進行中/未着手 はマージ、バックログは左端)", async () => {
+    test("ボードに 7 カラムが描画される (進行中/未着手 はマージ、バックログは左端)", async () => {
       // 各 status 名が必ずいずれかのカラムに含まれる (進行中/未着手 は同一カラム)
-      const expected = ["バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止"]
+      const expected = ["バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止", "対応不要"]
       for (const status of expected) {
         await expect(page.locator(COLUMN(status)).first()).toBeVisible()
       }
       const count = await page.locator("[data-testid='board-column']").count()
-      expect(count).toBe(6)
+      expect(count).toBe(7)
     })
 
     test("少なくとも1つのタスクが描画される", async () => {

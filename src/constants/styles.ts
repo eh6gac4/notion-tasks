@@ -1,7 +1,7 @@
 import type { TaskPriority, TaskStatus } from "@/types/task"
 
 export const STATUS_OPTIONS: TaskStatus[] = [
-  "バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止",
+  "バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止", "対応不要",
 ]
 
 // セマンティック・ステータス: 「進行中」のみ accent + グローでサイバー DNA を残す。
@@ -14,6 +14,7 @@ export const STATUS_STYLES: Record<TaskStatus, string> = {
   "一時中断":     "font-pixel bg-transparent text-[var(--status-pause)] border border-[rgba(251,113,133,0.45)]",
   "完了":         "font-pixel bg-transparent text-[var(--status-done)] border border-[rgba(52,211,153,0.45)]",
   "中止":         "font-pixel bg-transparent text-[var(--status-cancel)] border border-[rgba(244,63,94,0.45)]",
+  "対応不要":     "font-pixel bg-transparent text-[var(--text-faint)] border border-[var(--border)]",
   "アーカイブ済み": "font-pixel bg-transparent text-[var(--text-faint)] border border-[var(--border)]",
 }
 
@@ -27,6 +28,7 @@ export const STATUS_ACCENT: Record<TaskStatus, string> = {
   "一時中断":       "var(--status-pause)",
   "完了":           "var(--status-done)",
   "中止":           "var(--status-cancel)",
+  "対応不要":       "var(--text-faint)",
   "アーカイブ済み": "var(--text-faint)",
 }
 

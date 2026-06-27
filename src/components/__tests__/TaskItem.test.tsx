@@ -139,7 +139,7 @@ describe("TaskItem レンダリング", () => {
 
 describe("TaskItem STATUS_STYLES 網羅性", () => {
   // 各ステータスに対してバッジが表示されることを確認（スタイル抽出後の回帰防止）
-  const statuses = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止", "アーカイブ済み"] as const
+  const statuses = ["未着手", "進行中", "確認中", "一時中断", "完了", "中止", "対応不要", "アーカイブ済み"] as const
 
   for (const status of statuses) {
     it(`"${status}" でクラッシュしない`, () => {

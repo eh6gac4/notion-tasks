@@ -6,6 +6,7 @@ export type TaskStatus =
   | "一時中断"
   | "完了"
   | "中止"
+  | "対応不要"
   | "アーカイブ済み"
 
 export type TaskPriority = "high" | "medium" | "low"
