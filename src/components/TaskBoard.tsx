@@ -23,6 +23,7 @@ const COLUMNS: ColumnSpec[] = [
   { key: "pause",   statuses: ["一時中断"],           title: "一時中断",           accentStatus: "一時中断" },
   { key: "done",    statuses: ["完了"],               title: "完了",               accentStatus: "完了" },
   { key: "cancel",  statuses: ["中止"],               title: "中止",               accentStatus: "中止" },
+  { key: "skip",    statuses: ["対応不要"],           title: "対応不要",           accentStatus: "対応不要" },
 ]
 const INITIAL_FOCUS_COLUMN_KEY = "wip"
 

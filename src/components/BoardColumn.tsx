@@ -7,22 +7,23 @@ import { applyAdvancedFilter } from "@/constants/filters"
 import { applySort } from "@/lib/task-sort"
 import { buildNestedOrder, filterCollapsed } from "@/lib/task-tree"
 import { STATUS_ACCENT } from "@/constants/styles"
-import { getCompletedTasksAction, getCancelledTasksAction, getBacklogTasksAction } from "@/app/actions"
+import { getCompletedTasksAction, getCancelledTasksAction, getBacklogTasksAction, getSkipTasksAction } from "@/app/actions"
 import { CyberLoader } from "./CyberLoader"
 
 // 列が viewport に入ってから fetch する重い (or 低頻度な) ステータス。
 // 完了/中止 は件数が多く、バックログ は「退避してたまに見る」想定なので初回ロードから外す。
-const LAZY_STATUSES: ReadonlySet<TaskStatus> = new Set(["完了", "中止", "バックログ"])
+const LAZY_STATUSES: ReadonlySet<TaskStatus> = new Set(["完了", "中止", "対応不要", "バックログ"])
 
 // 注: action 参照は遅延 (関数呼び出し時) に解決する。module-load 時に LAZY_STATUSES の
 // バリュー側で dereference すると、テストの vi.mock("@/app/actions", ...) が
 // すべての action を列挙していない場合に import が失敗する。
 function getLazyFetcher(status: TaskStatus): (() => Promise<Task[]>) | null {
   switch (status) {
-    case "完了":     return getCompletedTasksAction
-    case "中止":     return getCancelledTasksAction
+    case "完了":       return getCompletedTasksAction
+    case "中止":       return getCancelledTasksAction
+    case "対応不要":   return getSkipTasksAction
     case "バックログ": return getBacklogTasksAction
-    default:         return null
+    default:           return null
   }
 }
 

@@ -75,6 +75,11 @@ export async function getBacklogTasksAction(): Promise<Task[]> {
   return getTasks({ statuses: ["バックログ"] })
 }
 
+export async function getSkipTasksAction(): Promise<Task[]> {
+  await requireAuth()
+  return getTasks({ statuses: ["対応不要"] })
+}
+
 export async function getTasksByIdsAction(ids: string[]): Promise<Task[]> {
   await requireAuth()
   if (ids.length === 0) return []

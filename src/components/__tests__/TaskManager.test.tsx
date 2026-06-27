@@ -78,14 +78,14 @@ function getColumn(status: string) {
 }
 
 describe("TaskManager ボード", () => {
-  it("ボードに 6 カラム描画される (進行中/未着手は1カラムにマージ、バックログは左端)", () => {
+  it("ボードに 7 カラム描画される (進行中/未着手は1カラムにマージ、バックログは左端)", () => {
     render(
       <TaskManager tagOptions={[]} initialAdvancedFilter={NONE} initialSort={DEFAULT_SORT} tasks={tasks} />
     )
     const cols = document.querySelectorAll("[data-testid='board-column']")
-    expect(cols.length).toBe(6)
+    expect(cols.length).toBe(7)
     // 各 status が必ずいずれかのカラムに含まれる
-    for (const status of ["バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止"]) {
+    for (const status of ["バックログ", "未着手", "進行中", "確認中", "一時中断", "完了", "中止", "対応不要"]) {
       expect(getColumn(status)).toBeInTheDocument()
     }
   })
