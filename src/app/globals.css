@@ -307,3 +307,15 @@ input[type="time"] {
   border-color: var(--accent) !important;
   box-shadow: 0 0 10px rgba(220, 20, 60, 0.7) !important;
 }
+
+/* iOS Safari: フォーカス時の自動ズームを防ぐ（font-size が 16px 未満だと発生）。
+   タッチ端末のみ 16px に引き上げ、PC は各コンポーネントのデザインを維持する。
+   レイヤー外（unlayered）の素セレクタで記述することで、@layer utilities 内の
+   .field / .field-sm や text-sm / text-xs クラスより優先して適用される。 */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
