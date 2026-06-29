@@ -220,7 +220,7 @@ export function BoardColumn({
       data-testid="board-column"
       data-column-key={columnKey}
       data-status={statuses.join(",")}
-      className="flex-shrink-0 w-[360px] h-full flex flex-col snap-start"
+      className="flex-shrink-0 w-[360px] lg:w-auto lg:flex-1 lg:min-w-[300px] lg:max-w-[480px] h-full flex flex-col snap-start"
       style={{ scrollSnapAlign: "start" }}
     >
       <header

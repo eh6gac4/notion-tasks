@@ -127,7 +127,7 @@ export function TaskManager({
       />
 
       {/* Toolbar */}
-      <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 py-3 flex-shrink-0 flex items-center gap-3">
+      <div className="bg-[var(--bg)] border-b border-[var(--border)] px-4 lg:px-6 py-3 flex-shrink-0 flex items-center gap-3">
         <input
           data-testid="search-input"
           type="search"
@@ -135,7 +135,7 @@ export function TaskManager({
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="検索..."
           aria-label="タスクを検索"
-          className="field flex-1 min-w-0"
+          className="field flex-1 min-w-0 lg:max-w-md"
         />
         <button
           data-testid="filter-button"
