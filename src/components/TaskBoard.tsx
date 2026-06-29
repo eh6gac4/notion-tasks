@@ -69,8 +69,8 @@ export const TaskBoard = forwardRef<
     <div
       ref={setRefs}
       data-testid="task-board"
-      className="flex h-full overflow-x-auto overflow-y-hidden divide-x divide-[var(--border-strong)]"
-      style={{ scrollSnapType: "x mandatory", overscrollBehaviorX: "contain" }}
+      className="flex h-full overflow-x-auto overflow-y-hidden divide-x divide-[var(--border-strong)] snap-x snap-mandatory lg:snap-none"
+      style={{ overscrollBehaviorX: "contain" }}
     >
       {COLUMNS.map((col) => (
         <BoardColumn

@@ -41,18 +41,18 @@ export function Settings() {
       </button>
 
       {open && (
-        <div data-testid="settings-sheet" className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div data-testid="settings-sheet" className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
 
           <div
-            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto"
+            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-2xl lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
             style={{
               backgroundColor: "var(--surface)",
               borderTop: "1px solid var(--border-strong)",
               boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
             }}
           >
-            <button onClick={() => setOpen(false)} className="w-full flex justify-center pb-2 -mt-1" aria-label="閉じる">
+            <button onClick={() => setOpen(false)} className="w-full flex justify-center pb-2 -mt-1 lg:hidden" aria-label="閉じる">
               <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
             </button>
 

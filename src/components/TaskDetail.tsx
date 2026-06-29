@@ -110,6 +110,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
   const isDraggingRef = useRef(false)
   const rafIdRef = useRef(0)
   const isEditingBlocksRef = useRef(isEditingBlocks)
+  const isPCRef = useRef(false)
   useEffect(() => { isEditingBlocksRef.current = isEditingBlocks }, [isEditingBlocks])
 
   useEffect(() => {
@@ -123,12 +124,24 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
     return () => { document.body.style.overflow = prev }
   }, [])
 
+  // PC 判定（lg: ≥1024px）。matchMedia 非対応環境（jsdom 等）では false のまま
+  useEffect(() => {
+    isPCRef.current = typeof window.matchMedia === "function" &&
+      window.matchMedia("(min-width: 1024px)").matches
+  }, [])
+
   // パネルの open/close アニメーションを直接 DOM に適用
   useEffect(() => {
     const el = panelRef.current
     if (!el) return
-    el.style.transition = "opacity 0.15s, transform 0.3s ease-out"
-    el.style.transform = visible ? "translateY(0)" : "translateY(100%)"
+    if (isPCRef.current) {
+      // PC: translateY アニメなし、opacity のみ
+      el.style.transition = "opacity 0.15s"
+      el.style.transform = "translateY(0)"
+    } else {
+      el.style.transition = "opacity 0.15s, transform 0.3s ease-out"
+      el.style.transform = visible ? "translateY(0)" : "translateY(100%)"
+    }
   }, [visible])
 
   // handleClose — レンダー中に ref へ同期代入することでレースコンディションを回避
@@ -141,6 +154,8 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
 
   // スワイプダウンで閉じる（rAF で描画を間引き、setState なしで直接 DOM 操作）
   useEffect(() => {
+    // PC ではタッチ操作を想定しないため無効化
+    if (isPCRef.current) return
     const panel = panelRef.current
     if (!panel) return
     const el = panel
@@ -383,7 +398,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
   const statusStyle = STATUS_STYLES[editStatus] ?? STATUS_STYLES["未着手"]
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div
         data-testid="task-detail-backdrop"
         className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
@@ -393,7 +408,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
       <div
         ref={panelRef}
         data-testid="task-detail"
-        className="relative rounded-t-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto"
+        className="relative rounded-t-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto lg:rounded-2xl lg:w-full lg:max-w-2xl lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
@@ -401,7 +416,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
         }}
       >
         {/* Handle */}
-        <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1">
+        <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1 lg:hidden">
           <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
