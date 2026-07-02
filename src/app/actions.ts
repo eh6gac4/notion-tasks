@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { isNotionClientError } from "@notionhq/client"
-import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
+import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, getLocationOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
 import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
 function isDevMode() {
@@ -54,10 +54,10 @@ export async function refreshTasksAction() {
   updateTag("tasks")
 }
 
-export async function fetchInitialDataAction(): Promise<{ tasks: Task[]; tagOptions: string[] }> {
+export async function fetchInitialDataAction(): Promise<{ tasks: Task[]; tagOptions: string[]; locationOptions: string[] }> {
   await requireAuth()
-  const [tasks, tagOptions] = await Promise.all([getTasks(), getTagOptions()])
-  return { tasks, tagOptions }
+  const [tasks, tagOptions, locationOptions] = await Promise.all([getTasks(), getTagOptions(), getLocationOptions()])
+  return { tasks, tagOptions, locationOptions }
 }
 
 export async function getCompletedTasksAction(): Promise<Task[]> {

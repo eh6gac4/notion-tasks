@@ -32,6 +32,7 @@ export function TaskFormSheet({
   open,
   onClose,
   tagOptions,
+  locationOptions,
   parentTaskId,
   heading = "✦ New Task",
   submitLabel = "CREATE TASK",
@@ -40,6 +41,7 @@ export function TaskFormSheet({
   open: boolean
   onClose: () => void
   tagOptions: string[]
+  locationOptions: string[]
   parentTaskId?: string
   heading?: string
   submitLabel?: string
@@ -83,6 +85,7 @@ export function TaskFormSheet({
         priority: (formData.get("priority") as TaskPriority) || undefined,
         due: buildDue(dueDate, dueTime) ?? undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
+        location: (formData.get("location") as string) || undefined,
         body,
         parentTaskId,
       })
@@ -162,6 +165,16 @@ export function TaskFormSheet({
                 setDueTime(t)
               }}
             />
+          </div>
+
+          <div>
+            <p className="font-pixel text-xs text-[var(--text-dim)] mb-4 tracking-widest uppercase">場所</p>
+            <select name="location" defaultValue="" className="field w-full">
+              <option value="">(指定なし)</option>
+              {locationOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </div>
 
           <div>

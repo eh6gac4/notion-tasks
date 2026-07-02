@@ -48,6 +48,11 @@ function extractTags(props: PageObjectResponse["properties"]): string[] {
   return p?.multi_select?.map((t) => t.name) ?? []
 }
 
+function extractLocation(props: PageObjectResponse["properties"]): string | null {
+  const p = props[NOTION_PROPS.LOCATION] as { type: "select"; select: { name: string } | null } | undefined
+  return p?.select?.name ?? null
+}
+
 function extractAssignees(props: PageObjectResponse["properties"]): string[] {
   const p = props[NOTION_PROPS.ASSIGNEE] as { type: "people"; people: Array<{ id: string }> }
   return p?.people?.map((p) => p.id) ?? []
@@ -117,6 +122,7 @@ function pageToTask(page: PageObjectResponse): Task {
     priority:     extractPriority(props),
     due:          extractDueDate(props),
     tags:         extractTags(props),
+    location:     extractLocation(props),
     assignees:    extractAssignees(props),
     source:       extractSource(props),
     sourceUrl:    extractSourceUrl(props),
@@ -201,6 +207,24 @@ export function getTagOptions(): Promise<string[]> {
   return fetchTagOptions()
 }
 
+async function fetchLocationOptions(): Promise<string[]> {
+  try {
+    const ds = await notion.dataSources.retrieve({ data_source_id: DATA_SOURCE_ID })
+    const locProp = (ds as { properties: Record<string, unknown> }).properties?.[NOTION_PROPS.LOCATION] as
+      | { type: "select"; select: { options: Array<{ name: string }> } }
+      | undefined
+    return locProp?.select?.options?.map((o) => o.name) ?? []
+  } catch (e) {
+    console.error("[getLocationOptions] Notion error:", e)
+    return []
+  }
+}
+
+export function getLocationOptions(): Promise<string[]> {
+  if (isDevMode()) return Promise.resolve(["自宅", "オフィス", "スーパー"]) // Mock
+  return fetchLocationOptions()
+}
+
 export async function getTask(id: string): Promise<Task | null> {
   if (isDevMode()) return getMockTask(id) ?? null
   try {
@@ -222,6 +246,7 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
   if (input.priority)    properties[NOTION_PROPS.PRIORITY]   = { select: { name: input.priority } }
   if (input.due)         properties[NOTION_PROPS.DUE]        = { date: { start: input.due } }
   if (input.tags?.length) properties[NOTION_PROPS.TAG]       = { multi_select: input.tags.map((t) => ({ name: t })) }
+  if (input.location)    properties[NOTION_PROPS.LOCATION]   = { select: { name: input.location } }
   if (input.source)      properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
   if (input.sourceUrl)   properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
   if (input.parentTaskId) properties[NOTION_PROPS.PARENT]   = { relation: [{ id: input.parentTaskId }] }
@@ -257,6 +282,7 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
   if (input.priority !== undefined) properties[NOTION_PROPS.PRIORITY]   = input.priority ? { select: { name: input.priority } } : { select: null }
   if (input.due !== undefined)      properties[NOTION_PROPS.DUE]        = input.due ? { date: { start: input.due } } : { date: null }
   if (input.tags !== undefined)     properties[NOTION_PROPS.TAG]        = { multi_select: input.tags.map((t) => ({ name: t })) }
+  if (input.location !== undefined) properties[NOTION_PROPS.LOCATION]   = input.location ? { select: { name: input.location } } : { select: null }
   if (input.source !== undefined)   properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
   if (input.sourceUrl !== undefined) properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
   if (input.parentTaskId !== undefined) properties[NOTION_PROPS.PARENT] = {

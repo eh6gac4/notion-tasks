@@ -12,9 +12,10 @@ import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
 import { useTasksRefresh } from "./TasksRefreshContext"
 
-export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () => {}, onClose }: {
+export function TaskDetail({ task, tagOptions, locationOptions, allTasks = [], onSelectTask = () => {}, onClose }: {
   task: Task
   tagOptions: string[]
+  locationOptions: string[]
   allTasks?: Task[]
   onSelectTask?: (task: Task) => void
   onClose: () => void
@@ -80,6 +81,7 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
   const [editDate, setEditDate] = useState(initialDue.date)
   const [editTime, setEditTime] = useState(snapTimeTo5Min(initialDue.time))
   const [editTags, setEditTags] = useState<string[]>(task.tags)
+  const [editLocation, setEditLocation] = useState<string>(task.location ?? "")
 
   const [blocks, setBlocks] = useState<string | null>(null)
   const [isLoadingBlocks, setIsLoadingBlocks] = useState(true)
@@ -395,6 +397,11 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
     save({ tags: next })
   }
 
+  function handleLocationChange(next: string) {
+    setEditLocation(next)
+    save({ location: next || null })
+  }
+
   const statusStyle = STATUS_STYLES[editStatus] ?? STATUS_STYLES["未着手"]
 
   return (
@@ -497,6 +504,19 @@ export function TaskDetail({ task, tagOptions, allTasks = [], onSelectTask = () 
 
           <Row label="タグ" block>
             <TagSelector options={tagOptions} selected={editTags} onChange={handleTagsChange} />
+          </Row>
+
+          <Row label="場所">
+            <select
+              value={editLocation}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className="field-sm text-sm"
+            >
+              <option value="">未設定</option>
+              {locationOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </Row>
 
           {task.source && (

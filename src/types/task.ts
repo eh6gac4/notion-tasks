@@ -27,6 +27,7 @@ export type Task = {
   priority: TaskPriority | null
   due: string | null
   tags: string[]
+  location: string | null
   assignees: string[]
   source: string | null
   sourceUrl: string | null
@@ -45,6 +46,7 @@ export type CreateTaskInput = {
   priority?: TaskPriority | null
   due?: string | null
   tags?: string[]
+  location?: string | null
   body?: string
   source?: string
   sourceUrl?: string
@@ -57,6 +59,7 @@ export type UpdateTaskInput = {
   priority?: TaskPriority | null
   due?: string | null
   tags?: string[]
+  location?: string | null
   body?: string
   source?: string
   sourceUrl?: string

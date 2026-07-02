@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { TaskFormSheet } from "./TaskFormSheet"
 
-export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
+export function TaskCreate({ tagOptions, locationOptions }: { tagOptions: string[]; locationOptions: string[] }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -25,7 +25,7 @@ export function TaskCreate({ tagOptions }: { tagOptions: string[] }) {
         </svg>
       </button>
 
-      <TaskFormSheet open={open} onClose={() => setOpen(false)} tagOptions={tagOptions} />
+      <TaskFormSheet open={open} onClose={() => setOpen(false)} tagOptions={tagOptions} locationOptions={locationOptions} />
     </>
   )
 }
