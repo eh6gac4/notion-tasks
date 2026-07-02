@@ -15,18 +15,21 @@ import { TasksRefreshProvider } from "./TasksRefreshContext"
 export function TaskManager({
   tasks: seedTasks,
   tagOptions: seedTagOptions,
+  locationOptions: seedLocationOptions,
   initialAdvancedFilter,
   initialSort,
   initialTaskId,
 }: {
   tasks?: Task[]
   tagOptions?: string[]
+  locationOptions?: string[]
   initialAdvancedFilter: AdvancedFilter
   initialSort: SortConfig
   initialTaskId?: string | null
 }) {
   const [tasks, setTasks] = useState<Task[]>(seedTasks ?? [])
   const [tagOptions, setTagOptions] = useState<string[]>(seedTagOptions ?? [])
+  const [locationOptions, setLocationOptions] = useState<string[]>(seedLocationOptions ?? [])
   const isSeeded = seedTasks !== undefined
 
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
@@ -79,6 +82,7 @@ export function TaskManager({
       const data = await fetchInitialDataAction()
       setTasks(data.tasks)
       setTagOptions(data.tagOptions)
+      setLocationOptions(data.locationOptions)
     })
   }, [isSeeded])
 
@@ -95,6 +99,7 @@ export function TaskManager({
         const data = await fetchInitialDataAction()
         setTasks(data.tasks)
         setTagOptions(data.tagOptions)
+        setLocationOptions(data.locationOptions)
       })
     }
     document.addEventListener("visibilitychange", onVisible)
@@ -111,6 +116,7 @@ export function TaskManager({
       const data = await fetchInitialDataAction()
       setTasks(data.tasks)
       setTagOptions(data.tagOptions)
+      setLocationOptions(data.locationOptions)
     })
   }, [])
 
@@ -231,12 +237,13 @@ export function TaskManager({
         />
       </main>
 
-      <TaskCreate tagOptions={tagOptions} />
+      <TaskCreate tagOptions={tagOptions} locationOptions={locationOptions} />
       {selectedTask && (
         <TaskDetail
           key={selectedTask.id}
           task={selectedTask}
           tagOptions={tagOptions}
+          locationOptions={locationOptions}
           allTasks={tasks}
           onSelectTask={handleSelect}
           onClose={handleCloseDetail}

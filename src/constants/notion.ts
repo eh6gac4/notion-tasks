@@ -12,4 +12,5 @@ export const NOTION_PROPS = {
   PREV:       "前タスク",
   NEXT:       "次タスク",
   FILES:      "添付ファイル",
+  LOCATION:   "Location",
 } as const
