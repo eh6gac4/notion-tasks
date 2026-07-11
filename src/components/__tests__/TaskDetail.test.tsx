@@ -99,7 +99,8 @@ describe("TaskDetail レンダリング", () => {
 
   it("priority が null のとき priority select が未設定になる", () => {
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ priority: null })} onClose={() => {}} />)
-    expect(screen.getByDisplayValue("未設定")).toBeInTheDocument()
+    const select = screen.getByTestId("priority-select") as HTMLSelectElement
+    expect(select.value).toBe("")
   })
 
   it("未来の due date が date input に反映される", () => {

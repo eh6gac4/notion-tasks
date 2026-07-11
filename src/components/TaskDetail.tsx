@@ -7,15 +7,16 @@ import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles
 import { TaskFormSheet } from "./TaskFormSheet"
 import { ParentTaskPickerModal } from "./ParentTaskPickerModal"
 import { MarkdownPreview } from "./MarkdownPreview"
+import { MailViewer } from "./MailViewer"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
 import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
 import { useTasksRefresh } from "./TasksRefreshContext"
 
-export function TaskDetail({ task, tagOptions, locationOptions, allTasks = [], onSelectTask = () => {}, onClose }: {
+export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = [], onSelectTask = () => {}, onClose }: {
   task: Task
   tagOptions: string[]
-  locationOptions: string[]
+  locationOptions?: string[]
   allTasks?: Task[]
   onSelectTask?: (task: Task) => void
   onClose: () => void
@@ -639,7 +640,7 @@ export function TaskDetail({ task, tagOptions, locationOptions, allTasks = [], o
               )}
             </div>
           ) : blocks ? (
-            <MarkdownPreview content={blocks} onToggleCheckbox={handleToggleCheckbox} />
+            <MailViewer content={blocks} onToggleCheckbox={handleToggleCheckbox} />
           ) : (
             <p className="text-xs text-[var(--text-faint)] italic">本文なし</p>
           )}
