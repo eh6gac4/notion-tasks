@@ -32,7 +32,7 @@ export function TaskFormSheet({
   open,
   onClose,
   tagOptions,
-  locationOptions,
+  locationOptions = [],
   parentTaskId,
   heading = "✦ New Task",
   submitLabel = "CREATE TASK",
@@ -41,7 +41,7 @@ export function TaskFormSheet({
   open: boolean
   onClose: () => void
   tagOptions: string[]
-  locationOptions: string[]
+  locationOptions?: string[]
   parentTaskId?: string
   heading?: string
   submitLabel?: string
