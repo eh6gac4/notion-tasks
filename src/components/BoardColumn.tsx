@@ -44,6 +44,7 @@ export function BoardColumn({
   searchQuery,
   advancedFilter,
   sort,
+  isLoading,
   onSelect,
 }: {
   columnKey: string
@@ -54,6 +55,7 @@ export function BoardColumn({
   searchQuery: string
   advancedFilter: AdvancedFilter
   sort: SortConfig
+  isLoading?: boolean
   onSelect: (task: Task) => void
 }) {
   // 完了/中止/バックログ カラムは初回ページ取得から除外しているため、カラムが viewport に
@@ -180,6 +182,7 @@ export function BoardColumn({
   const isLazyPending = isLazyStatus && !propsHasLazy && lazyTasks === null
   const showLazyLoading = isLazyPending && !hasLoadError
   const showLazyError = isLazyPending && hasLoadError
+  const showLoading = isLoading || showLazyLoading
 
   // incremental render (lazyStatus のみ): 表示件数を chunk ずつ増やす
   const [displayCount, setDisplayCount] = useState(INCREMENTAL_INITIAL)
@@ -240,7 +243,7 @@ export function BoardColumn({
       </header>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-11">
-        {showLazyLoading ? (
+        {showLoading ? (
           <div
             data-testid="board-column-loader"
             className="flex justify-center py-8"

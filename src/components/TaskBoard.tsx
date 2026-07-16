@@ -34,9 +34,10 @@ export const TaskBoard = forwardRef<
     searchQuery: string
     advancedFilter: AdvancedFilter
     sort: SortConfig
+    isLoading?: boolean
     onSelect: (task: Task) => void
   }
->(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, onSelect }, ref) {
+>(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, isLoading, onSelect }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {
@@ -83,6 +84,7 @@ export const TaskBoard = forwardRef<
           searchQuery={searchQuery}
           advancedFilter={advancedFilter}
           sort={sort}
+          isLoading={isLoading}
           onSelect={onSelect}
         />
       ))}
