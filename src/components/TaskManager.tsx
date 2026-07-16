@@ -233,6 +233,7 @@ export function TaskManager({
           searchQuery={searchQuery}
           advancedFilter={advancedFilter}
           sort={sort}
+          isLoading={isPending}
           onSelect={handleSelect}
         />
       </main>
