@@ -169,7 +169,7 @@ export function TaskFormSheet({
 
           <div>
             <p className="font-pixel text-xs text-[var(--text-dim)] mb-4 tracking-widest uppercase">場所</p>
-            <select name="location" defaultValue="" className="field w-full">
+            <select name="location" defaultValue="自宅" className="field w-full">
               <option value="">(指定なし)</option>
               {locationOptions.map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
