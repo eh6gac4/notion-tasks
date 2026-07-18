@@ -97,18 +97,24 @@ export function BoardColumn({
     return () => obs.disconnect()
   }, [isLazyStatus, propsHasLazy, lazyTasks, lazyStatus])
 
-  // タブ復帰時に lazy state をクリアして、再びカラムが見えたら fetch しなおす。
-  // (TaskManager 側の router.refresh() ではローカル state は消えないので個別に対応)
+  // タブ復帰時にバックグラウンドで fetch し直す。
+  // まだロードされていない (lazyTasks === null) 場合は既存の IntersectionObserver に任せる。
   useEffect(() => {
     if (!isLazyStatus) return
     function onVisible() {
       if (document.visibilityState !== "visible") return
-      setLazyTasks(null)
-      setHasLoadError(false)
+      if (lazyTasks === null) return // まだ表示されていない場合は fetch しない
+      const fetcher = getLazyFetcher(lazyStatus)
+      if (!fetcher) return
+      setIsLoadingLazy(true)
+      fetcher()
+        .then((t) => setLazyTasks(t))
+        .catch(() => setHasLoadError(true))
+        .finally(() => setIsLoadingLazy(false))
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [isLazyStatus])
+  }, [isLazyStatus, lazyTasks, lazyStatus])
 
   const q = searchQuery.trim().toLowerCase()
   const filtered = useMemo(() => {

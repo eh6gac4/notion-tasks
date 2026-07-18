@@ -31,6 +31,7 @@ export function TaskManager({
   const [tagOptions, setTagOptions] = useState<string[]>(seedTagOptions ?? [])
   const [locationOptions, setLocationOptions] = useState<string[]>(seedLocationOptions ?? [])
   const isSeeded = seedTasks !== undefined
+  const [isInitialLoading, setIsInitialLoading] = useState(!isSeeded)
 
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(initialAdvancedFilter)
   const [sort, setSort] = useState<SortConfig>(initialSort)
@@ -83,6 +84,7 @@ export function TaskManager({
       setTasks(data.tasks)
       setTagOptions(data.tagOptions)
       setLocationOptions(data.locationOptions)
+      setIsInitialLoading(false)
     })
   }, [isSeeded])
 
@@ -233,7 +235,7 @@ export function TaskManager({
           searchQuery={searchQuery}
           advancedFilter={advancedFilter}
           sort={sort}
-          isLoading={isPending}
+          isLoading={isInitialLoading}
           onSelect={handleSelect}
         />
       </main>
