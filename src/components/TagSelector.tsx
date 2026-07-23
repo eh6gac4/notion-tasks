@@ -19,11 +19,11 @@ export function TagSelector({
   const [draft, setDraft] = useState("")
   const pillClass = size === "lg" ? PILL_BUTTON_CLASS_LG : PILL_BUTTON_CLASS
   const inputClass = size === "lg"
-    ? "flex-1 min-w-0 h-11 rounded-full border border-[var(--border-strong)] px-4 text-xs text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
-    : "flex-1 min-w-0 h-9 rounded-full border border-[var(--border-strong)] px-4 text-xs text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
+    ? "flex-1 min-w-0 h-11 rounded-none border border-[var(--border-strong)] px-4 text-xs text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
+    : "flex-1 min-w-0 h-9 rounded-none border border-[var(--border-strong)] px-4 text-xs text-[var(--text)] bg-[var(--bg)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
   const addBtnClass = size === "lg"
-    ? "flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all disabled:opacity-40"
-    : "flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-40"
+    ? "flex-shrink-0 w-11 h-11 rounded-none flex items-center justify-center transition-all disabled:opacity-40"
+    : "flex-shrink-0 w-9 h-9 rounded-none flex items-center justify-center transition-all disabled:opacity-40"
 
   const allTags = [...options, ...selected.filter((t) => !options.includes(t))]
 

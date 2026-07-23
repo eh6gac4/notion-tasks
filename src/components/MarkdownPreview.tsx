@@ -40,7 +40,7 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
     elements.push(
       <pre
         key={key}
-        className="rounded-md px-3 py-2 text-xs text-[var(--text)] font-mono overflow-x-auto my-1"
+        className="rounded-none px-3 py-2 text-xs text-[var(--text)] font-mono overflow-x-auto my-1"
         style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
       >
         {codeLines.join("\n")}
@@ -73,7 +73,7 @@ export function MarkdownPreview({ content, onToggleCheckbox }: { content: string
           key={i}
           src={src}
           alt={alt}
-          className="my-2 max-w-full rounded-md"
+          className="my-2 max-w-full rounded-none"
           style={{ border: "1px solid var(--border)" }}
         />
       )

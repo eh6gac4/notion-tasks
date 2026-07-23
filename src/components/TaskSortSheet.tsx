@@ -79,7 +79,7 @@ export function TaskSortSheet({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
       <div
-        className="relative rounded-t-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-2xl lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+        className="relative rounded-none-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
@@ -87,7 +87,7 @@ export function TaskSortSheet({
         }}
       >
         <button onClick={onClose} className="w-full flex justify-center pb-2 -mt-1 lg:hidden" aria-label="閉じる">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
+          <div className="w-10 h-1 rounded-none" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
         <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
@@ -150,7 +150,7 @@ export function TaskSortSheet({
           <button
             type="button"
             onClick={handleReset}
-            className="font-pixel flex-1 rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors tracking-widest uppercase"
+            className="font-pixel flex-1 rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors tracking-widest uppercase"
             style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
           >
             リセット
@@ -158,7 +158,7 @@ export function TaskSortSheet({
           <button
             type="button"
             onClick={handleApply}
-            className="font-pixel flex-[2] rounded-lg py-3 text-sm tracking-widest uppercase font-semibold"
+            className="font-pixel flex-[2] rounded-none py-3 text-sm tracking-widest uppercase font-semibold"
             style={{
               backgroundColor: "var(--accent)",
               color: "var(--bg)",

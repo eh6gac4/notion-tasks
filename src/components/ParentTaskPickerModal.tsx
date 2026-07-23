@@ -49,14 +49,14 @@ export function ParentTaskPickerModal({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} data-testid="parent-picker-backdrop" />
 
       <div
-        className="relative rounded-t-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain lg:rounded-2xl lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+        className="relative rounded-none-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
           boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
         }}
       >
-        <div className="w-10 h-1 rounded-full mx-auto mb-4 lg:hidden" style={{ backgroundColor: "var(--border-strong)" }} />
+        <div className="w-10 h-1 rounded-none mx-auto mb-4 lg:hidden" style={{ backgroundColor: "var(--border-strong)" }} />
 
         <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
           ✦ Set Parent
@@ -88,14 +88,14 @@ export function ParentTaskPickerModal({
                 onSelect(t.id)
                 onClose()
               }}
-              className="flex items-center gap-2 w-full text-left rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
+              className="flex items-center gap-2 w-full text-left rounded-none border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
               style={{ minHeight: "var(--tap-min)" }}
             >
               {t.icon && (
                 t.icon.type === "emoji" ? (
                   <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{t.icon.emoji}</span>
                 ) : (
-                  <img src={t.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded object-cover" />
+                  <img src={t.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded-none object-cover" />
                 )
               )}
               <span className="flex-1 min-w-0 text-sm text-[var(--text)] break-words">{t.title}</span>
@@ -116,7 +116,7 @@ export function ParentTaskPickerModal({
               onSelect(null)
               onClose()
             }}
-            className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--status-cancel)] hover:border-[var(--status-cancel)] transition-colors tracking-widest uppercase"
+            className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--status-cancel)] hover:border-[var(--status-cancel)] transition-colors tracking-widest uppercase"
             style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
           >
             親を解除
@@ -126,7 +126,7 @@ export function ParentTaskPickerModal({
         <button
           type="button"
           onClick={onClose}
-          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
+          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
           style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
         >
           キャンセル

@@ -416,7 +416,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
       <div
         ref={panelRef}
         data-testid="task-detail"
-        className="relative rounded-t-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto lg:rounded-2xl lg:w-full lg:max-w-2xl lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto"
+        className="relative rounded-none-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-w-2xl lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
@@ -425,7 +425,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
       >
         {/* Handle */}
         <button onClick={handleClose} className="w-full flex justify-center pb-2 -mt-1 lg:hidden">
-          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
+          <div className="w-10 h-1 rounded-none" style={{ backgroundColor: "var(--border-strong)" }} />
         </button>
 
         {saveError && (
@@ -446,7 +446,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
               <img
                 src={task.icon.url}
                 alt=""
-                className="flex-shrink-0 w-7 h-7 rounded object-cover"
+                className="flex-shrink-0 w-7 h-7 rounded-none object-cover"
               />
             )
           )}
@@ -464,7 +464,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         <div className="space-y-4">
           <Row label="Status">
             <div className="relative inline-flex items-center">
-              <span className={`inline-flex items-center h-9 px-3 rounded-full text-sm uppercase tracking-wider ${statusStyle}`}>
+              <span className={`inline-flex items-center h-9 px-3 rounded-none text-sm uppercase tracking-wider ${statusStyle}`}>
                 {editStatus}
               </span>
               <select
@@ -544,7 +544,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 type="button"
                 data-testid="parent-set-button"
                 onClick={() => setParentPickerOpen(true)}
-                className="font-pixel flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
                 style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
               >
                 {parentTasks.length > 0 ? "親タスクを変更" : "+ 親タスクを設定"}
@@ -565,7 +565,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                   type="button"
                   data-testid="subtask-add-button"
                   onClick={() => setSubtaskFormOpen(true)}
-                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-lg py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
                   style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
                 >
                   + サブタスク追加
@@ -596,7 +596,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
 
           {isLoadingBlocks ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+              <div className="w-5 h-5 rounded-none border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           ) : isEditingBlocks ? (
             <div>
@@ -620,7 +620,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                     setBlocksSaveError(null)
                     setIsEditingBlocks(false)
                   }}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-none text-xs text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
                   style={{ border: "1px solid var(--border-strong)" }}
                 >
                   キャンセル
@@ -629,7 +629,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                   type="button"
                   disabled={isSavingBlocks}
                   onClick={handleSaveBlocks}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-none text-xs text-[var(--bg)] font-semibold transition-all"
                   style={{ backgroundColor: isSavingBlocks ? "rgba(220,20,60,0.5)" : "var(--accent)" }}
                 >
                   {isSavingBlocks ? "保存中…" : "保存"}
@@ -674,7 +674,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
 
           {isUploading && (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+              <div className="w-5 h-5 rounded-none border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           )}
 
@@ -696,7 +696,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                         <img
                           src={attachment.url}
                           alt={attachment.name}
-                          className="w-16 h-16 rounded-lg object-cover"
+                          className="w-16 h-16 rounded-none object-cover"
                           style={{ border: "1px solid var(--border)" }}
                         />
                       </a>
@@ -704,11 +704,11 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                         type="button"
                         disabled={isUploading || isDeletingIndex !== null}
                         onClick={() => handleDeleteAttachment(index)}
-                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-[var(--text-dim)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-none flex items-center justify-center text-[10px] text-[var(--text-dim)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                         style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-strong)" }}
                       >
                         {isDeletingIndex === index ? (
-                          <span className="w-3 h-3 rounded-full border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
+                          <span className="w-3 h-3 rounded-none border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
                         ) : (
                           "×"
                         )}
@@ -721,7 +721,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 ) : (
                   <div
                     key={index}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2"
+                    className="flex items-center gap-2 rounded-none px-3 py-2"
                     style={{ border: "1px solid var(--border-strong)" }}
                   >
                     <a
@@ -738,10 +738,10 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                       type="button"
                       disabled={isUploading || isDeletingIndex !== null}
                       onClick={() => handleDeleteAttachment(index)}
-                      className="flex items-center justify-center w-5 h-5 rounded text-[10px] text-[var(--text-faint)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                      className="flex items-center justify-center w-5 h-5 rounded-none text-[10px] text-[var(--text-faint)] hover:text-[var(--status-cancel)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       {isDeletingIndex === index ? (
-                        <span className="w-3 h-3 rounded-full border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
+                        <span className="w-3 h-3 rounded-none border border-[var(--border-strong)] border-t-[var(--accent)] animate-spin block" />
                       ) : (
                         "×"
                       )}
@@ -768,7 +768,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
 
           {isLoadingComments ? (
             <div className="flex justify-center py-4">
-              <div className="w-5 h-5 rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
+              <div className="w-5 h-5 rounded-none border-2 border-[var(--border-strong)] border-t-[var(--accent)] animate-spin" />
             </div>
           ) : (
             <div className="space-y-4 mb-4">
@@ -778,7 +778,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
               {comments.map((c) => (
                 <div
                   key={c.id}
-                  className="rounded-lg px-4 py-3"
+                  className="rounded-none px-4 py-3"
                   style={{ backgroundColor: "var(--bg)", border: "1px solid var(--border)" }}
                 >
                   <div className="flex items-center gap-2 mb-4">
@@ -812,7 +812,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 type="button"
                 disabled={isPostingComment || !commentInput.trim()}
                 onClick={handlePostComment}
-                className="inline-flex items-center justify-center h-9 px-4 rounded-lg text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
+                className="inline-flex items-center justify-center h-9 px-4 rounded-none text-xs text-[var(--bg)] font-semibold transition-all disabled:opacity-40"
                 style={{ backgroundColor: "var(--accent)" }}
               >
                 {isPostingComment ? "投稿中…" : "投稿"}
@@ -829,7 +829,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
           href={task.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
           style={{ border: "1px solid var(--border-strong)" }}
         >
           Open in Notion →
@@ -871,14 +871,14 @@ function RelatedTaskRow({
       data-testid={testid}
       data-task-id={task.id}
       onClick={onClick}
-      className="flex items-center gap-2 w-full text-left rounded-lg border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
+      className="flex items-center gap-2 w-full text-left rounded-none border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
       style={{ minHeight: "var(--tap-min)" }}
     >
       {task.icon && (
         task.icon.type === "emoji" ? (
           <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{task.icon.emoji}</span>
         ) : (
-          <img src={task.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded object-cover" />
+          <img src={task.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded-none object-cover" />
         )
       )}
       <span className="flex-1 min-w-0 text-sm text-[var(--text)] break-words">{task.title}</span>
