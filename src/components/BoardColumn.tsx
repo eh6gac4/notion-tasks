@@ -104,6 +104,7 @@ export function BoardColumn({
     function onVisible() {
       if (document.visibilityState !== "visible") return
       if (lazyTasks === null) return // まだ表示されていない場合は fetch しない
+      if (!lazyStatus) return
       const fetcher = getLazyFetcher(lazyStatus)
       if (!fetcher) return
       setIsLoadingLazy(true)
