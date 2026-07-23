@@ -45,7 +45,7 @@ export function Settings() {
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
 
           <div
-            className="relative rounded-t-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-2xl lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+            className="relative rounded-none-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
             style={{
               backgroundColor: "var(--surface)",
               borderTop: "1px solid var(--border-strong)",
@@ -53,7 +53,7 @@ export function Settings() {
             }}
           >
             <button onClick={() => setOpen(false)} className="w-full flex justify-center pb-2 -mt-1 lg:hidden" aria-label="閉じる">
-              <div className="w-10 h-1 rounded-full" style={{ backgroundColor: "var(--border-strong)" }} />
+              <div className="w-10 h-1 rounded-none" style={{ backgroundColor: "var(--border-strong)" }} />
             </button>
 
             <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-5 accent-glow-text-sm">
@@ -72,7 +72,7 @@ export function Settings() {
                 aria-checked={settings.debugVisible}
                 aria-label="デバッグ表示の切り替え"
                 onClick={() => update({ debugVisible: !settings.debugVisible })}
-                className="flex-shrink-0 relative w-12 h-6 rounded-full transition-colors"
+                className="flex-shrink-0 relative w-12 h-6 rounded-none transition-colors"
                 style={{
                   backgroundColor: settings.debugVisible ? "var(--accent)" : "var(--surface-2)",
                   boxShadow: settings.debugVisible ? "0 0 8px rgba(220,20,60,0.4)" : "inset 0 0 0 1px var(--border-strong)",
@@ -80,7 +80,7 @@ export function Settings() {
               >
                 <span
                   aria-hidden="true"
-                  className="absolute top-1 left-1 w-4 h-4 rounded-full transition-transform"
+                  className="absolute top-1 left-1 w-4 h-4 rounded-none transition-transform"
                   style={{
                     backgroundColor: settings.debugVisible ? "#fff" : "var(--text-dim)",
                     transform: settings.debugVisible ? "translateX(24px)" : "translateX(0)",

@@ -569,7 +569,7 @@ describe("TaskDetail スワイプ動作", () => {
     const onClose = vi.fn()
     const { container } = render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={onClose} />)
 
-    const panel = container.querySelector(".rounded-t-2xl") as HTMLElement
+    const panel = container.querySelector(".rounded-none-2xl") as HTMLElement
     act(() => {
       fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
       fireEvent.touchMove(panel, { touches: [{ clientY: 90 }] })
@@ -586,7 +586,7 @@ describe("TaskDetail スワイプ動作", () => {
     const onClose = vi.fn()
     const { container } = render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={onClose} />)
 
-    const panel = container.querySelector(".rounded-t-2xl") as HTMLElement
+    const panel = container.querySelector(".rounded-none-2xl") as HTMLElement
     fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
     fireEvent.touchMove(panel, { touches: [{ clientY: 50 }] })
     fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 50 }] })

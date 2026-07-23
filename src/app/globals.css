@@ -47,10 +47,10 @@
   --field-h:       44px;
   --field-px:      16px;
   --field-py:      12px;
-  --field-radius:  10px;
+  --field-radius:  0px;
 
   /* カード hover 時のエレベーション */
-  --elev-card-hover: 0 0 0 1px var(--border-accent), 0 0 16px rgba(220, 20, 60, 0.18);
+  --elev-card-hover: 4px 4px 0px var(--accent-dark);
 }
 
 body {
@@ -82,16 +82,16 @@ body::before {
     letter-spacing: 0.04em;
   }
   .accent-glow {
-    box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25);
+    box-shadow: 4px 4px 0px var(--accent-dark);
   }
   .accent-glow-sm {
-    box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2);
+    box-shadow: 2px 2px 0px var(--accent-dark);
   }
   .accent-glow-text {
-    text-shadow: 0 0 8px rgba(220, 20, 60, 0.7);
+    text-shadow: 2px 2px 0px var(--accent-dark);
   }
   .accent-glow-text-sm {
-    text-shadow: 0 0 6px rgba(220, 20, 60, 0.55);
+    text-shadow: 1px 1px 0px var(--accent-dark);
   }
   .surface {
     background-color: var(--surface);
@@ -101,10 +101,10 @@ body::before {
   }
 
   /* レガシー名のエイリアス */
-  .cyber-glow      { box-shadow: 0 0 12px rgba(220, 20, 60, 0.7), 0 0 24px rgba(220, 20, 60, 0.25); }
-  .cyber-glow-sm   { box-shadow: 0 0 6px rgba(220, 20, 60, 0.55), 0 0 12px rgba(220, 20, 60, 0.2); }
-  .cyber-glow-text { text-shadow: 0 0 8px rgba(220, 20, 60, 0.7); }
-  .cyber-glow-text-sm { text-shadow: 0 0 6px rgba(220, 20, 60, 0.55); }
+  .cyber-glow      { box-shadow: 4px 4px 0px var(--accent-dark); }
+  .cyber-glow-sm   { box-shadow: 2px 2px 0px var(--accent-dark); }
+  .cyber-glow-text { text-shadow: 2px 2px 0px var(--accent-dark); }
+  .cyber-glow-text-sm { text-shadow: 1px 1px 0px var(--accent-dark); }
   .cyber-border    { border: 1px solid var(--border); }
   .cyber-border-bright { border: 1px solid var(--border-accent); }
   .cyber-surface   { background-color: var(--surface); }
@@ -125,7 +125,7 @@ body::before {
   .field:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
+    box-shadow: 2px 2px 0px var(--accent-dark);
   }
   .field::placeholder { color: var(--text-faint); }
 
@@ -144,7 +144,7 @@ body::before {
   .field-sm:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent);
+    box-shadow: 2px 2px 0px var(--accent-dark);
   }
   .field-sm::placeholder { color: var(--text-faint); }
 
@@ -152,37 +152,39 @@ body::before {
   .icon-btn {
     width: var(--tap-min);
     height: var(--tap-min);
-    border-radius: 8px;
+    border-radius: 0px;
     border: 1px solid var(--border-strong);
     background-color: var(--surface);
     color: var(--accent);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s, transform 0.1s;
+    box-shadow: 2px 2px 0px var(--border-strong);
+    transition: border-color 0.2s, transform 0.05s, box-shadow 0.05s;
   }
   .icon-btn:hover    { border-color: var(--accent); }
-  .icon-btn:active   { transform: scale(0.95); }
-  .icon-btn:disabled { opacity: 0.4; }
+  .icon-btn:active   { transform: translate(2px, 2px); box-shadow: 0px 0px 0px transparent; }
+  .icon-btn:disabled { opacity: 0.4; box-shadow: none; }
 
   /* TaskDetail など密度優先の場面で使う 36×36 のコンパクトアイコンボタン。
      WCAG 44px は満たさないが .field-sm (36px) と高さを揃えるために許容。 */
   .icon-btn-sm {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: 0px;
     border: 1px solid var(--border-strong);
     background-color: var(--surface);
     color: var(--accent);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.2s, transform 0.1s;
+    box-shadow: 2px 2px 0px var(--border-strong);
+    transition: border-color 0.2s, transform 0.05s, box-shadow 0.05s;
     flex-shrink: 0;
   }
   .icon-btn-sm:hover    { border-color: var(--accent); }
-  .icon-btn-sm:active   { transform: scale(0.95); }
-  .icon-btn-sm:disabled { opacity: 0.4; }
+  .icon-btn-sm:active   { transform: translate(2px, 2px); box-shadow: 0px 0px 0px transparent; }
+  .icon-btn-sm:disabled { opacity: 0.4; box-shadow: none; }
 
   /* TaskItem 用 hover グロー */
   .card-glow-hover { transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; }
@@ -192,11 +194,9 @@ body::before {
   .status-dot {
     width: 12px;
     height: 12px;
-    border-radius: 9999px;
+    border-radius: 0px;
     background-color: var(--status-color);
-    box-shadow:
-      0 0 6px var(--status-color),
-      0 0 12px color-mix(in srgb, var(--status-color) 35%, transparent);
+    box-shadow: 2px 2px 0px color-mix(in srgb, var(--status-color) 35%, transparent);
     transition: box-shadow 0.2s, transform 0.15s;
   }
   .status-dot--faint {

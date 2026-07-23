@@ -42,7 +42,7 @@ export const TaskItem = memo(function TaskItem({
       data-testid="task-item"
       data-task-id={task.id}
       data-status={status ?? "未着手"}
-      className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
+      className="rounded-none border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
       onClick={() => onSelect(task)}
     >
       <div className={`flex items-center gap-2 px-4 ${hasMeta || updateError ? "pt-2 pb-2" : "pt-3 pb-3"}`}>
@@ -58,7 +58,7 @@ export const TaskItem = memo(function TaskItem({
             <img
               src={task.icon.url}
               alt=""
-              className="flex-shrink-0 w-4 h-4 rounded object-cover"
+              className="flex-shrink-0 w-4 h-4 rounded-none object-cover"
             />
           )
         )}
@@ -125,7 +125,7 @@ export const TaskItem = memo(function TaskItem({
             </span>
           )}
           {task.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="font-pixel text-[11px] text-[var(--text-dim)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-1 rounded">
+            <span key={tag} className="font-pixel text-[11px] text-[var(--text-dim)] border border-[var(--border-strong)] bg-[var(--surface-2)] px-2 py-1 rounded-none">
               {tag}
             </span>
           ))}

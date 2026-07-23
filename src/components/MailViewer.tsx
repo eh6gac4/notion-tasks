@@ -83,7 +83,7 @@ export function MailViewer({ content, onToggleCheckbox }: MailViewerProps) {
           <button
             type="button"
             onClick={() => setViewMode("mail")}
-            className="text-xs px-3 py-1 rounded bg-[var(--bg-elevated)] border border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+            className="text-xs px-3 py-1 rounded-none bg-[var(--bg-elevated)] border border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
           >
             メール表示に戻す
           </button>
@@ -98,14 +98,14 @@ export function MailViewer({ content, onToggleCheckbox }: MailViewerProps) {
   const initial = fromName ? fromName.charAt(0).toUpperCase() : "?"
 
   return (
-    <div className="flex flex-col bg-[var(--bg-elevated)] border border-[var(--border)] rounded-lg overflow-hidden shadow-sm">
+    <div className="flex flex-col bg-[var(--bg-elevated)] border border-[var(--border)] rounded-none overflow-hidden shadow-none">
       {/* ツールバー */}
       <div className="flex justify-between items-center px-4 py-2 border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="font-pixel text-[10px] text-[var(--text-faint)] uppercase tracking-wider">Mail Viewer</div>
         <button
           type="button"
           onClick={() => setViewMode("raw")}
-          className="text-[10px] px-2 py-1 rounded border border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
+          className="text-[10px] px-2 py-1 rounded-none border border-[var(--border-strong)] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors"
         >
           ソースを見る
         </button>
@@ -118,7 +118,7 @@ export function MailViewer({ content, onToggleCheckbox }: MailViewerProps) {
         </h3>
         
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-sm">
+          <div className="flex-shrink-0 w-10 h-10 rounded-none bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-none">
             {initial}
           </div>
           <div className="flex-1 min-w-0">

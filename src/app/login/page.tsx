@@ -21,7 +21,7 @@ export default async function LoginPage({
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
       <div
-        className="w-full max-w-sm rounded-2xl p-8"
+        className="w-full max-w-sm rounded-none p-8"
         style={{
           backgroundColor: "var(--surface)",
           border: "1px solid var(--border-strong)",
@@ -47,7 +47,7 @@ export default async function LoginPage({
               type="text"
               required
               autoComplete="username"
-              className="w-full rounded-lg px-4 py-3 text-sm bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
+              className="w-full rounded-none px-4 py-3 text-sm bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
               style={{ border: "1px solid var(--border-strong)", transition: "border-color 0.2s" }}
             />
           </div>
@@ -61,7 +61,7 @@ export default async function LoginPage({
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded-lg px-4 py-3 text-sm bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
+              className="w-full rounded-none px-4 py-3 text-sm bg-[var(--bg)] text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--accent)]"
               style={{ border: "1px solid var(--border-strong)", transition: "border-color 0.2s" }}
             />
           </div>
@@ -83,7 +83,7 @@ export default async function LoginPage({
           <button
             type="submit"
             disabled={error === "locked"}
-            className="font-pixel w-full rounded-lg py-3 text-sm tracking-widest uppercase font-semibold disabled:opacity-40 transition-all mt-2"
+            className="font-pixel w-full rounded-none py-3 text-sm tracking-widest uppercase font-semibold disabled:opacity-40 transition-all mt-2"
             style={{
               backgroundColor: "var(--accent)",
               color: "var(--bg)",

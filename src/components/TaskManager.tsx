@@ -167,7 +167,7 @@ export function TaskManager({
           {advancedActive && (
             <span
               data-testid="filter-active-dot"
-              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              className="absolute top-1 right-1 w-2 h-2 rounded-none"
               style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
             />
           )}
@@ -196,7 +196,7 @@ export function TaskManager({
           {sortActive && (
             <span
               data-testid="sort-active-dot"
-              className="absolute top-1 right-1 w-2 h-2 rounded-full"
+              className="absolute top-1 right-1 w-2 h-2 rounded-none"
               style={{ backgroundColor: "var(--accent)", boxShadow: "0 0 6px rgba(220,20,60,0.7)" }}
             />
           )}

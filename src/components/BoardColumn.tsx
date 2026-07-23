@@ -237,13 +237,13 @@ export function BoardColumn({
       >
         <span
           aria-hidden="true"
-          className="w-2 h-2 rounded-full flex-shrink-0"
+          className="w-2 h-2 rounded-none flex-shrink-0"
           style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
         />
         <span className="font-pixel text-xs tracking-widest uppercase flex-1" style={{ color: accent }}>
           {title}
         </span>
-        <span className="font-pixel text-[11px] text-[var(--text-dim)] tabular-nums bg-[var(--surface-2)] rounded px-2 py-1">
+        <span className="font-pixel text-[11px] text-[var(--text-dim)] tabular-nums bg-[var(--surface-2)] rounded-none px-2 py-1">
           {isLazyPending ? "" : filtered.length}
         </span>
       </header>
