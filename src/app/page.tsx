@@ -5,6 +5,7 @@ import { HydrationCheck } from "@/components/HydrationCheck"
 import { Settings } from "@/components/Settings"
 import { parseAdvancedFilter } from "@/constants/filters"
 import { parseSortConfig } from "@/lib/task-sort"
+import { fetchInitialDataAction } from "./actions"
 
 export default async function Page({
   searchParams,
@@ -30,6 +31,7 @@ export default async function Page({
   const initialTaskId = typeof taskParam === "string" ? taskParam : null
 
   const session = await auth()
+  const { tasks, tagOptions, locationOptions } = await fetchInitialDataAction()
 
   return (
     <div className="flex flex-col h-full">
@@ -54,7 +56,15 @@ export default async function Page({
       </header>
 
       <HydrationCheck />
-      <TaskManager initialAdvancedFilter={advancedFilter} initialSort={initialSort} initialTaskId={initialTaskId} />
+      <TaskManager
+        tasks={tasks}
+        tagOptions={tagOptions}
+        locationOptions={locationOptions}
+        initialAdvancedFilter={advancedFilter}
+        initialSort={initialSort}
+        initialTaskId={initialTaskId}
+      />
     </div>
   )
 }
+

@@ -21,7 +21,7 @@ const pixelMplus = localFont({
     },
   ],
   display: "swap",
-  preload: false,
+  preload: true,
   variable: "--font-pixel-mplus",
 })
 

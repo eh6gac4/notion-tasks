@@ -47,3 +47,7 @@ e2e/.auth/
 
 # deploy script (contains secrets)
 deploy.sh
+
+# Serwist
+public/sw.js
+public/sw.js.map
