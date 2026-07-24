@@ -49,88 +49,92 @@ export function ParentTaskPickerModal({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} data-testid="parent-picker-backdrop" />
 
       <div
-        className="relative rounded-none-2xl px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+        className="relative flex flex-col rounded-none-2xl pt-4 pb-0 safe-bottom h-[85svh] lg:h-auto lg:max-h-[80vh] lg:rounded-none lg:w-full lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
           boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
         }}
       >
-        <div className="w-10 h-1 rounded-none mx-auto mb-4 lg:hidden" style={{ backgroundColor: "var(--border-strong)" }} />
+        <div className="px-4 flex-shrink-0">
+          <div className="w-10 h-1 rounded-none mx-auto mb-4 lg:hidden" style={{ backgroundColor: "var(--border-strong)" }} />
 
-        <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
-          ✦ Set Parent
-        </h2>
+          <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
+            ✦ Set Parent
+          </h2>
 
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="タイトルで検索"
-          autoFocus
-          className="field w-full mb-4"
-          data-testid="parent-picker-search"
-        />
-
-        <div className="flex flex-col gap-2">
-          {candidates.length === 0 && (
-            <p className="text-sm text-[var(--text-faint)] py-4 text-center">
-              {query ? "該当するタスクがありません" : "候補となるタスクがありません"}
-            </p>
-          )}
-          {candidates.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              data-testid="parent-picker-candidate"
-              data-task-id={t.id}
-              onClick={() => {
-                onSelect(t.id)
-                onClose()
-              }}
-              className="flex items-center gap-2 w-full text-left rounded-none border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
-              style={{ minHeight: "var(--tap-min)" }}
-            >
-              {t.icon && (
-                t.icon.type === "emoji" ? (
-                  <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{t.icon.emoji}</span>
-                ) : (
-                  <img src={t.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded-none object-cover" />
-                )
-              )}
-              <span className="flex-1 min-w-0 text-sm text-[var(--text)] break-words">{t.title}</span>
-              <span
-                aria-hidden="true"
-                className="status-dot flex-shrink-0"
-                style={{ "--status-color": STATUS_ACCENT[t.status ?? "未着手"] } as CSSProperties}
-              />
-            </button>
-          ))}
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="タイトルで検索"
+            autoFocus
+            className="field w-full mb-4"
+            data-testid="parent-picker-search"
+          />
         </div>
 
-        {hasParent && (
+        <div className="px-4 flex-1 overflow-y-auto overscroll-contain pb-8 lg:pb-6">
+          <div className="flex flex-col gap-2">
+            {candidates.length === 0 && (
+              <p className="text-sm text-[var(--text-faint)] py-4 text-center">
+                {query ? "該当するタスクがありません" : "候補となるタスクがありません"}
+              </p>
+            )}
+            {candidates.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                data-testid="parent-picker-candidate"
+                data-task-id={t.id}
+                onClick={() => {
+                  onSelect(t.id)
+                  onClose()
+                }}
+                className="flex items-center gap-2 w-full text-left rounded-none border border-[var(--border-strong)] bg-[var(--surface-2)] px-3 py-2 hover:border-[var(--border-accent)] transition-colors"
+                style={{ minHeight: "var(--tap-min)" }}
+              >
+                {t.icon && (
+                  t.icon.type === "emoji" ? (
+                    <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{t.icon.emoji}</span>
+                  ) : (
+                    <img src={t.icon.url} alt="" className="flex-shrink-0 w-4 h-4 rounded-none object-cover" />
+                  )
+                )}
+                <span className="flex-1 min-w-0 text-sm text-[var(--text)] break-words">{t.title}</span>
+                <span
+                  aria-hidden="true"
+                  className="status-dot flex-shrink-0"
+                  style={{ "--status-color": STATUS_ACCENT[t.status ?? "未着手"] } as CSSProperties}
+                />
+              </button>
+            ))}
+          </div>
+
+          {hasParent && (
+            <button
+              type="button"
+              data-testid="parent-picker-clear"
+              onClick={() => {
+                onSelect(null)
+                onClose()
+              }}
+              className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--status-cancel)] hover:border-[var(--status-cancel)] transition-colors tracking-widest uppercase"
+              style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+            >
+              親を解除
+            </button>
+          )}
+
           <button
             type="button"
-            data-testid="parent-picker-clear"
-            onClick={() => {
-              onSelect(null)
-              onClose()
-            }}
-            className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--status-cancel)] hover:border-[var(--status-cancel)] transition-colors tracking-widest uppercase"
+            onClick={onClose}
+            className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
             style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
           >
-            親を解除
+            キャンセル
           </button>
-        )}
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
-          style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
-        >
-          キャンセル
-        </button>
+        </div>
       </div>
     </div>
   )
