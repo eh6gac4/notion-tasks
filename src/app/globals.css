@@ -236,19 +236,20 @@ body::before {
   to   { transform: rotate(360deg); }
 }
 
-@keyframes shimmer-bar {
-  0%   { background-position: -100% 0; }
-  100% { background-position: 100% 0; }
+@keyframes dot-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
 }
 
-@keyframes equalizer-bar {
+@keyframes dot-flow {
   0%, 100% {
-    transform: scaleY(0.2);
-    box-shadow: 0 0 4px rgba(220, 20, 60, 0.35);
+    opacity: 0.3;
+    transform: scale(0.8);
   }
   50% {
-    transform: scaleY(1);
-    box-shadow: 0 0 6px var(--accent), 0 0 12px rgba(220, 20, 60, 0.45);
+    opacity: 1;
+    transform: scale(1.2);
+    box-shadow: 0 0 6px var(--accent);
   }
 }
 
@@ -260,19 +261,45 @@ body::before {
     animation: spin-cyber 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     filter: drop-shadow(0 0 3px var(--accent));
   }
-  .loading-bar-shimmer {
-    background: linear-gradient(90deg, var(--accent) 0%, #ff6688 40%, #ffffff 50%, #ff6688 60%, var(--accent) 100%);
-    background-size: 200% 100%;
-    animation: shimmer-bar 1.2s linear infinite;
+  /* ドットスライドローダー：コンテナ */
+  .loading-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
   }
-  /* イコライザー型ローダー (CyberLoader 用): 縦バーが scaleY で脈動 */
-  .equalizer-bar {
-    display: inline-block;
+  /* ドットスライドローダー：個々のドット */
+  .loading-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     background-color: var(--accent);
-    transform-origin: bottom;
-    transform: scaleY(0.2);
-    animation: equalizer-bar 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    border-radius: 1px;
+    opacity: 0.3;
+    animation: dot-flow 1.4s ease-in-out infinite;
+  }
+  .loading-dot:nth-child(1) { animation-delay: 0ms; }
+  .loading-dot:nth-child(2) { animation-delay: 160ms; }
+  .loading-dot:nth-child(3) { animation-delay: 320ms; }
+  .loading-dot:nth-child(4) { animation-delay: 480ms; }
+  .loading-dot:nth-child(5) { animation-delay: 640ms; }
+
+  /* 上部バー用：光が左→右にスライド */
+  .loading-bar-dots {
+    position: relative;
+    overflow: hidden;
+    height: 4px;
+  }
+  .loading-bar-dots::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20%;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: dot-slide 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
 
