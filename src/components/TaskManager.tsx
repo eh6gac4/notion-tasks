@@ -125,13 +125,9 @@ export function TaskManager({
   return (
     <TasksRefreshProvider value={refresh}>
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* ローディングバー (h-0.5 = 2px は装飾的細線として 4px 例外を適用 — globals.css 参照) */}
+      {/* ローディングバー */}
       <div
-        className={`h-0.5 loading-bar-shimmer transition-all duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
-        style={{
-          width: completingBar ? "100%" : isPending ? "80%" : "0%",
-          boxShadow: "0 0 6px var(--accent)",
-        }}
+        className={`loading-bar-dots transition-opacity duration-300 ${isPending || completingBar ? "opacity-100" : "opacity-0"}`}
       />
 
       {/* Toolbar */}
