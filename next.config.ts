@@ -1,6 +1,7 @@
 import type { NextConfig } from "next"
 import { execSync } from "node:child_process"
 import { readFileSync } from "node:fs"
+import withSerwistInit from "@serwist/next"
 
 const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string }
 
@@ -31,17 +32,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "21mb",
     },
   },
-  async headers() {
-    return [
-      {
-        source: "/sw.js",
-        headers: [
-          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
-          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
-        ],
-      },
-    ]
-  },
 }
 
-export default nextConfig
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  register: false,
+  reloadOnOnline: false,
+})
+
+export default withSerwist(nextConfig)
