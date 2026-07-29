@@ -42,6 +42,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     tags: [],
     assignees: [],
     source: null,
+    location: null,
     sourceUrl: null,
     parentTaskIds: [],
     childTaskIds: [],
@@ -715,7 +716,7 @@ describe("TaskDetail 親タスク変更", () => {
     )
 
     fireEvent.click(screen.getByTestId("parent-set-button"))
-    expect(screen.getByTestId("parent-picker-modal")).toBeInTheDocument()
+    expect(screen.getByTestId("picker-modal")).toBeInTheDocument()
 
     const candidateButton = screen.getByText("候補タスク").closest("button")!
     await act(async () => {
@@ -723,7 +724,7 @@ describe("TaskDetail 親タスク変更", () => {
     })
 
     await waitFor(() => {
-      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("self", { parentTaskId: "cand" })
+      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("self", { parentTaskIds: ["cand"] })
     })
   })
 
@@ -737,11 +738,11 @@ describe("TaskDetail 親タスク変更", () => {
 
     fireEvent.click(screen.getByTestId("parent-set-button"))
     await act(async () => {
-      fireEvent.click(screen.getByTestId("parent-picker-clear"))
+      fireEvent.click(screen.getByTestId("picker-clear"))
     })
 
     await waitFor(() => {
-      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("c", { parentTaskId: null })
+      expect(vi.mocked(updateTaskAction)).toHaveBeenCalledWith("c", { parentTaskIds: [] })
     })
   })
 
@@ -754,7 +755,7 @@ describe("TaskDetail 親タスク変更", () => {
     )
 
     fireEvent.click(screen.getByTestId("parent-set-button"))
-    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    const candidates = screen.getAllByTestId("picker-candidate")
     expect(candidates).toHaveLength(1)
     expect(candidates[0]).toHaveAttribute("data-task-id", "o")
   })
@@ -775,7 +776,7 @@ describe("TaskDetail 親タスク変更", () => {
     )
 
     fireEvent.click(screen.getByTestId("parent-set-button"))
-    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    const candidates = screen.getAllByTestId("picker-candidate")
     expect(candidates).toHaveLength(1)
     expect(candidates[0]).toHaveAttribute("data-task-id", "o")
   })
@@ -794,9 +795,9 @@ describe("TaskDetail 親タスク変更", () => {
     )
 
     fireEvent.click(screen.getByTestId("parent-set-button"))
-    fireEvent.change(screen.getByTestId("parent-picker-search"), { target: { value: "買い" } })
+    fireEvent.change(screen.getByTestId("picker-search"), { target: { value: "買い" } })
 
-    const candidates = screen.getAllByTestId("parent-picker-candidate")
+    const candidates = screen.getAllByTestId("picker-candidate")
     expect(candidates).toHaveLength(2)
     expect(candidates.map((c) => c.getAttribute("data-task-id"))).toEqual(["a", "c"])
   })

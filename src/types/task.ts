@@ -63,7 +63,9 @@ export type UpdateTaskInput = {
   body?: string
   source?: string
   sourceUrl?: string
-  parentTaskId?: string | null
+  parentTaskIds?: string[]
+  prevTaskIds?: string[]
+  nextTaskIds?: string[]
 }
 
 export type TaskAttachment = {

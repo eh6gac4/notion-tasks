@@ -640,7 +640,7 @@ describe("updateTaskBlocks", () => {
 
     await updateTaskBlocks("page-1", "新しい本文")
 
-    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: any) => c[0].block_id)
     // 同 type (paragraph→paragraph) なので p1 は update に置換、p2 は不要なので delete
     expect(deletedIds).toEqual(["p2"])
     expect(deletedIds).not.toContain("img1")
@@ -735,7 +735,7 @@ describe("updateTaskBlocks", () => {
     await updateTaskBlocks("page-1", "# ただの段落")
 
     expect(mockBlocks.update).not.toHaveBeenCalled()
-    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: any) => c[0].block_id)
     expect(deletedIds).toEqual(["p1"])
     expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
     const appendCall = mockBlocks.children.append.mock.calls[0][0]
@@ -817,8 +817,8 @@ describe("updateTaskBlocks", () => {
     // ことだけを検証する。
     const appendCalls = mockBlocks.children.append.mock.calls
     const allAppendedTexts = appendCalls.flatMap(
-      (c: [{ children: Array<{ paragraph?: { rich_text: Array<{ text: { content: string } }> } }> }]) =>
-        c[0].children.map((b) => b.paragraph?.rich_text[0].text.content)
+      (c: any) =>
+        c[0].children.map((b: any) => b.paragraph?.rich_text[0].text.content)
     ).filter((t: string | undefined): t is string => typeof t === "string")
     const xIdx = allAppendedTexts.indexOf("X")
     const yIdx = allAppendedTexts.indexOf("Y")

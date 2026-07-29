@@ -5,7 +5,7 @@ import type { Task, TaskAttachment, TaskComment, TaskStatus, TaskPriority } from
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction, uploadTaskAttachmentAction, removeTaskAttachmentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles"
 import { TaskFormSheet } from "./TaskFormSheet"
-import { ParentTaskPickerModal } from "./ParentTaskPickerModal"
+import { TaskPickerModal } from "./TaskPickerModal"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { MailViewer } from "./MailViewer"
 import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-date"
@@ -30,6 +30,8 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const [extraTasks, setExtraTasks] = useState<Record<string, Task>>({})
   const [subtaskFormOpen, setSubtaskFormOpen] = useState(false)
   const [parentPickerOpen, setParentPickerOpen] = useState(false)
+  const [prevPickerOpen, setPrevPickerOpen] = useState(false)
+  const [nextPickerOpen, setNextPickerOpen] = useState(false)
 
   const taskById = useMemo(() => {
     const m = new Map<string, Task>()
@@ -45,7 +47,9 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
     return [...s]
   }, [task.id, task.childTaskIds, allTasks])
 
-  const parentIds = task.parentTaskIds
+  const parentIds = task.parentTaskIds || []
+  const prevIds = task.prevTaskIds || []
+  const nextIds = task.nextTaskIds || []
 
   const childTasks = childIds
     .map((id) => taskById.get(id))
@@ -53,9 +57,15 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const parentTasks = parentIds
     .map((id) => taskById.get(id))
     .filter((t): t is Task => t !== undefined)
+  const prevTasks = prevIds
+    .map((id) => taskById.get(id))
+    .filter((t): t is Task => t !== undefined)
+  const nextTasks = nextIds
+    .map((id) => taskById.get(id))
+    .filter((t): t is Task => t !== undefined)
 
   useEffect(() => {
-    const need = [...childIds, ...parentIds].filter((id) => !taskById.has(id))
+    const need = [...childIds, ...parentIds, ...prevIds, ...nextIds].filter((id) => !taskById.has(id))
     if (need.length === 0) return
     let cancelled = false
     try {
@@ -572,6 +582,38 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 </button>
               </div>
             </Row>
+
+            <Row label="前タスク" block>
+              <div className="flex flex-col gap-2">
+                {prevTasks.map((t) => (
+                  <RelatedTaskRow key={t.id} task={t} testid="prev-task-item" onClick={() => onSelectTask(t)} />
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPrevPickerOpen(true)}
+                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                  style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+                >
+                  + 前タスクを設定
+                </button>
+              </div>
+            </Row>
+
+            <Row label="次タスク" block>
+              <div className="flex flex-col gap-2">
+                {nextTasks.map((t) => (
+                  <RelatedTaskRow key={t.id} task={t} testid="next-task-item" onClick={() => onSelectTask(t)} />
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setNextPickerOpen(true)}
+                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+                  style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+                >
+                  + 次タスクを設定
+                </button>
+              </div>
+            </Row>
           </div>
         </div>
 
@@ -845,12 +887,37 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         submitLabel="ADD SUBTASK"
       />
 
-      <ParentTaskPickerModal
+      <TaskPickerModal
         open={parentPickerOpen}
         onClose={() => setParentPickerOpen(false)}
-        currentTask={task}
+        title="親タスクを設定"
         allTasks={allTasks}
-        onSelect={(parentId) => save({ parentTaskId: parentId })}
+        selectedIds={parentIds}
+        excludedIds={useMemo(() => collectExcludedIds(task.id, allTasks), [task.id, allTasks])}
+        multiple={false}
+        onClear={() => save({ parentTaskIds: [] })}
+        clearLabel="親を解除"
+        onSave={(ids) => save({ parentTaskIds: ids })}
+      />
+
+      <TaskPickerModal
+        open={prevPickerOpen}
+        onClose={() => setPrevPickerOpen(false)}
+        title="前タスクを設定"
+        allTasks={allTasks}
+        selectedIds={prevIds}
+        excludedIds={new Set([task.id])}
+        onSave={(ids) => save({ prevTaskIds: ids })}
+      />
+
+      <TaskPickerModal
+        open={nextPickerOpen}
+        onClose={() => setNextPickerOpen(false)}
+        title="次タスクを設定"
+        allTasks={allTasks}
+        selectedIds={nextIds}
+        excludedIds={new Set([task.id])}
+        onSave={(ids) => save({ nextTaskIds: ids })}
       />
     </div>
   )
@@ -910,4 +977,26 @@ function Row({
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
+}
+
+// 自タスク + その子孫を候補から除外する（循環防止）。
+function collectExcludedIds(rootId: string, allTasks: Task[]): Set<string> {
+  const byId = new Map(allTasks.map((t) => [t.id, t]))
+  const excluded = new Set<string>([rootId])
+  const queue: string[] = [rootId]
+  while (queue.length > 0) {
+    const id = queue.shift()!
+    const node = byId.get(id)
+    const childIds = new Set<string>(node?.childTaskIds ?? [])
+    for (const t of allTasks) {
+      if (t.parentTaskIds.includes(id)) childIds.add(t.id)
+    }
+    for (const cid of childIds) {
+      if (!excluded.has(cid)) {
+        excluded.add(cid)
+        queue.push(cid)
+      }
+    }
+  }
+  return excluded
 }

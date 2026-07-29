@@ -404,7 +404,7 @@ export function updateMockTask(id: string, input: UpdateTaskInput): Task | null 
     lastEditedTime: ts,
   }
   // 双方向 relation の同期模倣: 旧親の childTaskIds から自分を抜き、新親に追加する。
-  if (input.parentTaskId !== undefined) {
+  if (input.parentTaskIds !== undefined) {
     const prevParents = store[idx].parentTaskIds
     for (const pid of prevParents) {
       const p = store.find((t) => t.id === pid)
@@ -412,10 +412,10 @@ export function updateMockTask(id: string, input: UpdateTaskInput): Task | null 
     }
     store[idx] = {
       ...store[idx],
-      parentTaskIds: input.parentTaskId ? [input.parentTaskId] : [],
+      parentTaskIds: input.parentTaskIds,
     }
-    if (input.parentTaskId) {
-      const parent = store.find((t) => t.id === input.parentTaskId)
+    for (const pid of input.parentTaskIds) {
+      const parent = store.find((t) => t.id === pid)
       if (parent && !parent.childTaskIds.includes(id)) {
         parent.childTaskIds = [...parent.childTaskIds, id]
       }

@@ -18,17 +18,17 @@ vi.mock("react-dom", async (importActual) => {
 
 describe("TaskCreate FAB", () => {
   it("FAB が aria-label 付きでレンダリングされる", () => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     expect(screen.getByRole("button", { name: "タスクを追加" })).toBeInTheDocument()
   })
 
   it("初期状態でフォームは非表示", () => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     expect(screen.queryByText("✦ New Task")).not.toBeInTheDocument()
   })
 
   it("FAB クリックでフォームが表示される", () => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
     expect(screen.getByText("✦ New Task")).toBeInTheDocument()
   })
@@ -36,7 +36,7 @@ describe("TaskCreate FAB", () => {
 
 describe("TaskCreate フォーム表示", () => {
   beforeEach(() => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
   })
 
@@ -67,7 +67,7 @@ describe("TaskCreate フォーム表示", () => {
 
 describe("TaskCreate タグトグル", () => {
   beforeEach(() => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
   })
 
@@ -104,7 +104,7 @@ describe("TaskCreate タグトグル", () => {
 
 describe("TaskCreate 新規タグを送信", () => {
   beforeEach(() => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
   })
 
@@ -132,7 +132,7 @@ describe("TaskCreate 新規タグを送信", () => {
 
 describe("TaskCreate バックドロップで閉じる", () => {
   it("バックドロップクリックでフォームが閉じる", () => {
-    const { container } = render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    const { container } = render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
     expect(screen.getByText("✦ New Task")).toBeInTheDocument()
 
@@ -144,7 +144,7 @@ describe("TaskCreate バックドロップで閉じる", () => {
 
 describe("TaskCreate フォーム送信", () => {
   beforeEach(() => {
-    render(<TaskCreate tagOptions={TAG_OPTIONS} />)
+    render(<TaskCreate tagOptions={TAG_OPTIONS} locationOptions={[]} />)
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }))
   })
 

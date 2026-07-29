@@ -285,8 +285,14 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
   if (input.location !== undefined) properties[NOTION_PROPS.LOCATION]   = input.location ? { select: { name: input.location } } : { select: null }
   if (input.source !== undefined)   properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
   if (input.sourceUrl !== undefined) properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
-  if (input.parentTaskId !== undefined) properties[NOTION_PROPS.PARENT] = {
-    relation: input.parentTaskId ? [{ id: input.parentTaskId }] : [],
+  if (input.parentTaskIds !== undefined) {
+    properties[NOTION_PROPS.PARENT] = { relation: input.parentTaskIds.map((id) => ({ id })) }
+  }
+  if (input.prevTaskIds !== undefined) {
+    properties[NOTION_PROPS.PREV] = { relation: input.prevTaskIds.map((id) => ({ id })) }
+  }
+  if (input.nextTaskIds !== undefined) {
+    properties[NOTION_PROPS.NEXT] = { relation: input.nextTaskIds.map((id) => ({ id })) }
   }
 
   const page = await notion.pages.update({
