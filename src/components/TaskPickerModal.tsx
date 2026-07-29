@@ -9,18 +9,24 @@ export function TaskPickerModal({
   open,
   onClose,
   title = "タスクを選択",
-  currentTask,
   allTasks,
   selectedIds,
+  excludedIds = new Set(),
   onSave,
+  multiple = true,
+  onClear,
+  clearLabel = "選択を解除",
 }: {
   open: boolean
   onClose: () => void
   title?: string
-  currentTask: Task
   allTasks: Task[]
   selectedIds: string[]
+  excludedIds?: Set<string>
   onSave: (ids: string[]) => void
+  multiple?: boolean
+  onClear?: () => void
+  clearLabel?: string
 }) {
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds))
@@ -35,19 +41,22 @@ export function TaskPickerModal({
     }
   }, [open, selectedIds])
 
-  const excluded = useMemo(() => new Set([currentTask.id]), [currentTask.id])
-
   const candidates = useMemo(() => {
     const needle = query.trim().toLowerCase()
     return allTasks
-      .filter((t) => !excluded.has(t.id))
+      .filter((t) => !excludedIds.has(t.id))
       .filter((t) => (needle ? t.title.toLowerCase().includes(needle) : true))
       .slice(0, 50)
-  }, [allTasks, excluded, query])
+  }, [allTasks, excludedIds, query])
 
   if (!open) return null
 
-  function toggle(id: string) {
+  function handleSelect(id: string) {
+    if (!multiple) {
+      onSave([id])
+      onClose()
+      return
+    }
     const next = new Set(selected)
     if (next.has(id)) {
       next.delete(id)
@@ -58,11 +67,8 @@ export function TaskPickerModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6"
-    >
+    <div data-testid="picker-modal" className="fixed inset-0 z-[70] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-
       <div
         className="relative flex flex-col rounded-none-2xl pt-4 pb-0 safe-bottom h-[85svh] lg:h-auto lg:max-h-[80vh] lg:rounded-none lg:w-full lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
         style={{
@@ -73,12 +79,11 @@ export function TaskPickerModal({
       >
         <div className="px-4 flex-shrink-0">
           <div className="w-10 h-1 rounded-none mx-auto mb-4 lg:hidden" style={{ backgroundColor: "var(--border-strong)" }} />
-
           <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-4 accent-glow-text-sm">
             ✦ {title}
           </h2>
-
           <input
+            data-testid="picker-search"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -100,18 +105,22 @@ export function TaskPickerModal({
               return (
                 <button
                   key={t.id}
+                  data-testid="picker-candidate"
+                  data-task-id={t.id}
                   type="button"
-                  onClick={() => toggle(t.id)}
+                  onClick={() => handleSelect(t.id)}
                   className={`flex items-center gap-2 w-full text-left rounded-none border px-3 py-2 transition-colors ${
-                    isSelected
+                    isSelected && multiple
                       ? "border-[var(--accent)] bg-[var(--accent)] bg-opacity-10"
                       : "border-[var(--border-strong)] bg-[var(--surface-2)] hover:border-[var(--border-accent)]"
                   }`}
                   style={{ minHeight: "var(--tap-min)" }}
                 >
-                  <div className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 ${isSelected ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border-strong)]"}`}>
-                    {isSelected && <span className="text-[var(--bg)] text-[10px]">✓</span>}
-                  </div>
+                  {multiple && (
+                    <div className={`w-4 h-4 rounded-sm border flex items-center justify-center flex-shrink-0 ${isSelected ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border-strong)]"}`}>
+                      {isSelected && <span className="text-[var(--bg)] text-[10px]">✓</span>}
+                    </div>
+                  )}
                   {t.icon && (
                     t.icon.type === "emoji" ? (
                       <span aria-hidden="true" className="flex-shrink-0 text-base leading-none">{t.icon.emoji}</span>
@@ -130,26 +139,43 @@ export function TaskPickerModal({
             })}
           </div>
 
-          <div className="mt-4 flex gap-2">
+          {onClear && selectedIds.length > 0 && (
+            <button
+              data-testid="picker-clear"
+              type="button"
+              onClick={() => {
+                onClear()
+                onClose()
+              }}
+              className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--status-cancel)] hover:border-[var(--status-cancel)] transition-colors tracking-widest uppercase"
+              style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
+            >
+              {clearLabel}
+            </button>
+          )}
+
+          <div className={`mt-4 flex ${multiple ? "gap-2" : ""}`}>
             <button
               type="button"
               onClick={onClose}
-              className="font-pixel flex-1 flex items-center justify-center gap-2 rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
+              className="font-pixel flex-1 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors tracking-widest uppercase"
               style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
             >
               キャンセル
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                onSave(Array.from(selected))
-                onClose()
-              }}
-              className="font-pixel flex-1 flex items-center justify-center gap-2 rounded-none py-3 text-xs text-[var(--bg)] bg-[var(--accent)] hover:opacity-90 transition-colors tracking-widest uppercase"
-              style={{ minHeight: "var(--tap-min)" }}
-            >
-              保存
-            </button>
+            {multiple && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSave(Array.from(selected))
+                  onClose()
+                }}
+                className="font-pixel flex-1 flex items-center justify-center gap-2 rounded-none py-3 text-xs text-[var(--bg)] bg-[var(--accent)] hover:opacity-90 transition-colors tracking-widest uppercase"
+                style={{ minHeight: "var(--tap-min)" }}
+              >
+                保存
+              </button>
+            )}
           </div>
         </div>
       </div>

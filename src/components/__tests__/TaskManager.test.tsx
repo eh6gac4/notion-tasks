@@ -40,6 +40,7 @@ function makeTask(overrides: Partial<Task>): Task {
     tags: [],
     assignees: [],
     source: null,
+    location: null,
     sourceUrl: null,
     parentTaskIds: [],
     childTaskIds: [],

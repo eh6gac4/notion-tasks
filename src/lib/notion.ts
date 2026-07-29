@@ -287,8 +287,6 @@ export async function updateTask(id: string, input: UpdateTaskInput): Promise<Ta
   if (input.sourceUrl !== undefined) properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
   if (input.parentTaskIds !== undefined) {
     properties[NOTION_PROPS.PARENT] = { relation: input.parentTaskIds.map((id) => ({ id })) }
-  } else if (input.parentTaskId !== undefined) {
-    properties[NOTION_PROPS.PARENT] = { relation: input.parentTaskId ? [{ id: input.parentTaskId }] : [] }
   }
   if (input.prevTaskIds !== undefined) {
     properties[NOTION_PROPS.PREV] = { relation: input.prevTaskIds.map((id) => ({ id })) }

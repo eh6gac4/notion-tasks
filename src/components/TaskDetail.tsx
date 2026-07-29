@@ -5,7 +5,6 @@ import type { Task, TaskAttachment, TaskComment, TaskStatus, TaskPriority } from
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction, uploadTaskAttachmentAction, removeTaskAttachmentAction } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_STYLES, STATUS_ACCENT } from "@/constants/styles"
 import { TaskFormSheet } from "./TaskFormSheet"
-import { ParentTaskPickerModal } from "./ParentTaskPickerModal"
 import { TaskPickerModal } from "./TaskPickerModal"
 import { MarkdownPreview } from "./MarkdownPreview"
 import { MailViewer } from "./MailViewer"
@@ -888,21 +887,26 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         submitLabel="ADD SUBTASK"
       />
 
-      <ParentTaskPickerModal
+      <TaskPickerModal
         open={parentPickerOpen}
         onClose={() => setParentPickerOpen(false)}
-        currentTask={task}
+        title="親タスクを設定"
         allTasks={allTasks}
-        onSelect={(parentId) => save({ parentTaskId: parentId })}
+        selectedIds={parentIds}
+        excludedIds={useMemo(() => collectExcludedIds(task.id, allTasks), [task.id, allTasks])}
+        multiple={false}
+        onClear={() => save({ parentTaskIds: [] })}
+        clearLabel="親を解除"
+        onSave={(ids) => save({ parentTaskIds: ids })}
       />
 
       <TaskPickerModal
         open={prevPickerOpen}
         onClose={() => setPrevPickerOpen(false)}
         title="前タスクを設定"
-        currentTask={task}
         allTasks={allTasks}
         selectedIds={prevIds}
+        excludedIds={new Set([task.id])}
         onSave={(ids) => save({ prevTaskIds: ids })}
       />
 
@@ -910,9 +914,9 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         open={nextPickerOpen}
         onClose={() => setNextPickerOpen(false)}
         title="次タスクを設定"
-        currentTask={task}
         allTasks={allTasks}
         selectedIds={nextIds}
+        excludedIds={new Set([task.id])}
         onSave={(ids) => save({ nextTaskIds: ids })}
       />
     </div>
@@ -973,4 +977,26 @@ function Row({
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
+}
+
+// 自タスク + その子孫を候補から除外する（循環防止）。
+function collectExcludedIds(rootId: string, allTasks: Task[]): Set<string> {
+  const byId = new Map(allTasks.map((t) => [t.id, t]))
+  const excluded = new Set<string>([rootId])
+  const queue: string[] = [rootId]
+  while (queue.length > 0) {
+    const id = queue.shift()!
+    const node = byId.get(id)
+    const childIds = new Set<string>(node?.childTaskIds ?? [])
+    for (const t of allTasks) {
+      if (t.parentTaskIds.includes(id)) childIds.add(t.id)
+    }
+    for (const cid of childIds) {
+      if (!excluded.has(cid)) {
+        excluded.add(cid)
+        queue.push(cid)
+      }
+    }
+  }
+  return excluded
 }

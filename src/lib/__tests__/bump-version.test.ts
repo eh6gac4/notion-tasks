@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-// @ts-expect-error mjs スクリプトを直接 import
+
 import { bumpVersion } from "../../../scripts/bump-version-core.mjs"
 
 describe("bumpVersion", () => {
