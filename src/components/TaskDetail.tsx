@@ -562,7 +562,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
             </div>
           </Row>
 
-          <div data-testid="subtask-section">
+          <div data-testid="subtask-section" className="space-y-4">
             <Row label="サブタスク" block>
               <div className="flex flex-col gap-2">
                 {childTasks.map((c) => (
