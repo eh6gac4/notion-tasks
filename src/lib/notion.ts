@@ -4,15 +4,13 @@ import type { InternalOrExternalFileWithNameResponse } from "@notionhq/client/bu
 import type { Task, TaskAttachment, TaskComment, TaskIcon, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
-import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions, getMockTaskAttachments, addMockTaskAttachment, removeMockTaskAttachment } from "@/lib/mock-tasks"
+import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions, addMockTaskAttachment, removeMockTaskAttachment } from "@/lib/mock-tasks"
 
 function isDevMode() {
   return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
 }
 
 const notion = new Client({ auth: config.notion.token })
-
-const DATABASE_ID = config.notion.databaseId
 // collection:// prefix stripped — dataSources.query needs UUID only
 const DATA_SOURCE_ID = "7a3367e3-d695-4c23-8e7e-18ead8c56a33"
 

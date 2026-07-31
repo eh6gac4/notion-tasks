@@ -6,7 +6,7 @@ import {
   parseSortConfig,
   sortByPriorityAndDue,
 } from "@/lib/task-sort"
-import type { SortConfig, Task } from "@/types/task"
+import type { Task } from "@/types/task"
 
 function makeTask(overrides: Partial<Task>): Task {
   return {

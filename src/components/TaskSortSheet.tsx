@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import type { SortConfig, SortDirection, SortKey } from "@/types/task"
 import { DEFAULT_SORT } from "@/lib/task-sort"
 import { PILL_BUTTON_CLASS } from "@/constants/styles"
@@ -48,10 +48,14 @@ export function TaskSortSheet({
   onClose: () => void
 }) {
   const [draft, setDraft] = useState<SortConfig>(sort)
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevSort, setPrevSort] = useState(sort)
 
-  useEffect(() => {
+  if (open !== prevOpen || sort !== prevSort) {
+    setPrevOpen(open)
+    setPrevSort(sort)
     if (open) setDraft(sort)
-  }, [open, sort])
+  }
 
   function setKey(key: SortKey) {
     setDraft((d) => ({ ...d, key }))

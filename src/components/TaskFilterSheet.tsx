@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import type { AdvancedFilter, DueDateMode, TaskPriority } from "@/types/task"
 import { DEFAULT_ADVANCED_FILTER } from "@/constants/filters"
 import { PRIORITY_STYLES, PILL_BUTTON_CLASS, pillButtonStyle } from "@/constants/styles"
@@ -28,11 +28,14 @@ export function TaskFilterSheet({
   onClose: () => void
 }) {
   const [draft, setDraft] = useState<AdvancedFilter>(filter)
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevFilter, setPrevFilter] = useState(filter)
 
-  // 開くたびに親の現状フィルタで draft を初期化
-  useEffect(() => {
+  if (open !== prevOpen || filter !== prevFilter) {
+    setPrevOpen(open)
+    setPrevFilter(filter)
     if (open) setDraft(filter)
-  }, [open, filter])
+  }
 
   function toggleTag(tag: string) {
     setDraft((d) => ({

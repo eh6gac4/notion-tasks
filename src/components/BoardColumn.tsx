@@ -193,14 +193,16 @@ export function BoardColumn({
 
   // incremental render (lazyStatus のみ): 表示件数を chunk ずつ増やす
   const [displayCount, setDisplayCount] = useState(INCREMENTAL_INITIAL)
+  const [prevNestedFiltered, setPrevNestedFiltered] = useState(nestedFiltered)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLLIElement>(null)
 
-  // filtered (検索/フィルタ/ソートで参照が変わる) のたびに先頭からやり直す
-  useEffect(() => {
-    if (!isLazyStatus) return
-    setDisplayCount(INCREMENTAL_INITIAL)
-  }, [isLazyStatus, nestedFiltered])
+  if (nestedFiltered !== prevNestedFiltered) {
+    setPrevNestedFiltered(nestedFiltered)
+    if (isLazyStatus) {
+      setDisplayCount(INCREMENTAL_INITIAL)
+    }
+  }
 
   const visible = isLazyStatus ? nestedFiltered.slice(0, displayCount) : nestedFiltered
   const hasMore = isLazyStatus && displayCount < nestedFiltered.length
