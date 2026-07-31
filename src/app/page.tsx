@@ -1,4 +1,5 @@
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { auth, signOut } from "@/auth"
 import { TaskManager } from "@/components/TaskManager"
 import { HydrationCheck } from "@/components/HydrationCheck"
@@ -41,6 +42,9 @@ export default async function Page({
             ✦ To-do
           </h1>
           <div className="flex items-center gap-3">
+            <Link href="/mail" className="inline-flex items-center h-9 px-2 text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+              mail
+            </Link>
             <span className="text-xs text-[var(--text-dim)]">{session?.user?.name}</span>
             <Settings />
             <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }) }} className="flex items-center">
