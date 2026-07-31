@@ -83,7 +83,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
       // action 未提供 (テスト等) — 無視
     }
     return () => { cancelled = true }
-  }, [childIds, parentIds, taskById])
+  }, [childIds, parentIds, prevIds, nextIds, taskById])
 
   const [editTitle, setEditTitle] = useState(task.title)
   const [editStatus, setEditStatus] = useState<TaskStatus>(task.status ?? "未着手")
@@ -157,13 +157,14 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
     }
   }, [visible])
 
-  // handleClose — レンダー中に ref へ同期代入することでレースコンディションを回避
   const handleCloseRef = useRef<() => void>(() => {})
   function handleClose() {
     setVisible(false)
     setTimeout(onClose, 280)
   }
-  handleCloseRef.current = handleClose
+  useEffect(() => {
+    handleCloseRef.current = handleClose
+  })
 
   // スワイプダウンで閉じる（rAF で描画を間引き、setState なしで直接 DOM 操作）
   useEffect(() => {

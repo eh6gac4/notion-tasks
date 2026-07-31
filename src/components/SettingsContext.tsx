@@ -30,6 +30,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (!raw) return
       const parsed = JSON.parse(raw) as Partial<AppSettings>
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings({ ...DEFAULT_SETTINGS, ...parsed })
     } catch {
       // パース失敗時はデフォルト維持

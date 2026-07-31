@@ -51,3 +51,4 @@ deploy.sh
 # Serwist
 public/sw.js
 public/sw.js.map
+.agents/

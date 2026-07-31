@@ -30,16 +30,25 @@ export function TaskPickerModal({
 }) {
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds))
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevSelectedIds, setPrevSelectedIds] = useState(selectedIds)
 
-  useEffect(() => {
+  if (open !== prevOpen || selectedIds !== prevSelectedIds) {
+    setPrevOpen(open)
+    setPrevSelectedIds(selectedIds)
     if (open) {
       setQuery("")
       setSelected(new Set(selectedIds))
+    }
+  }
+
+  useEffect(() => {
+    if (open) {
       const prev = document.body.style.overflow
       document.body.style.overflow = "hidden"
       return () => { document.body.style.overflow = prev }
     }
-  }, [open, selectedIds])
+  }, [open])
 
   const candidates = useMemo(() => {
     const needle = query.trim().toLowerCase()

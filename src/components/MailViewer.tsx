@@ -15,7 +15,6 @@ function parseEmailContent(content: string): ParsedMail {
   const lines = content.split("\n")
   const headers: Record<string, string> = {}
   let bodyStartIndex = 0
-  let isParsingHeaders = true
 
   // 最初の数行にある "Key: Value" または "**Key:** Value" をパース
   for (let i = 0; i < lines.length; i++) {
