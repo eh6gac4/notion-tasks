@@ -48,7 +48,7 @@ export function MailList({
   };
 
   return (
-    <div className="w-80 flex-shrink-0 bg-[var(--bg)] border-r border-[var(--border)] flex flex-col min-h-0">
+    <div className={`w-full md:w-80 flex-shrink-0 bg-[var(--bg)] border-r border-[var(--border)] flex-col min-h-0 ${selectedId ? 'hidden md:flex' : 'flex'}`}>
       {/* Search Header */}
       <div className="p-3 border-b border-[var(--border)] bg-[var(--surface)] space-y-2">
         <div className="relative flex items-center">

@@ -130,7 +130,7 @@ export function MailSidebar({
   onOpenCompose,
 }: MailSidebarProps) {
   return (
-    <aside className="w-56 flex-shrink-0 bg-[var(--surface)] border-r border-[var(--border)] flex flex-col p-4 space-y-4">
+    <aside className="hidden md:flex w-56 flex-shrink-0 bg-[var(--surface)] border-r border-[var(--border)] flex-col p-4 space-y-4">
       {/* Compose Button */}
       <button
         onClick={onOpenCompose}
