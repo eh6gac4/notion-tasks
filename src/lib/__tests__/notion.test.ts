@@ -640,7 +640,7 @@ describe("updateTaskBlocks", () => {
 
     await updateTaskBlocks("page-1", "新しい本文")
 
-    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: unknown[]) => (c[0] as { block_id: string }).block_id)
     // 同 type (paragraph→paragraph) なので p1 は update に置換、p2 は不要なので delete
     expect(deletedIds).toEqual(["p2"])
     expect(deletedIds).not.toContain("img1")
@@ -735,7 +735,7 @@ describe("updateTaskBlocks", () => {
     await updateTaskBlocks("page-1", "# ただの段落")
 
     expect(mockBlocks.update).not.toHaveBeenCalled()
-    const deletedIds = mockBlocks.delete.mock.calls.map((c: [{ block_id: string }]) => c[0].block_id)
+    const deletedIds = mockBlocks.delete.mock.calls.map((c: unknown[]) => (c[0] as { block_id: string }).block_id)
     expect(deletedIds).toEqual(["p1"])
     expect(mockBlocks.children.append).toHaveBeenCalledTimes(1)
     const appendCall = mockBlocks.children.append.mock.calls[0][0]

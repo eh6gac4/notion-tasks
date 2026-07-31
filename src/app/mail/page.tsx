@@ -44,11 +44,8 @@ export default function MailPage() {
     );
   }, [currentFolderEmails, searchQuery]);
 
-  // Selected email state (default to first email in current folder)
-  const [selectedId, setSelectedId] = useState<string | null>(() => {
-    const initialFolderEmails = getFilteredEmails(INITIAL_MOCK_EMAILS, 'inbox');
-    return initialFolderEmails.length > 0 ? initialFolderEmails[0].id : null;
-  });
+  // Selected email state (default to null for mobile responsive view)
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Calculate unread counts per folder
   const unreadCounts = useMemo(() => {
@@ -70,8 +67,7 @@ export default function MailPage() {
   // Handle folder switching
   const handleSelectFolder = (folder: MailFolder) => {
     setActiveFolder(folder);
-    const folderEmails = getFilteredEmails(emails, folder);
-    setSelectedId(folderEmails.length > 0 ? folderEmails[0].id : null);
+    setSelectedId(null);
   };
 
   // Handle email selection & mark as read
@@ -214,14 +210,31 @@ export default function MailPage() {
         </div>
 
         <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-dim)]">
-          <span>
+          <span className="hidden md:inline">
             Folder: <strong className="text-[var(--text)] uppercase">{activeFolder}</strong>
           </span>
+          <select 
+            className="md:hidden bg-[var(--bg)] border border-[var(--border-strong)] text-[var(--text)] uppercase px-2 py-1 focus:outline-none focus:border-[var(--accent)]"
+            value={activeFolder}
+            onChange={(e) => handleSelectFolder(e.target.value as MailFolder)}
+          >
+            <option value="inbox">INBOX</option>
+            <option value="starred">STARRED</option>
+            <option value="sent">SENT</option>
+            <option value="archive">ARCHIVE</option>
+            <option value="trash">TRASH</option>
+          </select>
+          <button 
+            onClick={() => handleOpenCompose()}
+            className="md:hidden flex items-center justify-center w-8 h-8 bg-[var(--accent)] text-white shadow-[2px_2px_0px_var(--accent-dark)]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+          </button>
         </div>
       </header>
 
       {/* Main 3-Pane Body Layout */}
-      <main className="flex flex-1 min-h-0 overflow-hidden">
+      <main className="flex flex-1 min-h-0 overflow-hidden relative">
         {/* Pane 1: Sidebar */}
         <MailSidebar
           activeFolder={activeFolder}
@@ -246,6 +259,7 @@ export default function MailPage() {
           email={selectedEmail}
           onTaskify={handleTaskify}
           onAIDraft={handleAIDraft}
+          onBack={() => setSelectedId(null)}
         />
       </main>
 

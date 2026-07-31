@@ -7,6 +7,7 @@ export interface MailDetailProps {
   email: Email | null;
   onTaskify?: (email: Email) => void;
   onAIDraft?: (email: Email) => void;
+  onBack?: () => void;
 }
 
 export function getSenderInitials(name: string): string {
@@ -18,10 +19,10 @@ export function getSenderInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function MailDetail({ email, onTaskify, onAIDraft }: MailDetailProps) {
+export function MailDetail({ email, onTaskify, onAIDraft, onBack }: MailDetailProps) {
   if (!email) {
     return (
-      <div className="flex-1 bg-[var(--surface)] flex flex-col items-center justify-center p-8 text-center">
+      <div className="hidden md:flex flex-1 bg-[var(--surface)] flex-col items-center justify-center p-8 text-center">
         <div className="w-16 h-16 rounded-none bg-[var(--surface-2)] border border-[var(--border-strong)] flex items-center justify-center text-[var(--text-dim)] mb-4 shadow-[4px_4px_0px_var(--accent-dark)]">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -55,9 +56,17 @@ export function MailDetail({ email, onTaskify, onAIDraft }: MailDetailProps) {
   });
 
   return (
-    <div className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto">
+    <div className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto">
       {/* Top Detail Bar / Header */}
-      <div className="p-6 border-b border-[var(--border)] bg-[var(--bg)] space-y-4">
+      <div className="p-4 md:p-6 border-b border-[var(--border)] bg-[var(--bg)] space-y-4">
+        {/* Mobile Back Button */}
+        <button
+          onClick={onBack}
+          className="md:hidden flex items-center gap-2 text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] mb-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Back to List
+        </button>
         {/* Subject & Folder Badge */}
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-pixel font-bold text-[var(--text)] tracking-wide">
