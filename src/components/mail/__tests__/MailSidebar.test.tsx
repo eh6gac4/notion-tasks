@@ -18,6 +18,9 @@ describe('MailSidebar Component', () => {
     unreadCounts: defaultUnreadCounts,
     onSelectFolder: vi.fn(),
     onOpenCompose: vi.fn(),
+    labels: ['Design', 'Product'],
+    activeLabel: null,
+    onSelectLabel: vi.fn(),
   };
 
   beforeEach(() => {

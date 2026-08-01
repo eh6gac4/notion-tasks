@@ -18,6 +18,7 @@ const generateMailId = (): string => `mail-${Date.now()}`;
 export default function MailPage() {
   const [emails, setEmails] = useState<Email[]>(INITIAL_MOCK_EMAILS);
   const [activeFolder, setActiveFolder] = useState<MailFolder>('inbox');
+  const [activeLabel, setActiveLabel] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isComposeOpen, setIsComposeOpen] = useState<boolean>(false);
   const [composeInitialDraft, setComposeInitialDraft] = useState<Partial<ComposeDraft> | undefined>(undefined);
@@ -26,10 +27,22 @@ export default function MailPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'info' | 'error'>('info');
 
-  // Compute folder filtered emails
+  // Extract all unique labels
+  const allLabels = useMemo(() => {
+    const labels = new Set<string>();
+    emails.forEach((e) => {
+      e.labels?.forEach((l) => labels.add(l));
+    });
+    return Array.from(labels).sort();
+  }, [emails]);
+
+  // Compute folder/label filtered emails
   const currentFolderEmails = useMemo(() => {
+    if (activeLabel) {
+      return emails.filter((e) => e.labels?.includes(activeLabel));
+    }
     return getFilteredEmails(emails, activeFolder);
-  }, [emails, activeFolder]);
+  }, [emails, activeFolder, activeLabel]);
 
   // Compute search & folder filtered emails
   const filteredEmails = useMemo(() => {
@@ -67,6 +80,13 @@ export default function MailPage() {
   // Handle folder switching
   const handleSelectFolder = (folder: MailFolder) => {
     setActiveFolder(folder);
+    setActiveLabel(null);
+    setSelectedId(null);
+  };
+
+  // Handle label switching
+  const handleSelectLabel = (label: string) => {
+    setActiveLabel(label);
     setSelectedId(null);
   };
 
@@ -211,18 +231,38 @@ export default function MailPage() {
 
         <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-dim)]">
           <span className="hidden md:inline">
-            Folder: <strong className="text-[var(--text)] uppercase">{activeFolder}</strong>
+            {activeLabel ? (
+              <>Label: <strong className="text-[var(--text)] uppercase">{activeLabel}</strong></>
+            ) : (
+              <>Folder: <strong className="text-[var(--text)] uppercase">{activeFolder}</strong></>
+            )}
           </span>
           <select 
-            className="md:hidden bg-[var(--bg)] border border-[var(--border-strong)] text-[var(--text)] uppercase px-2 py-1 focus:outline-none focus:border-[var(--accent)]"
-            value={activeFolder}
-            onChange={(e) => handleSelectFolder(e.target.value as MailFolder)}
+            className="md:hidden bg-[var(--bg)] border border-[var(--border-strong)] text-[var(--text)] uppercase px-2 py-1 focus:outline-none focus:border-[var(--accent)] max-w-[120px]"
+            value={activeLabel ? `label:${activeLabel}` : `folder:${activeFolder}`}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val.startsWith('folder:')) {
+                handleSelectFolder(val.replace('folder:', '') as MailFolder);
+              } else if (val.startsWith('label:')) {
+                handleSelectLabel(val.replace('label:', ''));
+              }
+            }}
           >
-            <option value="inbox">INBOX</option>
-            <option value="starred">STARRED</option>
-            <option value="sent">SENT</option>
-            <option value="archive">ARCHIVE</option>
-            <option value="trash">TRASH</option>
+            <optgroup label="Folders">
+              <option value="folder:inbox">INBOX</option>
+              <option value="folder:starred">STARRED</option>
+              <option value="folder:sent">SENT</option>
+              <option value="folder:archive">ARCHIVE</option>
+              <option value="folder:trash">TRASH</option>
+            </optgroup>
+            {allLabels.length > 0 && (
+              <optgroup label="Labels">
+                {allLabels.map((l) => (
+                  <option key={l} value={`label:${l}`}>{l}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
           <button 
             onClick={() => handleOpenCompose()}
@@ -241,6 +281,9 @@ export default function MailPage() {
           onSelectFolder={handleSelectFolder}
           unreadCounts={unreadCounts}
           onOpenCompose={() => handleOpenCompose()}
+          labels={allLabels}
+          activeLabel={activeLabel}
+          onSelectLabel={handleSelectLabel}
         />
 
         {/* Pane 2: Email List */}
