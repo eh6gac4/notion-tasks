@@ -8,6 +8,9 @@ export interface MailSidebarProps {
   onSelectFolder: (folder: MailFolder) => void;
   unreadCounts: Record<MailFolder, number>;
   onOpenCompose: () => void;
+  labels: string[];
+  activeLabel: string | null;
+  onSelectLabel: (label: string) => void;
 }
 
 const FOLDERS: { id: MailFolder; label: string; icon: React.ReactNode }[] = [
@@ -128,6 +131,9 @@ export function MailSidebar({
   onSelectFolder,
   unreadCounts,
   onOpenCompose,
+  labels,
+  activeLabel,
+  onSelectLabel,
 }: MailSidebarProps) {
   return (
     <aside className="hidden md:flex w-56 flex-shrink-0 bg-[var(--surface)] border-r border-[var(--border)] flex-col p-4 space-y-4">
@@ -160,7 +166,7 @@ export function MailSidebar({
       {/* Navigation Folders */}
       <nav aria-label="Mail Folders" className="space-y-1">
         {FOLDERS.map((folder) => {
-          const isActive = activeFolder === folder.id;
+          const isActive = !activeLabel && activeFolder === folder.id;
           const unreadCount = unreadCounts[folder.id] || 0;
 
           return (
@@ -185,6 +191,37 @@ export function MailSidebar({
           );
         })}
       </nav>
+
+      {/* Labels */}
+      {labels.length > 0 && (
+        <div className="pt-4 mt-4 border-t border-[var(--border)] overflow-y-auto min-h-0 flex-1">
+          <h3 className="px-3 text-xs font-pixel text-[var(--text-faint)] mb-2 uppercase tracking-wider">
+            Labels
+          </h3>
+          <nav aria-label="Mail Labels" className="space-y-1">
+            {labels.map((label) => {
+              const isActive = activeLabel === label;
+              return (
+                <button
+                  key={label}
+                  onClick={() => onSelectLabel(label)}
+                  type="button"
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors border-l-2 ${
+                    isActive
+                      ? 'bg-[var(--surface-2)] text-[var(--accent)] border-[var(--accent)] font-semibold'
+                      : 'text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] border-transparent'
+                  }`}
+                >
+                  <span className="w-4 flex justify-center">
+                    <span className={`w-1.5 h-1.5 rounded-none ${isActive ? 'bg-[var(--accent)]' : 'border border-[var(--border-strong)]'}`}></span>
+                  </span>
+                  <span className="truncate">{label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      )}
     </aside>
   );
 }
