@@ -139,6 +139,17 @@ export function MailList({
                   {email.subject}
                 </div>
 
+                {/* Labels */}
+                {email.labels && email.labels.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                    {email.labels.map((label, i) => (
+                      <span key={i} className="px-1.5 py-0.5 text-[9px] font-pixel border border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text-dim)] uppercase tracking-wider">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {/* Body Snippet + Star Button */}
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <p className="text-[11px] text-[var(--text-faint)] truncate flex-1">
