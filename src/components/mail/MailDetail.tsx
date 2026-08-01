@@ -72,10 +72,22 @@ export function MailDetail({ email, onTaskify, onAIDraft, onBack }: MailDetailPr
           <h2 className="text-lg font-pixel font-bold text-[var(--text)] tracking-wide">
             {email.subject}
           </h2>
-          <span className="px-2 py-1 bg-[var(--surface-2)] text-[var(--accent)] text-xs font-pixel uppercase tracking-wider border border-[var(--border-accent)]">
+          <span className="px-2 py-1 bg-[var(--surface-2)] text-[var(--accent)] text-xs font-pixel uppercase tracking-wider border border-[var(--border-accent)] flex-shrink-0">
             {email.folder}
           </span>
         </div>
+
+        {/* Labels */}
+        {email.labels && email.labels.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            {email.labels.map((label, i) => (
+              <span key={i} className="px-2 py-0.5 text-[10px] font-pixel border border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text-dim)] uppercase tracking-wider flex items-center gap-1.5 shadow-[2px_2px_0px_var(--border)]">
+                <span className="w-1.5 h-1.5 bg-[var(--accent)] rounded-none"></span>
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Sender Info Row */}
         <div className="flex items-center justify-between gap-4">
