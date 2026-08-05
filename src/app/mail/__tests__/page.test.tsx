@@ -1,8 +1,22 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import MailPage from '../page';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { MailManager } from '@/components/mail/MailManager';
+import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
 import { INITIAL_MOCK_EMAILS } from '@/lib/mockMailData';
+
+// src/app/actions.ts を vi.mock するテスト(TaskDetail.test.tsx 等)と同じパターン。
+// Server Action の中身(requireAuth → @/auth → next-auth)をテスト環境で評価すると
+// next/server の解決に失敗するため、モジュール境界でモックする。
+// vi.mock は hoist されるため、実装は動的 import 経由で取得する(TDZ 回避)。
+vi.mock('@/app/mail/actions', async () => {
+  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  return {
+    fetchMailsAction: vi.fn(mockFetchMails),
+    markAsReadAction: vi.fn().mockResolvedValue(undefined),
+    toggleStarAction: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe('MailPage Orchestrator & Integration Suite', () => {
   beforeEach(() => {
@@ -11,7 +25,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
 
   describe('Tier 1: Core Layout & Navigation Flows', () => {
     it('renders initial 3-pane layout with default inbox selection', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Top bar header
       expect(screen.getByText('✦ NOTION MAIL')).toBeInTheDocument();
@@ -26,22 +40,24 @@ describe('MailPage Orchestrator & Integration Suite', () => {
       expect(screen.getAllByText(firstEmail.subject).length).toBeGreaterThan(0);
     });
 
-    it('filters email list when selecting a folder in MailSidebar', () => {
-      render(<MailPage />);
+    it('filters email list when selecting a folder in MailSidebar', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      // Switch to Sent folder
+      // Switch to Sent folder (Server Action 経由でメール一覧を取得し直すため非同期)
       const sentFolderBtn = screen.getByText('Sent');
       fireEvent.click(sentFolderBtn);
 
       // Verify email list filtered to sent emails
       const sentEmail = INITIAL_MOCK_EMAILS.find((e) => e.folder === 'sent');
       if (sentEmail) {
-        expect(screen.getAllByText(sentEmail.subject).length).toBeGreaterThan(0);
+        await waitFor(() => {
+          expect(screen.getAllByText(sentEmail.subject).length).toBeGreaterThan(0);
+        });
       }
     });
 
     it('updates displayed email in MailDetail when clicking an item in MailList', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Click second email in inbox list
       const secondEmail = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox')[1];
@@ -54,11 +70,12 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     });
 
     it('navigates list items up and down using global j and k keyboard shortcuts', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
 
-      // Initially first inbox email is selected
+      // Press 'j' -> since nothing is selected yet, snaps to first inbox email
+      fireEvent.keyDown(window, { key: 'j' });
       expect(screen.getAllByText(inboxEmails[0].subject).length).toBeGreaterThan(0);
 
       // Press 'j' -> moves selection down to second inbox email
@@ -71,7 +88,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     });
 
     it('opens MailComposeModal when pressing global c key shortcut', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       expect(screen.queryByTestId('compose-modal')).not.toBeInTheDocument();
 
@@ -82,16 +99,14 @@ describe('MailPage Orchestrator & Integration Suite', () => {
 
   describe('Tier 2: Cross-Feature Interactions & Edge Conditions', () => {
     it('suppresses j, k, c global shortcuts when typing inside search input', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       searchInput.focus();
 
-      const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
-
-      // Fire 'j' inside search input -> selection should NOT move
+      // Fire 'j' inside search input -> selection should NOT move (nothing selected)
       fireEvent.keyDown(searchInput, { key: 'j' });
-      expect(screen.getAllByText(inboxEmails[0].subject).length).toBeGreaterThan(0);
+      expect(screen.getByText('No Email Selected')).toBeInTheDocument();
 
       // Fire 'c' inside search input -> compose modal should NOT open
       fireEvent.keyDown(searchInput, { key: 'c' });
@@ -99,7 +114,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     });
 
     it('opens TaskifyModal when clicking Taskify button in MailDetail, and creates task with toast feedback', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Select the first inbox email (render no longer auto-selects it)
       const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
@@ -123,7 +138,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     it('executes AI draft flow: open AIDraftModal -> generate draft -> populate ComposeModal', () => {
       vi.useFakeTimers();
 
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Select the first inbox email (render no longer auto-selects it)
       const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
@@ -161,7 +176,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     });
 
     it('sends email from ComposeModal and adds sent email to store with success toast', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Open compose modal via button
       const composeBtn = screen.getByRole('button', { name: /compose/i });

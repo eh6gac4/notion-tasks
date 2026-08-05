@@ -6,17 +6,8 @@ import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { isNotionClientError } from "@notionhq/client"
 import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, getLocationOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
+import { isDevMode, requireAuth } from "@/lib/require-auth"
 import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
-
-function isDevMode() {
-  return process.env.NODE_ENV === "development" || process.env.NEXTJS_ENV === "development"
-}
-
-async function requireAuth() {
-  if (isDevMode()) return
-  const session = await auth()
-  if (!session?.user) redirect("/login")
-}
 
 export async function setAdvancedFilterAction(filter: AdvancedFilter) {
   ;(await cookies()).set("filter_advanced", JSON.stringify(filter), { maxAge: 86400, path: "/" })

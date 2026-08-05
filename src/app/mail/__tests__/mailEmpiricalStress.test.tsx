@@ -1,8 +1,22 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import MailPage from '../page';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MailManager } from '@/components/mail/MailManager';
+import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
+
+// src/app/actions.ts を vi.mock するテスト(TaskDetail.test.tsx 等)と同じパターン。
+// Server Action の中身(requireAuth → @/auth → next-auth)をテスト環境で評価すると
+// next/server の解決に失敗するため、モジュール境界でモックする。
+// vi.mock は hoist されるため、実装は動的 import 経由で取得する(TDZ 回避)。
+vi.mock('@/app/mail/actions', async () => {
+  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  return {
+    fetchMailsAction: vi.fn(mockFetchMails),
+    markAsReadAction: vi.fn().mockResolvedValue(undefined),
+    toggleStarAction: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () => {
   beforeEach(() => {
@@ -10,38 +24,44 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
   });
 
   describe('Check 1: Folder Filtering Across All Folders', () => {
-    it('toggles across all folders (inbox, starred, sent, archive, trash) and updates email list', () => {
-      render(<MailPage />);
+    it('toggles across all folders (inbox, starred, sent, archive, trash) and updates email list', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const folders = ['inbox', 'starred', 'sent', 'archive', 'trash'] as const;
 
-      folders.forEach((folder) => {
+      for (const folder of folders) {
         const folderLabel = folder.charAt(0).toUpperCase() + folder.slice(1);
         const folderBtn = screen.getByRole('button', { name: new RegExp(`^${folderLabel}`, 'i') });
         fireEvent.click(folderBtn);
 
         const expectedEmails = getFilteredEmails(INITIAL_MOCK_EMAILS, folder);
         if (expectedEmails.length > 0) {
-          expect(screen.getAllByText(expectedEmails[0].subject).length).toBeGreaterThan(0);
+          await waitFor(() => {
+            expect(screen.getAllByText(expectedEmails[0].subject).length).toBeGreaterThan(0);
+          });
         } else {
-          expect(screen.getByText('No emails in this folder.')).toBeInTheDocument();
+          await waitFor(() => {
+            expect(screen.getByText('No emails in this folder.')).toBeInTheDocument();
+          });
         }
-      });
+      }
     });
 
-    it('updates selected email when switching folders', () => {
-      render(<MailPage />);
+    it('updates selected email when switching folders', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const sentBtn = screen.getByRole('button', { name: /^Sent/i });
       fireEvent.click(sentBtn);
 
       const sentEmails = getFilteredEmails(INITIAL_MOCK_EMAILS, 'sent');
       expect(sentEmails.length).toBeGreaterThan(0);
-      expect(screen.getAllByText(sentEmails[0].subject).length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getAllByText(sentEmails[0].subject).length).toBeGreaterThan(0);
+      });
     });
 
-    it('unstarring an email while viewing Starred folder updates selectedId to a valid remaining starred email', () => {
-      render(<MailPage />);
+    it('unstarring an email while viewing Starred folder updates selectedId to a valid remaining starred email', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Switch to Starred folder
       const starredBtn = screen.getByRole('button', { name: /^Starred/i });
@@ -52,7 +72,11 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
       const targetStarredEmail = starredEmails[0];
       const nextStarredEmail = starredEmails[1];
 
-      // Select the first starred email (folder switch no longer auto-selects it)
+      // Select the first starred email (folder switch no longer auto-selects it, and the
+      // folder's contents only arrive after the Server Action round-trip resolves)
+      await waitFor(() => {
+        expect(screen.getAllByText(targetStarredEmail.subject).length).toBeGreaterThan(0);
+      });
       fireEvent.click(screen.getAllByText(targetStarredEmail.subject)[0]);
 
       // Unstar the first starred email
@@ -67,7 +91,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
 
   describe('Check 2: Search Query Handling & Edge Cases', () => {
     it('handles non-matching query and renders empty state correctly', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       fireEvent.change(searchInput, { target: { value: 'XYZ_NON_EXISTENT_SEARCH_999' } });
@@ -77,7 +101,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
     });
 
     it('handles special characters without crashing or throwing SyntaxError', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       const specialQuery = '[regex]*?()+^\\$#@!';
@@ -90,7 +114,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
     });
 
     it('handles case-insensitive search queries', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       fireEvent.change(searchInput, { target: { value: 'kAiTo' } });
@@ -100,7 +124,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
     });
 
     it('clears search query when clear button (✕) is clicked', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       fireEvent.change(searchInput, { target: { value: 'Kaito' } });
@@ -112,15 +136,14 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
     });
 
     it('ensures j/k shortcuts operate only on search-filtered list', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       // Search for Kaito (only mail-2 matches, mail-1 and mail-6 hidden)
       fireEvent.change(searchInput, { target: { value: 'Kaito' } });
       fireEvent.blur(searchInput);
 
-      // Initially selected is mail-1 (Alex Rivers)
-      // Press 'j' shortcut -> moves to single matching item in filteredEmails (mail-2 Kaito Tanaka)
+      // Press 'j' shortcut -> since nothing is selected yet, snaps to single matching item (mail-2 Kaito Tanaka)
       fireEvent.keyDown(window, { key: 'j' });
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Weekly Cyberpunk UI Sync & Retro Theme Mockups');
 
@@ -132,7 +155,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
 
   describe('Check 3: Star Toggling Side Effects & Selection Persistence', () => {
     it('toggles star without changing currently selected email row in Inbox', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const inboxEmails = getFilteredEmails(INITIAL_MOCK_EMAILS, 'inbox');
       const firstSubject = inboxEmails[0].subject;
@@ -152,7 +175,7 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
     });
 
     it('marks unread email as read upon selection', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const unreadEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox' && !e.isRead);
       expect(unreadEmails.length).toBeGreaterThan(0);

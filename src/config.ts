@@ -15,4 +15,9 @@ export const config = {
     username: process.env.APP_USERNAME ?? "",
     password: process.env.APP_PASSWORD ?? "",
   },
+  google: {
+    clientId:     requireEnv("GOOGLE_CLIENT_ID"),
+    clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
+    refreshToken: requireEnv("GOOGLE_REFRESH_TOKEN"),
+  },
 } as const

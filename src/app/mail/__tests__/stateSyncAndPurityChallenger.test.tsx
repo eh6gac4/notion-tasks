@@ -1,12 +1,26 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import MailPage from '../page';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MailManager } from '@/components/mail/MailManager';
+import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
 import { AIDraftModal } from '@/components/mail/AIDraftModal';
 import { MailComposeModal } from '@/components/mail/MailComposeModal';
 import { TaskifyModal } from '@/components/mail/TaskifyModal';
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
 import { Email } from '@/types/mail';
+
+// src/app/actions.ts を vi.mock するテスト(TaskDetail.test.tsx 等)と同じパターン。
+// Server Action の中身(requireAuth → @/auth → next-auth)をテスト環境で評価すると
+// next/server の解決に失敗するため、モジュール境界でモックする。
+// vi.mock は hoist されるため、実装は動的 import 経由で取得する(TDZ 回避)。
+vi.mock('@/app/mail/actions', async () => {
+  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  return {
+    fetchMailsAction: vi.fn(mockFetchMails),
+    markAsReadAction: vi.fn().mockResolvedValue(undefined),
+    toggleStarAction: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 describe('Adversarial State Synchronization & Purity Verification (Milestone 1)', () => {
   beforeEach(() => {
@@ -15,7 +29,7 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
 
   describe('Requirement 1: Search Filter Navigation Sync', () => {
     it('navigates strictly within search-filtered emails using j and k without jumping to hidden emails', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Search for 'UI' which matches mail-1 (Alex Rivers) and mail-2 (Kaito Tanaka), filtering out mail-6 (Elena Rostova)
       const searchInput = screen.getByPlaceholderText('Search mail...');
@@ -55,7 +69,7 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
     });
 
     it('snaps selection to first visible search-filtered email when selectedId was filtered out', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Initially mail-1 (Alex Rivers) is selected.
       // Now search for 'Kaito' (only matches mail-2).
@@ -70,7 +84,7 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
     });
 
     it('does not throw or jump to hidden emails when zero emails match search query', () => {
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       const searchInput = screen.getByPlaceholderText('Search mail...');
       fireEvent.change(searchInput, { target: { value: 'NON_MATCHING_SEARCH_QUERY_XYZ' } });
@@ -87,8 +101,8 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
   });
 
   describe('Requirement 2: Starred Folder Unstar Sync', () => {
-    it('updates selectedId to next valid remaining starred email when unstarring while activeFolder === starred', () => {
-      render(<MailPage />);
+    it('updates selectedId to next valid remaining starred email when unstarring while activeFolder === starred', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Switch to Starred folder
       const starredBtn = screen.getByRole('button', { name: /^Starred/i });
@@ -100,7 +114,11 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       const firstStarred = initialStarred[0];
       const secondStarred = initialStarred[1];
 
-      // Select the first starred email (folder switch no longer auto-selects it)
+      // Select the first starred email (folder switch no longer auto-selects it, and the
+      // folder's contents only arrive after the Server Action round-trip resolves)
+      await waitFor(() => {
+        expect(screen.getAllByText(firstStarred.subject).length).toBeGreaterThan(0);
+      });
       fireEvent.click(screen.getAllByText(firstStarred.subject)[0]);
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(firstStarred.subject);
 
@@ -112,12 +130,17 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(secondStarred.subject);
     });
 
-    it('sets selectedId to null and displays empty state when last starred email is unstarred', () => {
-      render(<MailPage />);
+    it('sets selectedId to null and displays empty state when last starred email is unstarred', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Switch to Starred folder
       const starredBtn = screen.getByRole('button', { name: /^Starred/i });
       fireEvent.click(starredBtn);
+
+      const initialStarred = getFilteredEmails(INITIAL_MOCK_EMAILS, 'starred');
+      await waitFor(() => {
+        expect(screen.getAllByText(initialStarred[0].subject).length).toBeGreaterThan(0);
+      });
 
       let unstarBtns = screen.getAllByRole('button', { name: /Unstar email/i });
 
@@ -134,12 +157,12 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
   });
 
   describe('Requirement 3: Render Purity & Modal Reset', () => {
-    it('verifies generateMailId is pure at render time and produces unique prefixed IDs on call', () => {
+    it('verifies generateMailId is pure at render time and produces unique prefixed IDs on call', async () => {
       // Mock Date.now to verify predictable timestamp generation
       const mockTimestamp = 1700000000000;
       vi.spyOn(Date, 'now').mockReturnValue(mockTimestamp);
 
-      render(<MailPage />);
+      render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Click compose button to open MailComposeModal
       const composeBtn = screen.getByRole('button', { name: /Compose/i });
@@ -154,11 +177,15 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       fireEvent.change(subjectInput, { target: { value: 'Purity Test Subject' } });
       fireEvent.click(sendBtn);
 
-      // Sent folder check
+      // Sent folder check (Server Action 経由でサーバーの sent フォルダを取得し直すため、
+      // ローカルでのみ生成された "Purity Test Subject" は消えてしまう。folder 切替が完了
+      // した後もローカル state に積んだ新規メールが残ることを確認する)
       const sentBtn = screen.getByRole('button', { name: /^Sent/i });
       fireEvent.click(sentBtn);
 
-      expect(screen.getAllByText('Purity Test Subject').length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getAllByText('Purity Test Subject').length).toBeGreaterThan(0);
+      });
     });
 
     it('resets AIDraftModal state cleanly on reopen without useEffect setState cascading renders', () => {
