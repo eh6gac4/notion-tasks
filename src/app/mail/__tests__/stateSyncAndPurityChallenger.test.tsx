@@ -32,7 +32,8 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       );
       expect(matchingEmails.length).toBeGreaterThan(1);
 
-      // Verify selected email is matching email 1 (mail-1)
+      // Press 'j' -> since nothing is selected yet, snaps to the first matching email (mail-1)
+      fireEvent.keyDown(window, { key: 'j' });
       const detailSubject = screen.getByRole('heading', { level: 2 });
       expect(detailSubject).toHaveTextContent(matchingEmails[0].subject);
 
@@ -96,10 +97,11 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       const initialStarred = getFilteredEmails(INITIAL_MOCK_EMAILS, 'starred');
       expect(initialStarred.length).toBeGreaterThan(1);
 
-      // Currently selected is initialStarred[0]
       const firstStarred = initialStarred[0];
       const secondStarred = initialStarred[1];
 
+      // Select the first starred email (folder switch no longer auto-selects it)
+      fireEvent.click(screen.getAllByText(firstStarred.subject)[0]);
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(firstStarred.subject);
 
       // Click unstar on the first email

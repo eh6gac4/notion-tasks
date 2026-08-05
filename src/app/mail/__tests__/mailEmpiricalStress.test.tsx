@@ -52,6 +52,9 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
       const targetStarredEmail = starredEmails[0];
       const nextStarredEmail = starredEmails[1];
 
+      // Select the first starred email (folder switch no longer auto-selects it)
+      fireEvent.click(screen.getAllByText(targetStarredEmail.subject)[0]);
+
       // Unstar the first starred email
       const unstarButtons = screen.getAllByRole('button', { name: /Unstar email/i });
       fireEvent.click(unstarButtons[0]);
@@ -133,6 +136,9 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
 
       const inboxEmails = getFilteredEmails(INITIAL_MOCK_EMAILS, 'inbox');
       const firstSubject = inboxEmails[0].subject;
+
+      // Select the first inbox email (render no longer auto-selects it)
+      fireEvent.click(screen.getAllByText(firstSubject)[0]);
 
       // Click star button on second email item in list
       const starButtons = screen.getAllByRole('button', { name: /Star email|Unstar email/i });
