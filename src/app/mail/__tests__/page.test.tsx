@@ -101,6 +101,10 @@ describe('MailPage Orchestrator & Integration Suite', () => {
     it('opens TaskifyModal when clicking Taskify button in MailDetail, and creates task with toast feedback', () => {
       render(<MailPage />);
 
+      // Select the first inbox email (render no longer auto-selects it)
+      const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
+      fireEvent.click(screen.getAllByText(inboxEmails[0].subject)[0]);
+
       const taskifyBtn = screen.getByRole('button', { name: /Taskify to Notion/i });
       fireEvent.click(taskifyBtn);
 
@@ -120,6 +124,10 @@ describe('MailPage Orchestrator & Integration Suite', () => {
       vi.useFakeTimers();
 
       render(<MailPage />);
+
+      // Select the first inbox email (render no longer auto-selects it)
+      const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
+      fireEvent.click(screen.getAllByText(inboxEmails[0].subject)[0]);
 
       // Click AI Draft Reply button
       const aiBtn = screen.getByRole('button', { name: /AI Draft Reply/i });
