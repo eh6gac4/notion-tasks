@@ -98,6 +98,25 @@ test.describe("ボード", () => {
       await page.getByRole("button", { name: "適用" }).click()
       await expect(page.locator("[data-testid='sort-active-dot']")).toHaveCount(0)
     })
+
+    test("タスク選択で前タスク/次タスクが一覧上でハイライトされる", async () => {
+      // モックデータのチェーン: mock-1 (次=mock-4) → mock-4 (前=mock-1, 次=mock-5) → mock-5 (前=mock-4)
+      const prev = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-1']`)
+      const current = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-4']`)
+      const next = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-5']`)
+
+      await current.locator("[data-testid='task-title']").click()
+
+      await expect(current).toHaveAttribute("data-relation", "selected")
+      await expect(prev).toHaveAttribute("data-relation", "prev")
+      await expect(next).toHaveAttribute("data-relation", "next")
+
+      // 選択解除でハイライトも消える
+      await page.locator("[data-testid='task-detail-backdrop']").click({ position: { x: 10, y: 10 } })
+      await expect(page.locator("[data-testid='task-detail']")).toBeHidden({ timeout: 5_000 })
+      await expect(prev).not.toHaveAttribute("data-relation", "prev")
+      await expect(next).not.toHaveAttribute("data-relation", "next")
+    })
   })
 
   test.describe("変更系", () => {
