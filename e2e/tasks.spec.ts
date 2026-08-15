@@ -117,6 +117,22 @@ test.describe("ボード", () => {
       await expect(prev).not.toHaveAttribute("data-relation", "prev")
       await expect(next).not.toHaveAttribute("data-relation", "next")
     })
+
+    test("未選択でも前/次タスクありバッジが常時表示される", async () => {
+      // mock-1: 次のみ / mock-4: 前後両方 / mock-5: 前のみ
+      const first = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-1']`)
+      const middle = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-4']`)
+      const last = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-5']`)
+
+      await expect(first.getByTestId("task-relation-next-badge")).toBeVisible()
+      await expect(first.getByTestId("task-relation-prev-badge")).toHaveCount(0)
+
+      await expect(middle.getByTestId("task-relation-prev-badge")).toBeVisible()
+      await expect(middle.getByTestId("task-relation-next-badge")).toBeVisible()
+
+      await expect(last.getByTestId("task-relation-prev-badge")).toBeVisible()
+      await expect(last.getByTestId("task-relation-next-badge")).toHaveCount(0)
+    })
   })
 
   test.describe("変更系", () => {

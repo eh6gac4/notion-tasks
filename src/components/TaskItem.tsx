@@ -43,7 +43,9 @@ export const TaskItem = memo(function TaskItem({
 
   const status = optimisticStatus
   const overdue = isOverdue(task.due)
-  const hasMeta = task.priority || task.due || task.tags.length > 0 || task.childTaskIds.length > 0
+  const hasPrev = task.prevTaskIds.length > 0
+  const hasNext = task.nextTaskIds.length > 0
+  const hasMeta = task.priority || task.due || task.tags.length > 0 || task.childTaskIds.length > 0 || hasPrev || hasNext
 
   const isDoing = status === "進行中"
   const relationTitle = relation ? RELATION_LABELS[relation] : undefined
@@ -144,6 +146,26 @@ export const TaskItem = memo(function TaskItem({
           {task.tags.length > 2 && (
             <span className="font-pixel text-[11px] text-[var(--text-faint)]">
               +{task.tags.length - 2}
+            </span>
+          )}
+          {hasPrev && (
+            <span
+              data-testid="task-relation-prev-badge"
+              title="前タスクあり"
+              className="font-pixel text-[11px]"
+              style={{ color: "var(--rel-prev)" }}
+            >
+              ◀前
+            </span>
+          )}
+          {hasNext && (
+            <span
+              data-testid="task-relation-next-badge"
+              title="次タスクあり"
+              className="font-pixel text-[11px]"
+              style={{ color: "var(--rel-next)" }}
+            >
+              次▶
             </span>
           )}
           {isCollapsible ? (

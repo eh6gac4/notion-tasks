@@ -136,6 +136,24 @@ describe("TaskItem レンダリング", () => {
     render(<TaskItem task={makeTask({ childTaskIds: [] })} onSelect={vi.fn()} />)
     expect(screen.queryByText(/子\d+件/)).not.toBeInTheDocument()
   })
+
+  it("prevTaskIds があれば「前タスクあり」バッジを表示する", () => {
+    render(<TaskItem task={makeTask({ prevTaskIds: ["p1"] })} onSelect={vi.fn()} />)
+    expect(screen.getByTestId("task-relation-prev-badge")).toBeInTheDocument()
+    expect(screen.queryByTestId("task-relation-next-badge")).not.toBeInTheDocument()
+  })
+
+  it("nextTaskIds があれば「次タスクあり」バッジを表示する", () => {
+    render(<TaskItem task={makeTask({ nextTaskIds: ["n1"] })} onSelect={vi.fn()} />)
+    expect(screen.getByTestId("task-relation-next-badge")).toBeInTheDocument()
+    expect(screen.queryByTestId("task-relation-prev-badge")).not.toBeInTheDocument()
+  })
+
+  it("prevTaskIds/nextTaskIds が両方空ならバッジを表示しない", () => {
+    render(<TaskItem task={makeTask({ prevTaskIds: [], nextTaskIds: [] })} onSelect={vi.fn()} />)
+    expect(screen.queryByTestId("task-relation-prev-badge")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("task-relation-next-badge")).not.toBeInTheDocument()
+  })
 })
 
 describe("TaskItem STATUS_STYLES 網羅性", () => {
