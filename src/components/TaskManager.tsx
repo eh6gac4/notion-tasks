@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useRef, useCallback } from "react"
+import { useState, useTransition, useEffect, useRef, useCallback, useMemo } from "react"
 import type { AdvancedFilter, SortConfig, Task } from "@/types/task"
 import { TaskBoard } from "./TaskBoard"
 import { TaskDetail } from "./TaskDetail"
@@ -10,7 +10,9 @@ import { TaskSortSheet } from "./TaskSortSheet"
 import { setAdvancedFilterAction, setSortAction, refreshTasksAction, fetchInitialDataAction } from "@/app/actions"
 import { isAdvancedFilterActive } from "@/constants/filters"
 import { isSortActive } from "@/lib/task-sort"
+import { buildRelationMap } from "@/lib/task-relation"
 import { TasksRefreshProvider } from "./TasksRefreshContext"
+import { TaskRelationProvider } from "./TaskRelationContext"
 
 export function TaskManager({
   tasks: seedTasks,
@@ -63,6 +65,8 @@ export function TaskManager({
     ? tasks.find((t) => t.id === selectedTaskId) ??
       (externalSelectedTask?.id === selectedTaskId ? externalSelectedTask : null)
     : null
+
+  const relationMap = useMemo(() => buildRelationMap(selectedTask), [selectedTask])
 
   function handleSelect(task: Task) {
     setSelectedTaskId(task.id)
@@ -226,14 +230,16 @@ export function TaskManager({
 
       {/* Board */}
       <main data-testid="task-list-main" className="flex-1 overflow-hidden">
-        <TaskBoard
-          tasks={tasks}
-          searchQuery={searchQuery}
-          advancedFilter={advancedFilter}
-          sort={sort}
-          isLoading={isInitialLoading}
-          onSelect={handleSelect}
-        />
+        <TaskRelationProvider value={relationMap}>
+          <TaskBoard
+            tasks={tasks}
+            searchQuery={searchQuery}
+            advancedFilter={advancedFilter}
+            sort={sort}
+            isLoading={isInitialLoading}
+            onSelect={handleSelect}
+          />
+        </TaskRelationProvider>
       </main>
 
       <TaskCreate tagOptions={tagOptions} locationOptions={locationOptions} />

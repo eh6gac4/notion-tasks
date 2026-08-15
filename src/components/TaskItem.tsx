@@ -2,10 +2,18 @@
 
 import { memo, useOptimistic, useTransition, useRef, useState, type CSSProperties } from "react"
 import type { Task, TaskStatus } from "@/types/task"
+import type { TaskRelation } from "@/lib/task-relation"
 import { updateTaskStatus } from "@/app/actions"
 import { STATUS_OPTIONS, STATUS_ACCENT, PRIORITY_STYLES } from "@/constants/styles"
 import { formatDueShort, isOverdue } from "@/lib/due-date"
 import { useTasksRefresh } from "./TasksRefreshContext"
+import { useTaskRelation } from "./TaskRelationContext"
+
+const RELATION_LABELS: Record<TaskRelation, string> = {
+  prev: "前タスク",
+  next: "次タスク",
+  selected: "選択中",
+}
 
 // ボード上の1カード。カラム自体が現ステータスを示すが、ステータスのカラードット
 // をカード右上に小さく置くことで「タップで他カラムへ移動できる」アフォーダンスを
@@ -31,17 +39,21 @@ export const TaskItem = memo(function TaskItem({
   const selectRef = useRef<HTMLSelectElement>(null)
   const [updateError, setUpdateError] = useState<string | null>(null)
   const refreshTasks = useTasksRefresh()
+  const relation = useTaskRelation(task.id)
 
   const status = optimisticStatus
   const overdue = isOverdue(task.due)
   const hasMeta = task.priority || task.due || task.tags.length > 0 || task.childTaskIds.length > 0
 
   const isDoing = status === "進行中"
+  const relationTitle = relation ? RELATION_LABELS[relation] : undefined
   return (
     <div
       data-testid="task-item"
       data-task-id={task.id}
       data-status={status ?? "未着手"}
+      data-relation={relation}
+      title={relationTitle}
       className="rounded-none border border-[var(--border-strong)] bg-[var(--surface)] hover:bg-[var(--surface-2)] hover:border-[var(--border-accent)] card-glow-hover cursor-pointer"
       onClick={() => onSelect(task)}
     >

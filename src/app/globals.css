@@ -30,6 +30,10 @@
   --status-done:   #34d399;
   --status-cancel: #f43f5e;
 
+  /* 前タスク / 次タスク (relation) ハイライト */
+  --rel-prev: #8b5cf6;
+  --rel-next: #22d3ee;
+
   /* レガシーエイリアス（残置 — テスト/未置換箇所のため） */
   --cyber-bg:           var(--bg);
   --cyber-surface:      var(--surface);
@@ -212,10 +216,34 @@ body::before {
   }
 }
 
+/* ステータス由来の影 (--status-shadow) と relation 由来の影 (--relation-shadow) を
+   別々のカスタムプロパティに積み、1つの box-shadow で合成する。両方が同時に
+   成立しても片方が上書きされず、今後ステータス側の装飾が増えても
+   組み合わせルールを追加する必要がない。 */
+[data-testid="task-item"] {
+  --status-shadow: none;
+  --relation-shadow: none;
+  box-shadow: var(--relation-shadow), var(--status-shadow);
+}
+
 /* 進行中タスクのアクセント縁取り (TaskItem 外枠の data-status を参照) */
 [data-testid="task-item"][data-status="進行中"] {
   border-color: var(--border-accent);
-  box-shadow: 0 0 0 1px rgba(220, 20, 60, 0.2);
+  --status-shadow: 0 0 0 1px rgba(220, 20, 60, 0.2);
+}
+
+/* 前タスク / 次タスク (relation) ハイライト。選択中タスクを基準に一覧上の
+   関連カードを控えめに示す (左端 4px ライン + 淡い背景)。 */
+[data-testid="task-item"][data-relation="prev"] {
+  --relation-shadow: inset 4px 0 0 var(--rel-prev);
+  background: color-mix(in srgb, var(--rel-prev) 8%, var(--surface));
+}
+[data-testid="task-item"][data-relation="next"] {
+  --relation-shadow: inset 4px 0 0 var(--rel-next);
+  background: color-mix(in srgb, var(--rel-next) 8%, var(--surface));
+}
+[data-testid="task-item"][data-relation="selected"] {
+  border-color: var(--border-accent);
 }
 
 /* モバイルのみカラム幅を peek (横スワイプの存在を示唆) */
