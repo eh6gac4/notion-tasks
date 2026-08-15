@@ -32,6 +32,8 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const [parentPickerOpen, setParentPickerOpen] = useState(false)
   const [prevPickerOpen, setPrevPickerOpen] = useState(false)
   const [nextPickerOpen, setNextPickerOpen] = useState(false)
+  const [prevTaskFormOpen, setPrevTaskFormOpen] = useState(false)
+  const [nextTaskFormOpen, setNextTaskFormOpen] = useState(false)
 
   const taskById = useMemo(() => {
     const m = new Map<string, Task>()
@@ -589,14 +591,13 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 {prevTasks.map((t) => (
                   <RelatedTaskRow key={t.id} task={t} testid="prev-task-item" onClick={() => onSelectTask(t)} />
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setPrevPickerOpen(true)}
-                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
-                  style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
-                >
-                  + 前タスクを設定
-                </button>
+                <LinkTaskButtons
+                  testidPrefix="prev-task"
+                  setLabel="+ 前タスクを設定"
+                  createLabel="+ 前タスクを新規作成"
+                  onSet={() => setPrevPickerOpen(true)}
+                  onCreate={() => setPrevTaskFormOpen(true)}
+                />
               </div>
             </Row>
 
@@ -605,14 +606,13 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
                 {nextTasks.map((t) => (
                   <RelatedTaskRow key={t.id} task={t} testid="next-task-item" onClick={() => onSelectTask(t)} />
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setNextPickerOpen(true)}
-                  className="font-pixel flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
-                  style={{ border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }}
-                >
-                  + 次タスクを設定
-                </button>
+                <LinkTaskButtons
+                  testidPrefix="next-task"
+                  setLabel="+ 次タスクを設定"
+                  createLabel="+ 次タスクを新規作成"
+                  onSet={() => setNextPickerOpen(true)}
+                  onCreate={() => setNextTaskFormOpen(true)}
+                />
               </div>
             </Row>
           </div>
@@ -888,6 +888,24 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         submitLabel="ADD SUBTASK"
       />
 
+      <TaskFormSheet
+        open={prevTaskFormOpen}
+        onClose={() => setPrevTaskFormOpen(false)}
+        tagOptions={tagOptions}
+        nextTaskId={task.id}
+        heading="✦ New Prev Task"
+        submitLabel="ADD PREV TASK"
+      />
+
+      <TaskFormSheet
+        open={nextTaskFormOpen}
+        onClose={() => setNextTaskFormOpen(false)}
+        tagOptions={tagOptions}
+        prevTaskId={task.id}
+        heading="✦ New Next Task"
+        submitLabel="ADD NEXT TASK"
+      />
+
       <TaskPickerModal
         open={parentPickerOpen}
         onClose={() => setParentPickerOpen(false)}
@@ -920,6 +938,33 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
         excludedIds={new Set([task.id])}
         onSave={(ids) => save({ nextTaskIds: ids })}
       />
+    </div>
+  )
+}
+
+function LinkTaskButtons({
+  testidPrefix,
+  setLabel,
+  createLabel,
+  onSet,
+  onCreate,
+}: {
+  testidPrefix: string
+  setLabel: string
+  createLabel: string
+  onSet: () => void
+  onCreate: () => void
+}) {
+  const buttonClassName = "font-pixel flex-1 flex items-center justify-center gap-2 w-full rounded-none py-3 text-xs text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
+  const buttonStyle = { border: "1px solid var(--border-strong)", minHeight: "var(--tap-min)" }
+  return (
+    <div className="flex gap-2">
+      <button type="button" data-testid={`${testidPrefix}-set-button`} onClick={onSet} className={buttonClassName} style={buttonStyle}>
+        {setLabel}
+      </button>
+      <button type="button" data-testid={`${testidPrefix}-create-button`} onClick={onCreate} className={buttonClassName} style={buttonStyle}>
+        {createLabel}
+      </button>
     </div>
   )
 }

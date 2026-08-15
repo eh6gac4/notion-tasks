@@ -34,6 +34,8 @@ export function TaskFormSheet({
   tagOptions,
   locationOptions = [],
   parentTaskId,
+  prevTaskId,
+  nextTaskId,
   heading = "✦ New Task",
   submitLabel = "CREATE TASK",
   onCreated,
@@ -43,6 +45,8 @@ export function TaskFormSheet({
   tagOptions: string[]
   locationOptions?: string[]
   parentTaskId?: string
+  prevTaskId?: string
+  nextTaskId?: string
   heading?: string
   submitLabel?: string
   onCreated?: () => void
@@ -88,6 +92,8 @@ export function TaskFormSheet({
         location: (formData.get("location") as string) || undefined,
         body,
         parentTaskId,
+        prevTaskId,
+        nextTaskId,
       })
       handleClose()
       refreshTasks()

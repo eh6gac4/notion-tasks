@@ -248,6 +248,8 @@ export async function createTask(input: CreateTaskInput): Promise<Task> {
   if (input.source)      properties[NOTION_PROPS.SOURCE]     = { rich_text: [{ text: { content: input.source } }] }
   if (input.sourceUrl)   properties[NOTION_PROPS.SOURCE_URL] = { url: input.sourceUrl }
   if (input.parentTaskId) properties[NOTION_PROPS.PARENT]   = { relation: [{ id: input.parentTaskId }] }
+  if (input.prevTaskId)  properties[NOTION_PROPS.PREV]      = { relation: [{ id: input.prevTaskId }] }
+  if (input.nextTaskId)  properties[NOTION_PROPS.NEXT]      = { relation: [{ id: input.nextTaskId }] }
 
   const page = await notion.pages.create({
     parent: { data_source_id: DATA_SOURCE_ID, type: "data_source_id" },

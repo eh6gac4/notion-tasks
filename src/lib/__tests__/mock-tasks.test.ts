@@ -27,3 +27,35 @@ describe("createMockTask の親子リレーション", () => {
     expect(() => createMockTask({ title: "孤児", parentTaskId: "does-not-exist" })).not.toThrow()
   })
 })
+
+describe("createMockTask の前後タスクリレーション", () => {
+  beforeEach(() => {
+    resetMockTasks()
+  })
+
+  it("nextTaskId 指定時に新タスクの nextTaskIds に対象が入る", () => {
+    const created = createMockTask({ title: "前タスク", nextTaskId: "mock-2" })
+    expect(created.nextTaskIds).toEqual(["mock-2"])
+  })
+
+  it("nextTaskId 指定時に対象タスクの prevTaskIds に新 ID が追加される", () => {
+    const created = createMockTask({ title: "前タスク", nextTaskId: "mock-2" })
+    const next = getMockTask("mock-2")
+    expect(next?.prevTaskIds).toContain(created.id)
+  })
+
+  it("prevTaskId 指定時に新タスクの prevTaskIds に対象が入る", () => {
+    const created = createMockTask({ title: "次タスク", prevTaskId: "mock-2" })
+    expect(created.prevTaskIds).toEqual(["mock-2"])
+  })
+
+  it("prevTaskId 指定時に対象タスクの nextTaskIds に新 ID が追加される", () => {
+    const created = createMockTask({ title: "次タスク", prevTaskId: "mock-2" })
+    const prev = getMockTask("mock-2")
+    expect(prev?.nextTaskIds).toContain(created.id)
+  })
+
+  it("存在しない前後タスク ID を指定しても例外を投げない", () => {
+    expect(() => createMockTask({ title: "孤立", prevTaskId: "does-not-exist", nextTaskId: "does-not-exist-2" })).not.toThrow()
+  })
+})
