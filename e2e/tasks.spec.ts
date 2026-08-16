@@ -119,7 +119,7 @@ test.describe("ボード", () => {
     })
 
     test("未選択でも前/次タスクありバッジが常時表示される", async () => {
-      // mock-1: 次のみ / mock-4: 前後両方 / mock-5: 前のみ
+      // mock-1 (次=mock-4) → mock-4 (前=mock-1, 次=mock-5) → mock-5 (前=mock-4)
       const first = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-1']`)
       const middle = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-4']`)
       const last = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-5']`)
@@ -132,6 +132,15 @@ test.describe("ボード", () => {
 
       await expect(last.getByTestId("task-relation-prev-badge")).toBeVisible()
       await expect(last.getByTestId("task-relation-next-badge")).toHaveCount(0)
+    })
+
+    test("前/次タスクありバッジに接続先タスクのタイトルが表示される", async () => {
+      const first = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-1']`)
+      const middle = page.locator(`${BOARD} [data-testid='task-item'][data-task-id='mock-4']`)
+
+      await expect(first.getByTestId("task-relation-next-badge")).toContainText("【DEV】家計簿の月次集計")
+      await expect(middle.getByTestId("task-relation-prev-badge")).toContainText("【DEV】ルーターのファームウェア更新")
+      await expect(middle.getByTestId("task-relation-next-badge")).toContainText("【DEV】サーバー監視ダッシュボード改善")
     })
   })
 

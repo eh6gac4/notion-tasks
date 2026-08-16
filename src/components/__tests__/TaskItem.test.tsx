@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { TaskItem } from "@/components/TaskItem"
+import { TaskLookupProvider } from "@/components/TaskLookupContext"
 import { formatDueShort } from "@/lib/due-date"
 import type { Task } from "@/types/task"
 
@@ -153,6 +154,36 @@ describe("TaskItem レンダリング", () => {
     render(<TaskItem task={makeTask({ prevTaskIds: [], nextTaskIds: [] })} onSelect={vi.fn()} />)
     expect(screen.queryByTestId("task-relation-prev-badge")).not.toBeInTheDocument()
     expect(screen.queryByTestId("task-relation-next-badge")).not.toBeInTheDocument()
+  })
+
+  it("ルックアップに存在する前/次タスクは、そのタイトルをバッジに表示する", () => {
+    const lookup = new Map([
+      ["p1", makeTask({ id: "p1", title: "前の作業" })],
+      ["n1", makeTask({ id: "n1", title: "次の作業" })],
+    ])
+    render(
+      <TaskLookupProvider value={lookup}>
+        <TaskItem task={makeTask({ prevTaskIds: ["p1"], nextTaskIds: ["n1"] })} onSelect={vi.fn()} />
+      </TaskLookupProvider>
+    )
+    expect(screen.getByText("◀前の作業")).toBeInTheDocument()
+    expect(screen.getByText("次の作業▶")).toBeInTheDocument()
+  })
+
+  it("ルックアップに未解決の前/次タスクは汎用ラベルにフォールバックする", () => {
+    render(<TaskItem task={makeTask({ prevTaskIds: ["p1"], nextTaskIds: ["n1"] })} onSelect={vi.fn()} />)
+    expect(screen.getByText("◀前タスク")).toBeInTheDocument()
+    expect(screen.getByText("次タスク▶")).toBeInTheDocument()
+  })
+
+  it("prevTaskIds/nextTaskIds が複数件のときは +N を付与する", () => {
+    const lookup = new Map([["p1", makeTask({ id: "p1", title: "先頭の前タスク" })]])
+    render(
+      <TaskLookupProvider value={lookup}>
+        <TaskItem task={makeTask({ prevTaskIds: ["p1", "p2", "p3"] })} onSelect={vi.fn()} />
+      </TaskLookupProvider>
+    )
+    expect(screen.getByText("◀先頭の前タスク +2")).toBeInTheDocument()
   })
 })
 

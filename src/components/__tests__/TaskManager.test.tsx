@@ -9,6 +9,7 @@ vi.mock("@/app/actions", () => ({
   setSortAction: vi.fn().mockResolvedValue(undefined),
   refreshTasksAction: vi.fn().mockResolvedValue(undefined),
   fetchInitialDataAction: vi.fn().mockResolvedValue({ tasks: [], tagOptions: [] }),
+  getTasksByIdsAction: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("next/navigation", () => ({

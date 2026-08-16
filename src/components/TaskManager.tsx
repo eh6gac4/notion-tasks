@@ -11,8 +11,10 @@ import { setAdvancedFilterAction, setSortAction, refreshTasksAction, fetchInitia
 import { isAdvancedFilterActive } from "@/constants/filters"
 import { isSortActive } from "@/lib/task-sort"
 import { buildRelationMap } from "@/lib/task-relation"
+import { useTaskLookup } from "@/hooks/useTaskLookup"
 import { TasksRefreshProvider } from "./TasksRefreshContext"
 import { TaskRelationProvider } from "./TaskRelationContext"
+import { TaskLookupProvider } from "./TaskLookupContext"
 
 export function TaskManager({
   tasks: seedTasks,
@@ -67,6 +69,14 @@ export function TaskManager({
     : null
 
   const relationMap = useMemo(() => buildRelationMap(selectedTask), [selectedTask])
+
+  // 前/次タスクバッジの名前表示用ルックアップ。完了/中止/バックログ等は lazy fetch
+  // 対象のため親 tasks に含まれないことがあり、その場合だけ id 単位で補完取得する。
+  const relationIds = useMemo(
+    () => tasks.flatMap((t) => [...t.prevTaskIds, ...t.nextTaskIds]),
+    [tasks]
+  )
+  const taskById = useTaskLookup(tasks, relationIds)
 
   function handleSelect(task: Task) {
     setSelectedTaskId(task.id)
@@ -231,14 +241,16 @@ export function TaskManager({
       {/* Board */}
       <main data-testid="task-list-main" className="flex-1 overflow-hidden">
         <TaskRelationProvider value={relationMap}>
-          <TaskBoard
-            tasks={tasks}
-            searchQuery={searchQuery}
-            advancedFilter={advancedFilter}
-            sort={sort}
-            isLoading={isInitialLoading}
-            onSelect={handleSelect}
-          />
+          <TaskLookupProvider value={taskById}>
+            <TaskBoard
+              tasks={tasks}
+              searchQuery={searchQuery}
+              advancedFilter={advancedFilter}
+              sort={sort}
+              isLoading={isInitialLoading}
+              onSelect={handleSelect}
+            />
+          </TaskLookupProvider>
         </TaskRelationProvider>
       </main>
 
