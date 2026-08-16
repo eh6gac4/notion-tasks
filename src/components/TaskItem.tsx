@@ -8,6 +8,7 @@ import { STATUS_OPTIONS, STATUS_ACCENT, PRIORITY_STYLES } from "@/constants/styl
 import { formatDueShort, isOverdue } from "@/lib/due-date"
 import { useTasksRefresh } from "./TasksRefreshContext"
 import { useTaskRelation } from "./TaskRelationContext"
+import { useTaskTitle } from "./TaskLookupContext"
 
 const RELATION_LABELS: Record<TaskRelation, string> = {
   prev: "前タスク",
@@ -40,11 +41,15 @@ export const TaskItem = memo(function TaskItem({
   const [updateError, setUpdateError] = useState<string | null>(null)
   const refreshTasks = useTasksRefresh()
   const relation = useTaskRelation(task.id)
+  const prevTitle = useTaskTitle(task.prevTaskIds[0])
+  const nextTitle = useTaskTitle(task.nextTaskIds[0])
 
   const status = optimisticStatus
   const overdue = isOverdue(task.due)
   const hasPrev = task.prevTaskIds.length > 0
   const hasNext = task.nextTaskIds.length > 0
+  const prevExtraCount = Math.max(task.prevTaskIds.length - 1, 0)
+  const nextExtraCount = Math.max(task.nextTaskIds.length - 1, 0)
   const hasMeta = task.priority || task.due || task.tags.length > 0 || task.childTaskIds.length > 0 || hasPrev || hasNext
 
   const isDoing = status === "進行中"
@@ -151,21 +156,21 @@ export const TaskItem = memo(function TaskItem({
           {hasPrev && (
             <span
               data-testid="task-relation-prev-badge"
-              title="前タスクあり"
-              className="font-pixel text-[11px]"
+              title={prevTitle ?? "前タスクあり"}
+              className="font-pixel text-[11px] inline-block max-w-[120px] truncate align-bottom"
               style={{ color: "var(--rel-prev)" }}
             >
-              ◀前
+              ◀{prevTitle ?? "前タスク"}{prevExtraCount > 0 ? ` +${prevExtraCount}` : ""}
             </span>
           )}
           {hasNext && (
             <span
               data-testid="task-relation-next-badge"
-              title="次タスクあり"
-              className="font-pixel text-[11px]"
+              title={nextTitle ?? "次タスクあり"}
+              className="font-pixel text-[11px] inline-block max-w-[120px] truncate align-bottom"
               style={{ color: "var(--rel-next)" }}
             >
-              次▶
+              {nextTitle ?? "次タスク"}{nextExtraCount > 0 ? ` +${nextExtraCount}` : ""}▶
             </span>
           )}
           {isCollapsible ? (
