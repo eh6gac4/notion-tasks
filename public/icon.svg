@@ -1,30 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
-  <rect width="192" height="192" fill="#0d0014"/>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 176" width="192" height="192">
   <defs>
-    <pattern id="dots" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
-      <rect x="0" y="0" width="2" height="2" fill="#ff00cc" opacity="0.25"/>
+    <linearGradient id="field" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff2d55"/>
+      <stop offset="100%" stop-color="#d4123f"/>
+    </linearGradient>
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="1.6" fill="#2a0410" fill-opacity="0.4"/>
     </pattern>
+    <radialGradient id="vignetteFill" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#ff2d55" stop-opacity="1"/>
+      <stop offset="34%" stop-color="#ff2d55" stop-opacity="1"/>
+      <stop offset="78%" stop-color="#ff2d55" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="192" height="192" fill="url(#dots)"/>
 
-  <!-- checkmark glow -->
-  <polyline
-    points="36,100 70,136 156,48"
-    fill="none"
-    stroke="#ff00cc"
-    stroke-width="26"
-    stroke-linecap="square"
-    stroke-linejoin="miter"
-    opacity="0.2"
-  />
-  <!-- checkmark -->
-  <polyline
-    points="36,100 70,136 156,48"
-    fill="none"
-    stroke="#ff00cc"
-    stroke-width="14"
-    stroke-linecap="square"
-    stroke-linejoin="miter"
-  />
+  <rect width="176" height="176" fill="url(#field)"/>
+  <rect width="176" height="176" fill="url(#dots)"/>
+  <rect width="176" height="176" fill="url(#vignetteFill)"/>
+
+  <!-- N-check monogram -->
+  <g fill="none" stroke="#2a0410" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 50 128 L 50 48 L 96 104 L 96 48"/>
+    <path d="M 96 104 L 118 128 L 140 66"/>
+  </g>
 </svg>
