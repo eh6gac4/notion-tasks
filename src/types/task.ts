@@ -51,6 +51,8 @@ export type CreateTaskInput = {
   source?: string
   sourceUrl?: string
   parentTaskId?: string
+  prevTaskId?: string
+  nextTaskId?: string
 }
 
 export type UpdateTaskInput = {

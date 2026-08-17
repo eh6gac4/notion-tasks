@@ -497,6 +497,20 @@ describe("createTask", () => {
     const props = mockPages.create.mock.calls[0][0].properties
     expect(props["親タスク"]).toEqual({ relation: [{ id: "parent-abc" }] })
   })
+
+  it("prevTaskId をリレーション形式で送信する", async () => {
+    mockPages.create.mockResolvedValue(makePage())
+    await createTask({ title: "次タスク", prevTaskId: "prev-abc" })
+    const props = mockPages.create.mock.calls[0][0].properties
+    expect(props["前タスク"]).toEqual({ relation: [{ id: "prev-abc" }] })
+  })
+
+  it("nextTaskId をリレーション形式で送信する", async () => {
+    mockPages.create.mockResolvedValue(makePage())
+    await createTask({ title: "前タスク", nextTaskId: "next-abc" })
+    const props = mockPages.create.mock.calls[0][0].properties
+    expect(props["次タスク"]).toEqual({ relation: [{ id: "next-abc" }] })
+  })
 })
 
 // -------------------------------------------------------------------

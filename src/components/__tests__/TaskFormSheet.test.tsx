@@ -84,6 +84,44 @@ describe("TaskFormSheet", () => {
     })
   })
 
+  it("nextTaskId 指定時は createTaskAction に nextTaskId を渡す", async () => {
+    const { createTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(createTaskAction)
+
+    render(
+      <TaskFormSheet open onClose={() => {}} tagOptions={TAG_OPTIONS} nextTaskId="t1" />,
+    )
+
+    const input = screen.getByPlaceholderText(/TASK NAME/)
+    fireEvent.change(input, { target: { value: "前タスク" } })
+    fireEvent.submit(input.closest("form") as HTMLFormElement)
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "前タスク", nextTaskId: "t1" }),
+      )
+    })
+  })
+
+  it("prevTaskId 指定時は createTaskAction に prevTaskId を渡す", async () => {
+    const { createTaskAction } = await import("@/app/actions")
+    const mock = vi.mocked(createTaskAction)
+
+    render(
+      <TaskFormSheet open onClose={() => {}} tagOptions={TAG_OPTIONS} prevTaskId="t1" />,
+    )
+
+    const input = screen.getByPlaceholderText(/TASK NAME/)
+    fireEvent.change(input, { target: { value: "次タスク" } })
+    fireEvent.submit(input.closest("form") as HTMLFormElement)
+
+    await waitFor(() => {
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "次タスク", prevTaskId: "t1" }),
+      )
+    })
+  })
+
   it("送信成功後に onClose が呼ばれる", async () => {
     const onClose = vi.fn()
     render(<TaskFormSheet open onClose={onClose} tagOptions={TAG_OPTIONS} />)

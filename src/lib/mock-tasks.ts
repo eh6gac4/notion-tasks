@@ -290,6 +290,15 @@ export function getMockTask(id: string): Task | undefined {
   return store.find((t) => t.id === id)
 }
 
+/** id のタスクが持つ relation 配列 field に targetId を追加する（片方向のリレーション同期）。 */
+function linkMockRelation(id: string | undefined, targetId: string, field: "childTaskIds" | "prevTaskIds" | "nextTaskIds") {
+  if (!id) return
+  const t = store.find((t) => t.id === id)
+  if (t && !t[field].includes(targetId)) {
+    t[field] = [...t[field], targetId]
+  }
+}
+
 export function createMockTask(input: CreateTaskInput): Task {
   const ts = new Date().toISOString()
   const task: Task = {
@@ -307,21 +316,17 @@ export function createMockTask(input: CreateTaskInput): Task {
     sourceUrl: input.sourceUrl ?? null,
     parentTaskIds: input.parentTaskId ? [input.parentTaskId] : [],
     childTaskIds: [],
-    prevTaskIds: [],
-    nextTaskIds: [],
+    prevTaskIds: input.prevTaskId ? [input.prevTaskId] : [],
+    nextTaskIds: input.nextTaskId ? [input.nextTaskId] : [],
     createdTime: ts,
     lastEditedTime: ts,
     attachments: [],
   }
   store.push(task)
-  // Notion のシンクド・リレーション挙動を模倣: 子の親を設定したら
-  // 親側の childTaskIds にも反映する。
-  if (input.parentTaskId) {
-    const parent = store.find((t) => t.id === input.parentTaskId)
-    if (parent && !parent.childTaskIds.includes(task.id)) {
-      parent.childTaskIds = [...parent.childTaskIds, task.id]
-    }
-  }
+  // Notion のシンクド・リレーション挙動を模倣: 片方を設定したら相手側にも反映する。
+  linkMockRelation(input.parentTaskId, task.id, "childTaskIds")
+  linkMockRelation(input.prevTaskId, task.id, "nextTaskIds")
+  linkMockRelation(input.nextTaskId, task.id, "prevTaskIds")
   if (input.body?.trim()) mockBlockStore.set(task.id, input.body)
   return task
 }

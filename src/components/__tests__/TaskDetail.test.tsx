@@ -689,6 +689,24 @@ describe("TaskDetail サブタスク", () => {
     expect(screen.getByText("✦ New Subtask")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /ADD SUBTASK/i })).toBeInTheDocument()
   })
+
+  it("前タスクを新規作成ボタンで作成フォームが開く", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+
+    expect(screen.queryByText("✦ New Prev Task")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId("prev-task-create-button"))
+    expect(screen.getByText("✦ New Prev Task")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /ADD PREV TASK/i })).toBeInTheDocument()
+  })
+
+  it("次タスクを新規作成ボタンで作成フォームが開く", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+
+    expect(screen.queryByText("✦ New Next Task")).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId("next-task-create-button"))
+    expect(screen.getByText("✦ New Next Task")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /ADD NEXT TASK/i })).toBeInTheDocument()
+  })
 })
 
 describe("TaskDetail 親タスク変更", () => {
