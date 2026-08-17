@@ -12,6 +12,9 @@ export default defineConfig({
     env: {
       NOTION_TOKEN: "test-token-placeholder",
       NOTION_DATABASE_ID: "test-db-placeholder",
+      GOOGLE_CLIENT_ID: "test-google-client-id-placeholder",
+      GOOGLE_CLIENT_SECRET: "test-google-client-secret-placeholder",
+      GOOGLE_REFRESH_TOKEN: "test-google-refresh-token-placeholder",
     },
   },
 })
