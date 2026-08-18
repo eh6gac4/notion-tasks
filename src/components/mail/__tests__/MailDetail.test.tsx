@@ -114,4 +114,35 @@ describe('MailDetail Component', () => {
       }).not.toThrow();
     });
   });
+
+  describe('Archive button', () => {
+    it('shows the Archive action for a non-archived email and calls back with its id', () => {
+      const onToggleArchive = vi.fn();
+      render(<MailDetail {...defaultProps} email={sampleEmail} onToggleArchive={onToggleArchive} />);
+
+      const archiveBtn = screen.getByRole('button', { name: 'Archive email' });
+      fireEvent.click(archiveBtn);
+
+      expect(archiveBtn).toHaveTextContent('Archive');
+      expect(onToggleArchive).toHaveBeenCalledWith(sampleEmail.id);
+    });
+
+    it('shows the Unarchive action for an already archived email', () => {
+      const onToggleArchive = vi.fn();
+      const archivedEmail: Email = { ...sampleEmail, folder: 'archive' };
+      render(<MailDetail {...defaultProps} email={archivedEmail} onToggleArchive={onToggleArchive} />);
+
+      const unarchiveBtn = screen.getByRole('button', { name: 'Unarchive email' });
+      fireEvent.click(unarchiveBtn);
+
+      expect(unarchiveBtn).toHaveTextContent('Unarchive');
+      expect(onToggleArchive).toHaveBeenCalledWith(archivedEmail.id);
+    });
+
+    it('does not throw when onToggleArchive is undefined', () => {
+      render(<MailDetail email={sampleEmail} />);
+
+      expect(() => fireEvent.click(screen.getByRole('button', { name: 'Archive email' }))).not.toThrow();
+    });
+  });
 });

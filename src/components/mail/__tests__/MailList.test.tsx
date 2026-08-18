@@ -138,4 +138,78 @@ describe('MailList Component', () => {
       expect(unreadDots.length).toBe(1);
     });
   });
+
+  describe('Swipe to archive', () => {
+    const swipe = (row: Element, dx: number, dy = 0) => {
+      fireEvent.touchStart(row, { touches: [{ clientX: 0, clientY: 0 }] });
+      fireEvent.touchMove(row, { touches: [{ clientX: dx, clientY: dy }] });
+      fireEvent.touchEnd(row);
+    };
+
+    const getRow = (senderName: string) =>
+      screen.getByText(senderName).closest('div[role="option"]')!;
+
+    it('archives the email when swiped beyond the threshold', () => {
+      const onToggleArchive = vi.fn();
+      render(<MailList {...defaultProps} onToggleArchive={onToggleArchive} />);
+
+      swipe(getRow('Kaito Tanaka'), -100);
+
+      expect(onToggleArchive).toHaveBeenCalledWith('mail-2');
+    });
+
+    it('archives on a rightward swipe as well', () => {
+      const onToggleArchive = vi.fn();
+      render(<MailList {...defaultProps} onToggleArchive={onToggleArchive} />);
+
+      swipe(getRow('Kaito Tanaka'), 100);
+
+      expect(onToggleArchive).toHaveBeenCalledWith('mail-2');
+    });
+
+    it('does not archive when the swipe is shorter than the threshold', () => {
+      const onToggleArchive = vi.fn();
+      const onSelectEmail = vi.fn();
+      render(
+        <MailList {...defaultProps} onSelectEmail={onSelectEmail} onToggleArchive={onToggleArchive} />
+      );
+
+      const row = getRow('Kaito Tanaka');
+      swipe(row, -20);
+      fireEvent.click(row);
+
+      expect(onToggleArchive).not.toHaveBeenCalled();
+      expect(onSelectEmail).toHaveBeenCalledWith('mail-2');
+    });
+
+    it('ignores mostly-vertical drags so the list can still scroll', () => {
+      const onToggleArchive = vi.fn();
+      render(<MailList {...defaultProps} onToggleArchive={onToggleArchive} />);
+
+      swipe(getRow('Kaito Tanaka'), -100, -160);
+
+      expect(onToggleArchive).not.toHaveBeenCalled();
+    });
+
+    it('does not open the email on the click that follows a completed swipe', () => {
+      const onSelectEmail = vi.fn();
+      const onToggleArchive = vi.fn();
+      render(
+        <MailList {...defaultProps} onSelectEmail={onSelectEmail} onToggleArchive={onToggleArchive} />
+      );
+
+      const row = getRow('Kaito Tanaka');
+      swipe(row, -100);
+      fireEvent.click(row);
+
+      expect(onToggleArchive).toHaveBeenCalledWith('mail-2');
+      expect(onSelectEmail).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when onToggleArchive is not provided', () => {
+      render(<MailList {...defaultProps} onToggleArchive={undefined} />);
+
+      expect(() => swipe(getRow('Kaito Tanaka'), -100)).not.toThrow();
+    });
+  });
 });

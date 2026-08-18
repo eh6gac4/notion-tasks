@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
 import { useMailShortcuts } from '@/hooks/useMailShortcuts';
-import { fetchMailsAction, markAsReadAction, toggleStarAction } from '@/app/mail/actions';
+import { fetchMailsAction, markAsReadAction, toggleStarAction, toggleArchiveAction } from '@/app/mail/actions';
 import { MailSidebar } from '@/components/mail/MailSidebar';
 import { MailList } from '@/components/mail/MailList';
 import { MailDetail } from '@/components/mail/MailDetail';
@@ -158,6 +158,47 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     const nextStarred = current ? !current.isStarred : false;
     startMailTransition(async () => {
       await toggleStarAction(id, nextStarred);
+    });
+  };
+
+  // Handle archive toggle — アーカイブ済み(folder === 'archive')なら解除、それ以外はアーカイブする。
+  // Gmail 側では INBOX ラベルの付け外しで表現される。
+  const handleToggleArchive = (id: string) => {
+    const target = emails.find((email) => email.id === id);
+    if (!target) return;
+    const willArchive = target.folder !== 'archive';
+    const nextFolder: MailFolder = willArchive ? 'archive' : 'inbox';
+
+    // inbox / archive 表示中は操作後に対象がそのフォルダの条件を満たさなくなるためリストから除く。
+    // ラベル表示中はフォルダ条件で絞っていないので残す。
+    const leavesCurrentList = !activeLabel && (activeFolder === 'inbox' || activeFolder === 'archive');
+
+    const applyFolder = (list: Email[]) =>
+      list.map((email) => (email.id === id ? { ...email, folder: nextFolder } : email));
+
+    setEmails((prev) => (leavesCurrentList ? prev.filter((email) => email.id !== id) : applyFolder(prev)));
+    if (leavesCurrentList && selectedId === id) {
+      setSelectedId(null);
+    }
+
+    if (isLocalOnlyEmail(id)) {
+      setLocalOnlyEmails(applyFolder);
+      showToast(willArchive ? 'Archived' : 'Moved to Inbox', 'success');
+      return;
+    }
+
+    // 未読メールの移動分だけ INBOX の未読数を補正する。
+    // archive は複合クエリのためサーバー側でも 0 固定(getUnreadCounts)なので触らない。
+    if (!target.isRead) {
+      setUnreadCounts((prev) => ({
+        ...prev,
+        inbox: willArchive ? Math.max(0, prev.inbox - 1) : prev.inbox + 1,
+      }));
+    }
+
+    startMailTransition(async () => {
+      await toggleArchiveAction(id, willArchive);
+      showToast(willArchive ? 'Archived' : 'Moved to Inbox', 'success');
     });
   };
 
@@ -331,6 +372,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
           selectedId={selectedId}
           onSelectEmail={handleSelectEmail}
           onToggleStar={handleToggleStar}
+          onToggleArchive={handleToggleArchive}
           activeFolder={activeFolder}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -344,6 +386,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
           email={selectedEmail}
           onTaskify={handleTaskify}
           onAIDraft={handleAIDraft}
+          onToggleArchive={handleToggleArchive}
           onBack={() => setSelectedId(null)}
         />
       </main>
