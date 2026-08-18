@@ -7,6 +7,7 @@ export interface MailDetailProps {
   email: Email | null;
   onTaskify?: (email: Email) => void;
   onAIDraft?: (email: Email) => void;
+  onToggleArchive?: (id: string) => void;
   onBack?: () => void;
 }
 
@@ -19,7 +20,7 @@ export function getSenderInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function MailDetail({ email, onTaskify, onAIDraft, onBack }: MailDetailProps) {
+export function MailDetail({ email, onTaskify, onAIDraft, onToggleArchive, onBack }: MailDetailProps) {
   if (!email) {
     return (
       <div className="hidden md:flex flex-1 bg-[var(--surface)] flex-col items-center justify-center p-8 text-center">
@@ -49,6 +50,8 @@ export function MailDetail({ email, onTaskify, onAIDraft, onBack }: MailDetailPr
       </div>
     );
   }
+
+  const isArchived = email.folder === 'archive';
 
   const formattedDate = new Date(email.date).toLocaleString([], {
     dateStyle: 'medium',
@@ -162,6 +165,49 @@ export function MailDetail({ email, onTaskify, onAIDraft, onBack }: MailDetailPr
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
             </svg>
             <span>AI Draft Reply</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onToggleArchive?.(email.id)}
+            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-mono font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
+            aria-label={isArchived ? 'Unarchive email' : 'Archive email'}
+          >
+            {isArchived ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="2" y="4" width="20" height="5" />
+                <path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9" />
+                <line x1="10" y1="13" x2="14" y2="13" />
+              </svg>
+            )}
+            <span>{isArchived ? 'Unarchive' : 'Archive'}</span>
           </button>
         </div>
       </div>

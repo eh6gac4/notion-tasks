@@ -297,6 +297,11 @@ async function markReadOnGmail(id: string): Promise<void> {
   await gmailModify(`/messages/${id}/modify`, { removeLabelIds: ["UNREAD"] })
 }
 
+// Gmail のアーカイブは INBOX ラベルの付け外しで表現される(専用の API は無い)。
+async function setArchivedOnGmail(id: string, archived: boolean): Promise<void> {
+  await gmailModify(`/messages/${id}/modify`, archived ? { removeLabelIds: ["INBOX"] } : { addLabelIds: ["INBOX"] })
+}
+
 // archive・all は複合クエリのため labels.get の対象にならない。0 固定とする。
 const UNREAD_COUNT_FOLDERS: { folder: MailFolder; labelId: string }[] = [
   { folder: "inbox", labelId: "INBOX" },
@@ -337,6 +342,11 @@ export function getMailBody(id: string): Promise<Email | null> {
 export async function toggleMailStar(id: string, starred: boolean): Promise<void> {
   if (isDevMode()) return
   await setStarredOnGmail(id, starred)
+}
+
+export async function setMailArchived(id: string, archived: boolean): Promise<void> {
+  if (isDevMode()) return
+  await setArchivedOnGmail(id, archived)
 }
 
 export async function markMailAsRead(id: string): Promise<void> {
