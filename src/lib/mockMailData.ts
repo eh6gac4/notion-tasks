@@ -165,6 +165,9 @@ Elena`,
 ];
 
 export function getFilteredEmails(emails: Email[], folder: MailFolder): Email[] {
+  if (folder === 'all') {
+    return emails.filter((email) => email.folder !== 'trash');
+  }
   if (folder === 'starred') {
     return emails.filter((email) => email.isStarred && email.folder !== 'trash');
   }

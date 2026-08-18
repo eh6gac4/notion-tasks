@@ -1,4 +1,4 @@
-export type MailFolder = 'inbox' | 'starred' | 'sent' | 'trash' | 'archive';
+export type MailFolder = 'all' | 'inbox' | 'starred' | 'sent' | 'trash' | 'archive';
 
 export interface EmailSender {
   name: string;

@@ -6,6 +6,7 @@ import { MailFolder } from '@/types/mail';
 
 describe('MailSidebar Component', () => {
   const defaultUnreadCounts: Record<MailFolder, number> = {
+    all: 4,
     inbox: 3,
     starred: 1,
     sent: 0,
@@ -28,9 +29,10 @@ describe('MailSidebar Component', () => {
   });
 
   describe('Tier 1: Feature Coverage', () => {
-    it('renders all 5 folder navigation items (Inbox, Starred, Sent, Archive, Trash)', () => {
+    it('renders all 6 folder navigation items (All Mail, Inbox, Starred, Sent, Archive, Trash)', () => {
       render(<MailSidebar {...defaultProps} />);
 
+      expect(screen.getByText('All Mail')).toBeInTheDocument();
       expect(screen.getByText('Inbox')).toBeInTheDocument();
       expect(screen.getByText('Starred')).toBeInTheDocument();
       expect(screen.getByText('Sent')).toBeInTheDocument();
@@ -79,6 +81,7 @@ describe('MailSidebar Component', () => {
   describe('Tier 2: Boundary & Edge Cases', () => {
     it('hides unread count badge when folder unread count is 0', () => {
       const zeroUnreadCounts: Record<MailFolder, number> = {
+        all: 0,
         inbox: 0,
         starred: 0,
         sent: 0,
@@ -92,6 +95,7 @@ describe('MailSidebar Component', () => {
 
     it('displays large unread count numbers without layout truncation', () => {
       const largeUnreadCounts: Record<MailFolder, number> = {
+        all: 0,
         inbox: 9999,
         starred: 0,
         sent: 0,
