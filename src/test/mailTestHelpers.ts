@@ -1,4 +1,4 @@
-import { Email, MailFolder } from '@/types/mail';
+import { MailFolder, MailPage } from '@/types/mail';
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
 import { MailManagerProps } from '@/components/mail/MailManager';
 
@@ -34,9 +34,9 @@ export function getDefaultMailManagerProps(): MailManagerProps {
 // src/lib/gmail.ts の dev フォールバック(getMails)と同じ計算を再現する。
 // vi.mock の factory は hoist されるため、呼び出し側では動的 import 経由でこの関数を
 // 使うこと(トップレベル import すると TDZ エラーになる)。
-export function mockFetchMails(folder: MailFolder, label?: string): Promise<Email[]> {
+export function mockFetchMails(folder: MailFolder, label?: string): Promise<MailPage> {
   const filtered = label
     ? INITIAL_MOCK_EMAILS.filter((e) => e.labels?.includes(label))
     : getFilteredEmails(INITIAL_MOCK_EMAILS, folder);
-  return Promise.resolve(filtered);
+  return Promise.resolve({ emails: filtered });
 }

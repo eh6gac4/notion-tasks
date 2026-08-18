@@ -1,4 +1,4 @@
-import { Email, EmailSender, MailFolder } from "@/types/mail"
+import { Email, EmailSender, MailFolder, MailPage } from "@/types/mail"
 import { config } from "@/config"
 import { isDevMode } from "@/lib/require-auth"
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from "@/lib/mockMailData"
@@ -249,21 +249,22 @@ function toEmail(message: GmailMessage, idToName: Map<string, string>, bodyOverr
 }
 
 // ---- 一覧・詳細取得 ----
-async function fetchMailsFromGmail(folder: MailFolder, label?: string): Promise<Email[]> {
+async function fetchMailsFromGmail(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
   const { q: folderQuery, includeSpamTrash } = folderToQuery(folder)
   const q = label ? `label:"${label}"` : folderQuery
 
   const [listData, labelsCache] = await Promise.all([
-    gmailGet<{ messages?: { id: string }[] }>("/messages", {
+    gmailGet<{ messages?: { id: string }[]; nextPageToken?: string }>("/messages", {
       q,
       maxResults: String(LIST_MAX_RESULTS),
       includeSpamTrash: String(includeSpamTrash),
+      ...(pageToken ? { pageToken } : {}),
     }),
     getLabelsCache(),
   ])
 
   const ids = listData.messages ?? []
-  if (ids.length === 0) return []
+  if (ids.length === 0) return { emails: [] }
 
   // messages.list は ID のみ返すため、ヘッダだけを 1 件ずつ取得する(本文は詳細表示時のみ)。
   // 25 件を無制限並列で取得すると Workers の同時接続数に影響しうるため、バッチ処理する。
@@ -274,7 +275,7 @@ async function fetchMailsFromGmail(folder: MailFolder, label?: string): Promise<
     }),
   )
 
-  return messages.map((m) => toEmail(m, labelsCache.idToName))
+  return { emails: messages.map((m) => toEmail(m, labelsCache.idToName)), nextPageToken: listData.nextPageToken }
 }
 
 async function fetchMailBodyFromGmail(id: string): Promise<Email> {
@@ -313,14 +314,14 @@ async function fetchUnreadCountsFromGmail(): Promise<Record<MailFolder, number>>
 }
 
 // ---- 公開 API(dev モードでは mockMailData にフォールバック。src/lib/notion.ts と同じ方針) ----
-export function getMails(folder: MailFolder, label?: string): Promise<Email[]> {
+export function getMails(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
   if (isDevMode()) {
     const filtered = label
       ? INITIAL_MOCK_EMAILS.filter((e) => e.labels?.includes(label))
       : getFilteredEmails(INITIAL_MOCK_EMAILS, folder)
-    return Promise.resolve(filtered)
+    return Promise.resolve({ emails: filtered })
   }
-  return fetchMailsFromGmail(folder, label)
+  return fetchMailsFromGmail(folder, label, pageToken)
 }
 
 export function getMailBody(id: string): Promise<Email | null> {

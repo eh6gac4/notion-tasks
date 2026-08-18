@@ -2,11 +2,12 @@ import { MailManager } from '@/components/mail/MailManager';
 import { fetchInitialMailDataAction } from './actions';
 
 export default async function MailPage() {
-  const { emails, labels, unreadCounts } = await fetchInitialMailDataAction();
+  const { mailPage, labels, unreadCounts } = await fetchInitialMailDataAction();
 
   return (
     <MailManager
-      initialEmails={emails}
+      initialEmails={mailPage.emails}
+      initialNextPageToken={mailPage.nextPageToken}
       initialLabels={labels}
       initialUnreadCounts={unreadCounts}
     />
