@@ -2,25 +2,25 @@
 
 import { requireAuth } from "@/lib/require-auth"
 import { getMails, getMailBody, toggleMailStar, markMailAsRead, getMailLabels, getUnreadCounts } from "@/lib/gmail"
-import type { Email, MailFolder } from "@/types/mail"
+import type { Email, MailFolder, MailPage } from "@/types/mail"
 
 export async function fetchInitialMailDataAction(): Promise<{
-  emails: Email[]
+  mailPage: MailPage
   labels: string[]
   unreadCounts: Record<MailFolder, number>
 }> {
   await requireAuth()
-  const [emails, labels, unreadCounts] = await Promise.all([
+  const [mailPage, labels, unreadCounts] = await Promise.all([
     getMails("inbox"),
     getMailLabels(),
     getUnreadCounts(),
   ])
-  return { emails, labels, unreadCounts }
+  return { mailPage, labels, unreadCounts }
 }
 
-export async function fetchMailsAction(folder: MailFolder, label?: string): Promise<Email[]> {
+export async function fetchMailsAction(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
   await requireAuth()
-  return getMails(folder, label)
+  return getMails(folder, label, pageToken)
 }
 
 export async function fetchMailBodyAction(id: string): Promise<Email | null> {

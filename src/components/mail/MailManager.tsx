@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useTransition } from 'react';
 import Link from 'next/link';
-import { MailFolder, Email, ComposeDraft } from '@/types/mail';
+import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
 import { useMailShortcuts } from '@/hooks/useMailShortcuts';
 import { fetchMailsAction, markAsReadAction, toggleStarAction } from '@/app/mail/actions';
@@ -22,11 +22,12 @@ const isLocalOnlyEmail = (id: string): boolean => id.startsWith('mail-');
 
 export interface MailManagerProps {
   initialEmails: Email[];
+  initialNextPageToken?: string;
   initialLabels: string[];
   initialUnreadCounts: Record<MailFolder, number>;
 }
 
-export function MailManager({ initialEmails, initialLabels, initialUnreadCounts }: MailManagerProps) {
+export function MailManager({ initialEmails, initialNextPageToken, initialLabels, initialUnreadCounts }: MailManagerProps) {
   const [emails, setEmails] = useState<Email[]>(initialEmails);
   // 送信モック(対象外機能)で生成したメールは Gmail 上に存在しないため、フォルダ切替時の
   // サーバー再フェッチでは戻ってこない。別 state で保持し、フォルダ一致時に合成する。
@@ -43,6 +44,8 @@ export function MailManager({ initialEmails, initialLabels, initialUnreadCounts 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'info' | 'error'>('info');
   const [isMailLoading, startMailTransition] = useTransition();
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(initialNextPageToken);
+  const [isLoadingMore, startLoadMoreTransition] = useTransition();
 
   // Compute search filtered emails (folder/label のフィルタは fetchMailsAction 側で完了済み)
   const filteredEmails = useMemo(() => {
@@ -60,6 +63,14 @@ export function MailManager({ initialEmails, initialLabels, initialUnreadCounts 
   // Selected email state (default to null for mobile responsive view)
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // メール一覧の取得結果を state に反映する共通処理。mergeEmails で
+  // 「置き換え(フォルダ/ラベル切替)」「先頭に合成(ローカル限定メール)」
+  // 「末尾に追加(もっと読み込む)」の違いだけを呼び出し側に委ねる。
+  const applyMailPage = (page: MailPage, mergeEmails: (prev: Email[], fetched: Email[]) => Email[]) => {
+    setEmails((prev) => mergeEmails(prev, page.emails));
+    setNextPageToken(page.nextPageToken);
+  };
+
   // Handle folder switching — サーバーから該当フォルダのメールを取得する。
   // ローカル限定メール(送信モック)のうち対象フォルダに属するものは先頭に合成する。
   const handleSelectFolder = (folder: MailFolder) => {
@@ -67,9 +78,9 @@ export function MailManager({ initialEmails, initialLabels, initialUnreadCounts 
     setActiveLabel(null);
     setSelectedId(null);
     startMailTransition(async () => {
-      const fetched = await fetchMailsAction(folder);
+      const page = await fetchMailsAction(folder);
       const localForFolder = localOnlyEmails.filter((email) => email.folder === folder);
-      setEmails([...localForFolder, ...fetched]);
+      applyMailPage(page, (_prev, fetched) => [...localForFolder, ...fetched]);
     });
   };
 
@@ -78,7 +89,16 @@ export function MailManager({ initialEmails, initialLabels, initialUnreadCounts 
     setActiveLabel(label);
     setSelectedId(null);
     startMailTransition(async () => {
-      setEmails(await fetchMailsAction(activeFolder, label));
+      applyMailPage(await fetchMailsAction(activeFolder, label), (_prev, fetched) => fetched);
+    });
+  };
+
+  // Handle "load more" — 現在のフォルダ/ラベルの続きを取得して末尾に追加する
+  const handleLoadMore = () => {
+    if (!nextPageToken) return;
+    startLoadMoreTransition(async () => {
+      const page = await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
+      applyMailPage(page, (prev, fetched) => [...prev, ...fetched]);
     });
   };
 
@@ -313,6 +333,9 @@ export function MailManager({ initialEmails, initialLabels, initialUnreadCounts 
           activeFolder={activeFolder}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          hasMore={!!nextPageToken}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={handleLoadMore}
         />
 
         {/* Pane 3: Email Detail */}

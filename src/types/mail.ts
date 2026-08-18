@@ -19,6 +19,11 @@ export interface Email {
   labels?: string[];
 }
 
+export interface MailPage {
+  emails: Email[];
+  nextPageToken?: string;
+}
+
 export interface ComposeDraft {
   to: string;
   subject: string;

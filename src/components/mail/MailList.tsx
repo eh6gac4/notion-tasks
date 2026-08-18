@@ -11,6 +11,9 @@ export interface MailListProps {
   activeFolder?: MailFolder;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function MailList({
@@ -20,6 +23,9 @@ export function MailList({
   onToggleStar,
   searchQuery = '',
   onSearchChange,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
 }: MailListProps) {
   const filteredEmails = emails.filter((email) => {
     if (!searchQuery.trim()) return true;
@@ -185,6 +191,18 @@ export function MailList({
               </div>
             );
           })
+        )}
+        {hasMore && (
+          <div className="p-3">
+            <button
+              type="button"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="w-full py-2 text-xs font-mono text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
+            >
+              {isLoadingMore ? 'Loading...' : 'Load more'}
+            </button>
+          </div>
         )}
       </div>
     </div>
