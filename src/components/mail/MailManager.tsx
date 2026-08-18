@@ -288,6 +288,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
             }}
           >
             <optgroup label="Folders">
+              <option value="folder:all">ALL MAIL</option>
               <option value="folder:inbox">INBOX</option>
               <option value="folder:starred">STARRED</option>
               <option value="folder:sent">SENT</option>

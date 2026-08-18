@@ -13,12 +13,14 @@ export function getMockLabels(): string[] {
 }
 
 export function getMockUnreadCounts(): Record<MailFolder, number> {
-  const counts: Record<MailFolder, number> = { inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 };
+  const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 };
   INITIAL_MOCK_EMAILS.forEach((email) => {
     if (!email.isRead && email.folder !== 'trash') {
       counts[email.folder] = (counts[email.folder] || 0) + 1;
     }
   });
+  // all はゴミ箱以外の未読合計。starred は inbox/sent/archive のいずれかと重複カウントされるため除外する。
+  counts.all = counts.inbox + counts.sent + counts.archive;
   return counts;
 }
 

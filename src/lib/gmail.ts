@@ -89,6 +89,9 @@ async function fetchInBatches<T, R>(items: T[], batchSize: number, fn: (item: T)
 // ---- フォルダ ⇔ Gmail 検索クエリ ----
 function folderToQuery(folder: MailFolder): { q: string; includeSpamTrash: boolean } {
   switch (folder) {
+    case "all":
+      // Gmail の「すべてのメール」相当。ゴミ箱・迷惑メールのみ除外する。
+      return { q: "-label:TRASH -label:SPAM", includeSpamTrash: false }
     case "inbox":
       return { q: "label:INBOX", includeSpamTrash: false }
     case "starred":
@@ -294,7 +297,7 @@ async function markReadOnGmail(id: string): Promise<void> {
   await gmailModify(`/messages/${id}/modify`, { removeLabelIds: ["UNREAD"] })
 }
 
-// archive は複合クエリのため labels.get の対象にならない。0 固定とする。
+// archive・all は複合クエリのため labels.get の対象にならない。0 固定とする。
 const UNREAD_COUNT_FOLDERS: { folder: MailFolder; labelId: string }[] = [
   { folder: "inbox", labelId: "INBOX" },
   { folder: "starred", labelId: "STARRED" },
@@ -303,7 +306,7 @@ const UNREAD_COUNT_FOLDERS: { folder: MailFolder; labelId: string }[] = [
 ]
 
 async function fetchUnreadCountsFromGmail(): Promise<Record<MailFolder, number>> {
-  const counts: Record<MailFolder, number> = { inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
+  const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
   const results = await Promise.all(
     UNREAD_COUNT_FOLDERS.map(({ labelId }) => gmailGet<{ messagesUnread?: number }>(`/labels/${labelId}`)),
   )
@@ -353,12 +356,14 @@ export async function getMailLabels(): Promise<string[]> {
 
 export function getUnreadCounts(): Promise<Record<MailFolder, number>> {
   if (isDevMode()) {
-    const counts: Record<MailFolder, number> = { inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
+    const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
     INITIAL_MOCK_EMAILS.forEach((email) => {
       if (!email.isRead && email.folder !== "trash") {
         counts[email.folder] = (counts[email.folder] || 0) + 1
       }
     })
+    // all はゴミ箱以外の未読合計。starred は inbox/sent/archive のいずれかと重複カウントされるため除外する。
+    counts.all = counts.inbox + counts.sent + counts.archive
     return Promise.resolve(counts)
   }
   return fetchUnreadCountsFromGmail()
