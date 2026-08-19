@@ -13,6 +13,15 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "ja",
     dir: "ltr",
     categories: ["productivity"],
+    // ホーム画面のアイコン長押しからメール画面へ直接遷移する(トップ経由の往復を省く)。
+    shortcuts: [
+      {
+        name: "メール",
+        short_name: "メール",
+        url: "/mail",
+        icons: [{ src: "/icon-192", sizes: "192x192", type: "image/png" }],
+      },
+    ],
     background_color: "#0b0008",
     theme_color: "#dc143c",
     icons: [

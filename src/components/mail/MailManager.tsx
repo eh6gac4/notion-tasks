@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useTransition } from 'react';
+import React, { useState, useMemo, useRef, useTransition, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
@@ -15,6 +15,10 @@ import { AIDraftModal } from '@/components/mail/AIDraftModal';
 import { MailToast } from '@/components/mail/MailToast';
 
 const generateMailId = (): string => `mail-${Date.now()}`;
+
+// フォルダ/ラベル単位のキャッシュキー。ラベル表示はフォルダに依存しないため label 単独で持つ。
+const mailCacheKey = (folder: MailFolder, label: string | null): string =>
+  label ? `label:${label}` : `folder:${folder}`;
 
 // 送信モック(対象外機能)で生成したローカル限定メールかどうかの判定。
 // Gmail 上に実在しないため、サーバーへの既読化・スター操作を送らない。
@@ -47,10 +51,24 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   const [nextPageToken, setNextPageToken] = useState<string | undefined>(initialNextPageToken);
   const [isLoadingMore, startLoadMoreTransition] = useTransition();
 
+  // 一度取得したフォルダ/ラベルの一覧を保持し、再訪時は即座に表示してから裏で再検証する
+  // (stale-while-revalidate)。切替のたびに空リストへ落ちるのを防ぐのが目的。
+  // useRef の引数は毎レンダー評価されるため、初期 Map は遅延生成する。
+  const mailCacheRef = useRef<Map<string, MailPage> | null>(null);
+  if (mailCacheRef.current === null) {
+    mailCacheRef.current = new Map([
+      [mailCacheKey('inbox', null), { emails: initialEmails, nextPageToken: initialNextPageToken }],
+    ]);
+  }
+  const mailCache = mailCacheRef.current;
+
+  // 入力のたびに全件フィルタすると打鍵が詰まるため、検索語の反映を遅延させる。
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   // Compute search filtered emails (folder/label のフィルタは fetchMailsAction 側で完了済み)
   const filteredEmails = useMemo(() => {
-    if (!searchQuery.trim()) return emails;
-    const q = searchQuery.toLowerCase();
+    if (!deferredSearchQuery.trim()) return emails;
+    const q = deferredSearchQuery.toLowerCase();
     return emails.filter(
       (email) =>
         email.subject.toLowerCase().includes(q) ||
@@ -58,7 +76,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
         email.sender.email.toLowerCase().includes(q) ||
         email.body.toLowerCase().includes(q)
     );
-  }, [emails, searchQuery]);
+  }, [emails, deferredSearchQuery]);
 
   // Selected email state (default to null for mobile responsive view)
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -71,26 +89,39 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     setNextPageToken(page.nextPageToken);
   };
 
+  // フォルダ/ラベル切替の共通処理。キャッシュがあれば即座に描画し、
+  // いずれの場合もサーバーから取り直して最新に揃える。
+  const loadMailPage = (folder: MailFolder, label: string | null) => {
+    const key = mailCacheKey(folder, label);
+    const cached = mailCache.get(key);
+    const localForFolder = label ? [] : localOnlyEmails.filter((email) => email.folder === folder);
+
+    if (cached) {
+      setEmails([...localForFolder, ...cached.emails]);
+      setNextPageToken(cached.nextPageToken);
+    }
+
+    startMailTransition(async () => {
+      const page = await fetchMailsAction(folder, label ?? undefined);
+      mailCache.set(key, page);
+      applyMailPage(page, (_prev, fetched) => [...localForFolder, ...fetched]);
+    });
+  };
+
   // Handle folder switching — サーバーから該当フォルダのメールを取得する。
   // ローカル限定メール(送信モック)のうち対象フォルダに属するものは先頭に合成する。
   const handleSelectFolder = (folder: MailFolder) => {
     setActiveFolder(folder);
     setActiveLabel(null);
     setSelectedId(null);
-    startMailTransition(async () => {
-      const page = await fetchMailsAction(folder);
-      const localForFolder = localOnlyEmails.filter((email) => email.folder === folder);
-      applyMailPage(page, (_prev, fetched) => [...localForFolder, ...fetched]);
-    });
+    loadMailPage(folder, null);
   };
 
   // Handle label switching — サーバーから該当ラベルのメールを取得する
   const handleSelectLabel = (label: string) => {
     setActiveLabel(label);
     setSelectedId(null);
-    startMailTransition(async () => {
-      applyMailPage(await fetchMailsAction(activeFolder, label), (_prev, fetched) => fetched);
-    });
+    loadMailPage(activeFolder, label);
   };
 
   // Handle "load more" — 現在のフォルダ/ラベルの続きを取得して末尾に追加する
@@ -98,8 +129,32 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     if (!nextPageToken) return;
     startLoadMoreTransition(async () => {
       const page = await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
+      // 追加読み込み分もキャッシュに足し、再訪時に読み込み済みの範囲まで復元されるようにする。
+      // キャッシュはサーバー由来のメールだけを持つので、表示リストではなく前回のキャッシュに継ぎ足す。
+      const key = mailCacheKey(activeFolder, activeLabel);
+      mailCache.set(key, {
+        emails: [...(mailCache.get(key)?.emails ?? []), ...page.emails],
+        nextPageToken: page.nextPageToken,
+      });
       applyMailPage(page, (prev, fetched) => [...prev, ...fetched]);
     });
+  };
+
+  // キャッシュ済みの全ページに対して 1 通の変更を反映する。
+  // これをしないと、操作したメールが別フォルダの古いキャッシュに元の状態のまま残る。
+  const patchCachedEmail = (id: string, patch: (email: Email) => Email) => {
+    mailCache.forEach((page, key) => {
+      if (!page.emails.some((email) => email.id === id)) return;
+      mailCache.set(key, {
+        ...page,
+        emails: page.emails.map((email) => (email.id === id ? patch(email) : email)),
+      });
+    });
+  };
+
+  // フォルダ所属が変わる操作の後は、対象フォルダのキャッシュを捨てて次回に取り直す。
+  const invalidateCachedFolders = (folders: MailFolder[]) => {
+    folders.forEach((folder) => mailCache.delete(mailCacheKey(folder, null)));
   };
 
   // Handle email selection & mark as read
@@ -110,6 +165,10 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     setEmails((prev) =>
       prev.map((email) => (email.id === id ? { ...email, isRead: true } : email))
     );
+    // 既読のメールを開き直した場合は書き換える内容が無いので、キャッシュ走査ごと省く。
+    if (wasUnread) {
+      patchCachedEmail(id, (email) => ({ ...email, isRead: true }));
+    }
     if (isLocalOnlyEmail(id)) {
       setLocalOnlyEmails((prev) =>
         prev.map((email) => (email.id === id ? { ...email, isRead: true } : email))
@@ -129,6 +188,11 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     e.stopPropagation();
     const toggleStarred = (list: Email[]) =>
       list.map((email) => (email.id === id ? { ...email, isStarred: !email.isStarred } : email));
+
+    // starred フォルダは所属自体が変わるため、キャッシュを捨てて次回取り直す。
+    // 破棄を先に行い、直後の patch が捨てるページを書き換えずに済むようにする。
+    invalidateCachedFolders(['starred']);
+    patchCachedEmail(id, (email) => ({ ...email, isStarred: !email.isStarred }));
 
     setEmails((prevEmails) => {
       const oldIndex = prevEmails.findIndex((email) => email.id === id);
@@ -177,6 +241,10 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
       list.map((email) => (email.id === id ? { ...email, folder: nextFolder } : email));
 
     setEmails((prev) => (leavesCurrentList ? prev.filter((email) => email.id !== id) : applyFolder(prev)));
+    // inbox ⇔ archive の移動なので、両フォルダのキャッシュを捨てて次回取り直す。
+    // 破棄を先に行い、直後の patch が捨てるページを書き換えずに済むようにする。
+    invalidateCachedFolders(['inbox', 'archive']);
+    patchCachedEmail(id, (email) => ({ ...email, folder: nextFolder }));
     if (leavesCurrentList && selectedId === id) {
       setSelectedId(null);
     }
