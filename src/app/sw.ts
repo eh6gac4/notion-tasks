@@ -16,6 +16,16 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
+  // オフライン時にページ遷移が失敗した場合、ブラウザ標準のエラー画面ではなく /offline を返す。
+  // /offline は force-static なのでプリキャッシュに含まれる。
+  fallbacks: {
+    entries: [
+      {
+        url: "/offline",
+        matcher: ({ request }) => request.destination === "document",
+      },
+    ],
+  },
 })
 
 serwist.addEventListeners()

@@ -34,11 +34,23 @@ const nextConfig: NextConfig = {
   },
 }
 
+// @serwist/next は webpack プラグインのため、Turbopack ビルドでは黙って無視され
+// public/sw.js が生成されない(= PWA のプリキャッシュ・オフライン・更新バナーが全て無効になる)。
+// このため package.json の build は `next build --webpack` を指定している。
+//
+// これは暫定対応。--webpack は非推奨化の予定があり、外れると PWA が再び無言で壊れる。
+// また dev は Turbopack のままなので dev と本番でバンドラが異なる点にも注意。
+// 恒久対応は Serwist 側の Turbopack 対応(@serwist/turbopack もしくは configurator mode)への移行。
+// 追跡: https://github.com/serwist/serwist/issues/54
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
   register: false,
   reloadOnOnline: false,
+  // プリキャッシュ manifest にはビルド成果物しか載らず、描画済みページの HTML は含まれない。
+  // sw.ts の fallbacks が /offline をプリキャッシュから引くため、明示的に追加する。
+  // revision は毎ビルド更新して古い HTML が残らないようにする。
+  additionalPrecacheEntries: [{ url: "/offline", revision: buildTime }],
 })
 
 export default withSerwist(nextConfig)

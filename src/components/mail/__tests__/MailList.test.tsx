@@ -77,8 +77,11 @@ describe('MailList Component', () => {
       expect(onToggleStar).toHaveBeenCalledWith('mail-1', expect.anything());
     });
 
-    it('filters email list dynamically when searchQuery is provided', () => {
-      render(<MailList {...defaultProps} searchQuery="Cyberpunk" />);
+    // 検索の絞り込みは MailManager が行い、MailList は渡された結果をそのまま描画する
+    // (j/k ナビゲーションと表示を同じリストで揃えるため、フィルタは親に一本化している)。
+    it('renders exactly the emails it is given while a search is active', () => {
+      const matched = defaultProps.emails.filter((email) => email.sender.name === 'Kaito Tanaka');
+      render(<MailList {...defaultProps} emails={matched} searchQuery="Cyberpunk" />);
 
       expect(screen.getByText('Kaito Tanaka')).toBeInTheDocument();
       expect(screen.queryByText('Alex Rivers')).not.toBeInTheDocument();
@@ -92,8 +95,8 @@ describe('MailList Component', () => {
       expect(screen.getByText('No emails in this folder.')).toBeInTheDocument();
     });
 
-    it('renders no search match message when searchQuery filters out all items', () => {
-      render(<MailList {...defaultProps} searchQuery="NonExistentTerm999" />);
+    it('renders no search match message when a search leaves no emails', () => {
+      render(<MailList {...defaultProps} emails={[]} searchQuery="NonExistentTerm999" />);
 
       expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
     });

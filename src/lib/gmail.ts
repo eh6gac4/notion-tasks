@@ -2,6 +2,13 @@ import { Email, EmailSender, MailFolder, MailPage } from "@/types/mail"
 import { config } from "@/config"
 import { isDevMode } from "@/lib/require-auth"
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from "@/lib/mockMailData"
+import {
+  GMAIL_BATCH_URL,
+  buildBatchBody,
+  chunkSubRequests,
+  extractBoundary,
+  parseBatchResponse,
+} from "@/lib/gmail-batch"
 
 // Gmail REST API を fetch で直叩きする。googleapis パッケージは Node 依存が重く
 // Cloudflare Workers 上で動かないため使わない（src/lib/notion.ts と同様の方針）。
@@ -9,8 +16,16 @@ const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 const TOKEN_URL = "https://oauth2.googleapis.com/token"
 
 const LIST_MAX_RESULTS = 25
-const LIST_BATCH_SIZE = 5
+// batch が使えない場合のフォールバック用。Workers の同時接続上限(6)に収まる幅にする。
+const LIST_FALLBACK_BATCH_SIZE = 5
 const LABEL_CACHE_TTL_MS = 5 * 60 * 1000
+// 一覧に必要なヘッダのみを取る。batch 経路と逐次取得の両方でこの定義を使う。
+const LIST_METADATA_PARAMS = {
+  format: "metadata",
+  metadataHeaders: ["From", "To", "Subject", "Date"],
+} as const satisfies Record<string, string | string[]>
+// 未読数は多少古くても支障が無いため、isolate 内で短期キャッシュして往復を減らす。
+const UNREAD_COUNT_CACHE_TTL_MS = 30 * 1000
 
 // システムラベル(id)。カスタムラベル抽出時に除外する。
 const SYSTEM_LABEL_IDS = new Set([
@@ -46,19 +61,28 @@ async function getAccessToken(): Promise<string> {
   return cachedAccessToken.token
 }
 
-async function gmailGet<T>(path: string, params?: Record<string, string | string[]>): Promise<T> {
-  const token = await getAccessToken()
-  const url = new URL(`${GMAIL_API_BASE}${path}`)
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      if (Array.isArray(value)) {
-        value.forEach((v) => url.searchParams.append(key, v))
-      } else {
-        url.searchParams.set(key, value)
-      }
+type GmailParams = Record<string, string | string[]>
+
+// GET のクエリ文字列を組み立てる。単発取得と batch のサブリクエストで同じ表現を使うため、
+// ここを唯一の組み立て箇所にする(片方だけパラメータを足す取りこぼしを防ぐ)。
+function buildQuery(params?: GmailParams): string {
+  if (!params) return ""
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) {
+      value.forEach((v) => search.append(key, v))
+    } else {
+      search.set(key, value)
     }
   }
-  const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } })
+  const query = search.toString()
+  return query ? `?${query}` : ""
+}
+
+async function gmailGet<T>(path: string, params?: GmailParams): Promise<T> {
+  const token = await getAccessToken()
+  const url = `${GMAIL_API_BASE}${path}${buildQuery(params)}`
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   if (!res.ok) {
     throw new Error(`[gmail] API エラー (${path}): ${res.status} ${await res.text()}`)
   }
@@ -84,6 +108,61 @@ async function fetchInBatches<T, R>(items: T[], batchSize: number, fn: (item: T)
     results.push(...(await Promise.all(batch.map(fn))))
   }
   return results
+}
+
+interface GmailRequest {
+  path: string
+  params?: GmailParams
+}
+
+async function gmailBatchGet<T>(requests: GmailRequest[]): Promise<(T | null)[]> {
+  const token = await getAccessToken()
+  const chunks = chunkSubRequests(requests.map((r) => `${r.path}${buildQuery(r.params)}`))
+
+  const chunkResults = await Promise.all(
+    chunks.map(async (chunk) => {
+      const boundary = `batch_${crypto.randomUUID()}`
+      const res = await fetch(GMAIL_BATCH_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": `multipart/mixed; boundary=${boundary}`,
+        },
+        body: buildBatchBody(chunk, boundary),
+      })
+      if (!res.ok) throw new Error(`[gmail] batch エラー: ${res.status}`)
+
+      const responseBoundary = extractBoundary(res.headers.get("content-type"))
+      if (!responseBoundary) throw new Error("[gmail] batch レスポンスの boundary を特定できませんでした")
+
+      const parts = parseBatchResponse<T>(await res.text(), responseBoundary, chunk.length)
+      return parts.map((part) => (part.status >= 200 && part.status < 300 ? part.body : null))
+    }),
+  )
+  return chunkResults.flat()
+}
+
+/**
+ * 複数の GET をまとめて取得する。まず batch エンドポイントで 1 往復に集約し、
+ * batch が使えない場合のみ従来どおり逐次取得へ退避する。
+ * 退避の判断をここに閉じ込め、呼び出し側が batch を意識しないようにする。
+ * 個々のリクエストが失敗した場合はその要素だけ null になる。
+ */
+async function gmailGetMany<T>(requests: GmailRequest[]): Promise<(T | null)[]> {
+  if (requests.length === 0) return []
+  try {
+    return await gmailBatchGet<T>(requests)
+  } catch (error) {
+    // 原因が分からないまま遅い経路に落ち続けるのを避けるため、退避時は必ず記録する。
+    console.warn("[gmail] batch 取得に失敗したため逐次取得に切り替えます", error)
+    return fetchInBatches(requests, LIST_FALLBACK_BATCH_SIZE, async (request) => {
+      try {
+        return await gmailGet<T>(request.path, request.params)
+      } catch {
+        return null
+      }
+    })
+  }
 }
 
 // ---- フォルダ ⇔ Gmail 検索クエリ ----
@@ -269,14 +348,12 @@ async function fetchMailsFromGmail(folder: MailFolder, label?: string, pageToken
   const ids = listData.messages ?? []
   if (ids.length === 0) return { emails: [] }
 
-  // messages.list は ID のみ返すため、ヘッダだけを 1 件ずつ取得する(本文は詳細表示時のみ)。
-  // 25 件を無制限並列で取得すると Workers の同時接続数に影響しうるため、バッチ処理する。
-  const messages = await fetchInBatches(ids, LIST_BATCH_SIZE, (item) =>
-    gmailGet<GmailMessage>(`/messages/${item.id}`, {
-      format: "metadata",
-      metadataHeaders: ["From", "To", "Subject", "Date"],
-    }),
+  // messages.list は ID のみ返すため、ヘッダの取得が別途必要になる(本文は詳細表示時のみ)。
+  // 1 件ずつ叩くと往復回数がそのままレイテンシになるので batch で 1 往復にまとめる。
+  const fetched = await gmailGetMany<GmailMessage>(
+    ids.map((item) => ({ path: `/messages/${item.id}`, params: LIST_METADATA_PARAMS })),
   )
+  const messages = fetched.filter((m): m is GmailMessage => m !== null)
 
   return { emails: messages.map((m) => toEmail(m, labelsCache.idToName)), nextPageToken: listData.nextPageToken }
 }
@@ -310,14 +387,29 @@ const UNREAD_COUNT_FOLDERS: { folder: MailFolder; labelId: string }[] = [
   { folder: "trash", labelId: "TRASH" },
 ]
 
+let cachedUnreadCounts: { counts: Record<MailFolder, number>; fetchedAt: number } | null = null
+
+// 未読数を変化させる操作の後に呼ぶ。どの操作が未読数に影響するかを
+// 呼び出し側で明示できるよう、モジュール変数の直接操作にはしない。
+function invalidateUnreadCounts(): void {
+  cachedUnreadCounts = null
+}
+
 async function fetchUnreadCountsFromGmail(): Promise<Record<MailFolder, number>> {
+  const now = Date.now()
+  if (cachedUnreadCounts && now - cachedUnreadCounts.fetchedAt < UNREAD_COUNT_CACHE_TTL_MS) {
+    return cachedUnreadCounts.counts
+  }
+
   const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
-  const results = await Promise.all(
-    UNREAD_COUNT_FOLDERS.map(({ labelId }) => gmailGet<{ messagesUnread?: number }>(`/labels/${labelId}`)),
+  const results = await gmailGetMany<{ messagesUnread?: number }>(
+    UNREAD_COUNT_FOLDERS.map(({ labelId }) => ({ path: `/labels/${labelId}` })),
   )
+
   UNREAD_COUNT_FOLDERS.forEach(({ folder }, i) => {
-    counts[folder] = results[i].messagesUnread ?? 0
+    counts[folder] = results[i]?.messagesUnread ?? 0
   })
+  cachedUnreadCounts = { counts, fetchedAt: now }
   return counts
 }
 
@@ -347,11 +439,14 @@ export async function toggleMailStar(id: string, starred: boolean): Promise<void
 export async function setMailArchived(id: string, archived: boolean): Promise<void> {
   if (isDevMode()) return
   await setArchivedOnGmail(id, archived)
+  // 未読メールの移動で INBOX の未読数が変わるため。
+  invalidateUnreadCounts()
 }
 
 export async function markMailAsRead(id: string): Promise<void> {
   if (isDevMode()) return
   await markReadOnGmail(id)
+  invalidateUnreadCounts()
 }
 
 export async function getMailLabels(): Promise<string[]> {
