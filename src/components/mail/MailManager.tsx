@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
 import { useMailShortcuts } from '@/hooks/useMailShortcuts';
-import { fetchMailsAction, markAsReadAction, toggleStarAction, toggleArchiveAction } from '@/app/mail/actions';
+import { fetchMailsAction, fetchMailBodyAction, markAsReadAction, toggleStarAction, toggleArchiveAction } from '@/app/mail/actions';
 import { MailSidebar } from '@/components/mail/MailSidebar';
 import { MailList } from '@/components/mail/MailList';
 import { MailDetail } from '@/components/mail/MailDetail';
@@ -80,6 +80,9 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
 
   // Selected email state (default to null for mobile responsive view)
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 本文の遅延取得中のメール ID。一覧取得は snippet しか含まないため、詳細を開いたタイミングで
+  // 本文(bodyHtml 含む)を取りに行く。
+  const [loadingBodyId, setLoadingBodyId] = useState<string | null>(null);
 
   // メール一覧の取得結果を state に反映する共通処理。mergeEmails で
   // 「置き換え(フォルダ/ラベル切替)」「先頭に合成(ローカル限定メール)」
@@ -179,6 +182,30 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
       startMailTransition(async () => {
         await markAsReadAction(id);
         setUnreadCounts((prev) => ({ ...prev, [target!.folder]: Math.max(0, prev[target!.folder] - 1) }));
+      });
+    }
+
+    // 一覧の body は snippet のみのため、未取得なら詳細を開いたタイミングで本文を取りに行く。
+    if (!target?.bodyLoaded) {
+      setLoadingBodyId(id);
+      startMailTransition(async () => {
+        try {
+          const full = await fetchMailBodyAction(id);
+          if (!full) return;
+          // isRead/isStarred 等は既存の楽観的更新を優先し、本文関連フィールドだけ差し替える。
+          const patch = (email: Email): Email => ({
+            ...email,
+            body: full.body,
+            bodyHtml: full.bodyHtml,
+            bodyLoaded: full.bodyLoaded,
+          });
+          setEmails((prev) => prev.map((email) => (email.id === id ? patch(email) : email)));
+          patchCachedEmail(id, patch);
+        } catch {
+          showToast('メール本文の取得に失敗しました', 'error');
+        } finally {
+          setLoadingBodyId((prev) => (prev === id ? null : prev));
+        }
       });
     }
   };
@@ -452,6 +479,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
         {/* Pane 3: Email Detail */}
         <MailDetail
           email={selectedEmail}
+          isBodyLoading={!!selectedEmail && loadingBodyId === selectedEmail.id}
           onTaskify={handleTaskify}
           onAIDraft={handleAIDraft}
           onToggleArchive={handleToggleArchive}

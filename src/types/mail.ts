@@ -12,6 +12,8 @@ export interface Email {
   recipients: string[];
   subject: string;
   body: string;
+  bodyHtml?: string;
+  bodyLoaded?: boolean;
   date: string;
   folder: MailFolder;
   isRead: boolean;
