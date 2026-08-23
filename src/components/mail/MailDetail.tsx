@@ -3,6 +3,7 @@
 import React from 'react';
 import { Email } from '@/types/mail';
 import { MailBody } from '@/components/mail/MailBody';
+import { useSwipeBack } from '@/hooks/useSwipeBack';
 
 export interface MailDetailProps {
   email: Email | null;
@@ -23,6 +24,9 @@ export function getSenderInitials(name: string): string {
 }
 
 export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggleArchive, onBack }: MailDetailProps) {
+  // 左端からのスワイプで一覧へ戻る（standalone PWA では OS のエッジスワイプバックが効かないため）
+  const panelRef = useSwipeBack<HTMLDivElement>({ onBack: () => onBack?.() });
+
   if (!email) {
     return (
       <div className="hidden md:flex flex-1 bg-[var(--surface)] flex-col items-center justify-center p-8 text-center">
@@ -61,7 +65,10 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
   });
 
   return (
-    <div className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto">
+    <div
+      ref={panelRef}
+      className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto"
+    >
       {/* Top Detail Bar / Header */}
       <div className="p-4 md:p-6 border-b border-[var(--border)] bg-[var(--bg)] space-y-4">
         {/* Mobile Back Button */}
