@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { Email } from '@/types/mail';
+import { MailBody } from '@/components/mail/MailBody';
 
 export interface MailDetailProps {
   email: Email | null;
+  isBodyLoading?: boolean;
   onTaskify?: (email: Email) => void;
   onAIDraft?: (email: Email) => void;
   onToggleArchive?: (id: string) => void;
@@ -20,7 +22,7 @@ export function getSenderInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-export function MailDetail({ email, onTaskify, onAIDraft, onToggleArchive, onBack }: MailDetailProps) {
+export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggleArchive, onBack }: MailDetailProps) {
   if (!email) {
     return (
       <div className="hidden md:flex flex-1 bg-[var(--surface)] flex-col items-center justify-center p-8 text-center">
@@ -213,9 +215,7 @@ export function MailDetail({ email, onTaskify, onAIDraft, onToggleArchive, onBac
       </div>
 
       {/* Email Body */}
-      <div className="p-6 text-sm text-[var(--text)] font-sans leading-relaxed whitespace-pre-wrap">
-        {email.body}
-      </div>
+      <MailBody body={email.body} bodyHtml={email.bodyHtml} isLoading={isBodyLoading} />
     </div>
   );
 }

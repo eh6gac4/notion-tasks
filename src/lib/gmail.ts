@@ -266,7 +266,7 @@ function decodeBase64Url(data: string): string {
   return new TextDecoder("utf-8").decode(bytes)
 }
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -294,12 +294,19 @@ function findBodyPart(part: GmailMessagePart, mimeType: string): GmailMessagePar
   return null
 }
 
-function extractBody(payload: GmailMessagePart): string {
+export interface MailBodyParts {
+  text: string
+  html: string
+}
+
+// text/plain と text/html の両方を取り出す。HTML があれば詳細画面はそちらを優先表示し、
+// テキストは Taskify/AI Draft 等プレーンテキストが必要な用途のフォールバックに使う。
+export function extractBodyParts(payload: GmailMessagePart): MailBodyParts {
   const plainPart = findBodyPart(payload, "text/plain")
-  if (plainPart?.body?.data) return decodeBase64Url(plainPart.body.data)
+  const text = plainPart?.body?.data ? decodeBase64Url(plainPart.body.data) : ""
   const htmlPart = findBodyPart(payload, "text/html")
-  if (htmlPart?.body?.data) return stripHtml(decodeBase64Url(htmlPart.body.data))
-  return ""
+  const html = htmlPart?.body?.data ? decodeBase64Url(htmlPart.body.data) : ""
+  return { text, html }
 }
 
 // ---- Gmail message → Email 変換 ----
@@ -311,15 +318,20 @@ interface GmailMessage {
   internalDate?: string
 }
 
-function toEmail(message: GmailMessage, idToName: Map<string, string>, bodyOverride?: string): Email {
+function toEmail(message: GmailMessage, idToName: Map<string, string>, bodyOverride?: MailBodyParts): Email {
   const headers = message.payload.headers ?? []
   const labelIds = message.labelIds ?? []
+  // bodyOverride が無ければ一覧取得(本文は未取得)なので snippet を仮の body として使う。
+  // ある場合は text/plain を優先し、無ければ text/html をテキスト化したものを使う。
+  const plainText = bodyOverride ? bodyOverride.text || stripHtml(bodyOverride.html) : undefined
   return {
     id: message.id,
     sender: parseSender(getHeader(headers, "From")),
     recipients: parseRecipients(getHeader(headers, "To")),
     subject: getHeader(headers, "Subject") || "(件名なし)",
-    body: bodyOverride ?? message.snippet ?? "",
+    body: plainText || message.snippet || "",
+    bodyHtml: bodyOverride?.html || undefined,
+    bodyLoaded: bodyOverride !== undefined,
     date: message.internalDate
       ? new Date(Number(message.internalDate)).toISOString()
       : new Date(getHeader(headers, "Date")).toISOString(),
@@ -363,7 +375,7 @@ async function fetchMailBodyFromGmail(id: string): Promise<Email> {
     gmailGet<GmailMessage>(`/messages/${id}`, { format: "full" }),
     getLabelsCache(),
   ])
-  return toEmail(message, labelsCache.idToName, extractBody(message.payload))
+  return toEmail(message, labelsCache.idToName, extractBodyParts(message.payload))
 }
 
 async function setStarredOnGmail(id: string, starred: boolean): Promise<void> {
@@ -426,7 +438,8 @@ export function getMails(folder: MailFolder, label?: string, pageToken?: string)
 
 export function getMailBody(id: string): Promise<Email | null> {
   if (isDevMode()) {
-    return Promise.resolve(INITIAL_MOCK_EMAILS.find((e) => e.id === id) ?? null)
+    const mock = INITIAL_MOCK_EMAILS.find((e) => e.id === id)
+    return Promise.resolve(mock ? { ...mock, bodyLoaded: true } : null)
   }
   return fetchMailBodyFromGmail(id)
 }

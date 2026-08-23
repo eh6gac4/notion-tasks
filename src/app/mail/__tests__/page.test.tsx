@@ -13,6 +13,7 @@ vi.mock('@/app/mail/actions', async () => {
   const { mockFetchMails } = await import('@/test/mailTestHelpers');
   return {
     fetchMailsAction: vi.fn(mockFetchMails),
+    fetchMailBodyAction: vi.fn().mockResolvedValue(null),
     markAsReadAction: vi.fn().mockResolvedValue(undefined),
     toggleStarAction: vi.fn().mockResolvedValue(undefined),
   };
