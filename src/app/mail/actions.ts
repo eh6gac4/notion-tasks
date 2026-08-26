@@ -1,7 +1,7 @@
 "use server"
 
 import { requireAuth } from "@/lib/require-auth"
-import { getMails, getMailBody, toggleMailStar, markMailAsRead, setMailArchived, getMailLabels, getUnreadCounts, createEmptyUnreadCounts } from "@/lib/gmail"
+import { getMails, getMailBody, toggleMailStar, markMailAsRead, setMailArchived, getMailLabels, getUnreadCounts, createEmptyUnreadCounts, GmailReauthRequiredError } from "@/lib/gmail"
 import type { Email, MailFolder, MailPage } from "@/types/mail"
 
 // fulfilled ならその値、rejected ならログを出して既定値にフォールバックする。
@@ -12,11 +12,15 @@ function withFallback<T>(name: string, result: PromiseSettledResult<T>, fallback
   return fallback
 }
 
-export async function fetchInitialMailDataAction(): Promise<{
+type MailReadyData = {
   mailPage: MailPage
   labels: string[]
   unreadCounts: Record<MailFolder, number>
-}> {
+}
+
+export type MailInitialData = { reauthRequired: true } | ({ reauthRequired: false } & MailReadyData)
+
+export async function fetchInitialMailDataAction(): Promise<MailInitialData> {
   await requireAuth()
   // メール一覧の取得失敗は致命的（error.tsx に委ねる）が、
   // ラベル・未読数は付随情報のため失敗しても一覧表示は継続させる。3つとも並行実行する。
@@ -26,9 +30,15 @@ export async function fetchInitialMailDataAction(): Promise<{
     getUnreadCounts(),
   ])
   if (mailPageResult.status === "rejected") {
+    // Google 再認可が要る状態は「通常運用に起こりうる状態」であって例外ではないため、
+    // error.tsx（本番では error.message が握り潰される）ではなくここで判別して正常系として返す。
+    if (mailPageResult.reason instanceof GmailReauthRequiredError) {
+      return { reauthRequired: true }
+    }
     throw mailPageResult.reason
   }
   return {
+    reauthRequired: false,
     mailPage: mailPageResult.value,
     labels: withFallback("ラベル", labelsResult, []),
     unreadCounts: withFallback("未読数", unreadCountsResult, createEmptyUnreadCounts()),

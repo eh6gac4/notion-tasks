@@ -27,6 +27,15 @@
 			"bucket_name": "notion-tasks-opennext-cache"
 		}
 	],
+	"kv_namespaces": [
+		{
+			// Run before first deploy: wrangler kv namespace create notion-tasks-tokens
+			// Gmail の refresh token を保存する。GOOGLE_REFRESH_TOKEN env は
+			// KV に値が無い場合の初回ブートストラップ用に残す(src/lib/token-store.ts 参照)。
+			"binding": "TOKEN_STORE",
+			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
+		}
+	],
 	"routes": [
 		{
 			"pattern": "todo.eh6gac4.work",

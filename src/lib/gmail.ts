@@ -1,6 +1,7 @@
 import { Email, EmailSender, MailFolder, MailPage } from "@/types/mail"
 import { config } from "@/config"
 import { isDevMode } from "@/lib/require-auth"
+import { getGoogleRefreshToken } from "@/lib/token-store"
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from "@/lib/mockMailData"
 import {
   GMAIL_BATCH_URL,
@@ -33,6 +34,15 @@ const SYSTEM_LABEL_IDS = new Set([
   "CATEGORY_PERSONAL", "CATEGORY_SOCIAL", "CATEGORY_PROMOTIONS", "CATEGORY_UPDATES", "CATEGORY_FORUMS",
 ])
 
+// refresh token 自体が失効・取り消し済みで、ユーザーによる Google 再認可でしか
+// 復旧できない状態。一時的な API エラーとは区別してハンドリングできるようにする。
+export class GmailReauthRequiredError extends Error {
+  constructor(detail: string) {
+    super(`[gmail] Google の再認可が必要です: ${detail}`)
+    this.name = "GmailReauthRequiredError"
+  }
+}
+
 // ---- アクセストークン ----
 // Workers の isolate は短命なため、モジュールスコープの変数キャッシュで十分。
 // isolate が再利用される間は再取得を避け、期限切れ間際(30秒前)で更新する。
@@ -43,18 +53,23 @@ async function getAccessToken(): Promise<string> {
   if (cachedAccessToken && cachedAccessToken.expiresAt > now + 30_000) {
     return cachedAccessToken.token
   }
+  const refreshToken = await getGoogleRefreshToken()
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: config.google.clientId,
       client_secret: config.google.clientSecret,
-      refresh_token: config.google.refreshToken,
+      refresh_token: refreshToken,
       grant_type: "refresh_token",
     }),
   })
   if (!res.ok) {
-    throw new Error(`[gmail] アクセストークン取得に失敗しました: ${res.status} ${await res.text()}`)
+    const body = await res.text()
+    if (res.status === 400 && body.includes("invalid_grant")) {
+      throw new GmailReauthRequiredError(body)
+    }
+    throw new Error(`[gmail] アクセストークン取得に失敗しました: ${res.status} ${body}`)
   }
   const data = (await res.json()) as { access_token: string; expires_in: number }
   cachedAccessToken = { token: data.access_token, expiresAt: now + data.expires_in * 1000 }
