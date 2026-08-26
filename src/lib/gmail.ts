@@ -399,6 +399,10 @@ const UNREAD_COUNT_FOLDERS: { folder: MailFolder; labelId: string }[] = [
   { folder: "trash", labelId: "TRASH" },
 ]
 
+export function createEmptyUnreadCounts(): Record<MailFolder, number> {
+  return { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
+}
+
 let cachedUnreadCounts: { counts: Record<MailFolder, number>; fetchedAt: number } | null = null
 
 // 未読数を変化させる操作の後に呼ぶ。どの操作が未読数に影響するかを
@@ -413,7 +417,7 @@ async function fetchUnreadCountsFromGmail(): Promise<Record<MailFolder, number>>
     return cachedUnreadCounts.counts
   }
 
-  const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
+  const counts = createEmptyUnreadCounts()
   const results = await gmailGetMany<{ messagesUnread?: number }>(
     UNREAD_COUNT_FOLDERS.map(({ labelId }) => ({ path: `/labels/${labelId}` })),
   )
@@ -474,7 +478,7 @@ export async function getMailLabels(): Promise<string[]> {
 
 export function getUnreadCounts(): Promise<Record<MailFolder, number>> {
   if (isDevMode()) {
-    const counts: Record<MailFolder, number> = { all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }
+    const counts = createEmptyUnreadCounts()
     INITIAL_MOCK_EMAILS.forEach((email) => {
       if (!email.isRead && email.folder !== "trash") {
         counts[email.folder] = (counts[email.folder] || 0) + 1
