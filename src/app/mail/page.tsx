@@ -1,15 +1,25 @@
 import { MailManager } from '@/components/mail/MailManager';
 import { fetchInitialMailDataAction } from './actions';
+import { GoogleReauthScreen } from './GoogleReauthScreen';
 
-export default async function MailPage() {
-  const { mailPage, labels, unreadCounts } = await fetchInitialMailDataAction();
+export default async function MailPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reauth?: string }>;
+}) {
+  const data = await fetchInitialMailDataAction();
+
+  if (data.reauthRequired) {
+    const { reauth } = await searchParams;
+    return <GoogleReauthScreen reason={reauth} />;
+  }
 
   return (
     <MailManager
-      initialEmails={mailPage.emails}
-      initialNextPageToken={mailPage.nextPageToken}
-      initialLabels={labels}
-      initialUnreadCounts={unreadCounts}
+      initialEmails={data.mailPage.emails}
+      initialNextPageToken={data.mailPage.nextPageToken}
+      initialLabels={data.labels}
+      initialUnreadCounts={data.unreadCounts}
     />
   );
 }

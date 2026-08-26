@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+class GmailReauthRequiredError extends Error {
+  constructor(detail: string) {
+    super(`[gmail] Google の再認可が必要です: ${detail}`);
+    this.name = 'GmailReauthRequiredError';
+  }
+}
+
 vi.mock('@/lib/require-auth', () => ({
   requireAuth: vi.fn().mockResolvedValue(undefined),
 }));
@@ -13,6 +20,7 @@ vi.mock('@/lib/gmail', () => ({
   getMailLabels: vi.fn(),
   getUnreadCounts: vi.fn(),
   createEmptyUnreadCounts: () => ({ all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 }),
+  GmailReauthRequiredError,
 }));
 
 describe('fetchInitialMailDataAction', () => {
@@ -32,6 +40,7 @@ describe('fetchInitialMailDataAction', () => {
 
     const result = await fetchInitialMailDataAction();
 
+    if (result.reauthRequired) throw new Error('unexpected reauthRequired');
     expect(result.mailPage.emails).toEqual([]);
     expect(result.labels).toEqual(['Work']);
     expect(result.unreadCounts.inbox).toBe(1);
@@ -47,19 +56,33 @@ describe('fetchInitialMailDataAction', () => {
 
     const result = await fetchInitialMailDataAction();
 
+    if (result.reauthRequired) throw new Error('unexpected reauthRequired');
     expect(result.mailPage.emails).toHaveLength(1);
     expect(result.labels).toEqual([]);
     expect(result.unreadCounts).toEqual({ all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 });
   });
 
-  it('throws when mail list fetch itself fails, so error.tsx can catch it', async () => {
+  it('throws when mail list fetch fails with a generic error, so error.tsx can catch it', async () => {
     const { getMails, getMailLabels, getUnreadCounts } = await import('@/lib/gmail');
     const { fetchInitialMailDataAction } = await import('../actions');
 
-    vi.mocked(getMails).mockRejectedValue(new Error('[gmail] アクセストークン取得に失敗しました'));
+    vi.mocked(getMails).mockRejectedValue(new Error('[gmail] API エラー (list): 500'));
     vi.mocked(getMailLabels).mockResolvedValue([]);
     vi.mocked(getUnreadCounts).mockResolvedValue({ all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 });
 
-    await expect(fetchInitialMailDataAction()).rejects.toThrow('アクセストークン取得に失敗しました');
+    await expect(fetchInitialMailDataAction()).rejects.toThrow('API エラー');
+  });
+
+  it('returns reauthRequired instead of throwing when the refresh token is expired', async () => {
+    const { getMails, getMailLabels, getUnreadCounts } = await import('@/lib/gmail');
+    const { fetchInitialMailDataAction } = await import('../actions');
+
+    vi.mocked(getMails).mockRejectedValue(new GmailReauthRequiredError('invalid_grant'));
+    vi.mocked(getMailLabels).mockResolvedValue([]);
+    vi.mocked(getUnreadCounts).mockResolvedValue({ all: 0, inbox: 0, starred: 0, sent: 0, archive: 0, trash: 0 });
+
+    const result = await fetchInitialMailDataAction();
+
+    expect(result).toEqual({ reauthRequired: true });
   });
 });
