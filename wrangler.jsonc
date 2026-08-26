@@ -33,7 +33,7 @@
 			// Gmail の refresh token を保存する。GOOGLE_REFRESH_TOKEN env は
 			// KV に値が無い場合の初回ブートストラップ用に残す(src/lib/token-store.ts 参照)。
 			"binding": "TOKEN_STORE",
-			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
+			"id": "e9edef0748424b7da4b4b85c4f4842b5"
 		}
 	],
 	"routes": [
