@@ -4,6 +4,7 @@ import type { InternalOrExternalFileWithNameResponse } from "@notionhq/client/bu
 import type { Task, TaskAttachment, TaskComment, TaskIcon, TaskPriority, TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 import { NOTION_PROPS } from "@/constants/notion"
 import { config } from "@/config"
+import { IMAGE_EXT_RE, INITIAL_STATUSES } from "@/constants/task"
 import { getMockTasks, getMockTask, createMockTask, updateMockTask, getMockTaskBlocks, updateMockTaskBlocks, getMockTaskComments, addMockTaskComment, getMockTagOptions, addMockTaskAttachment, removeMockTaskAttachment } from "@/lib/mock-tasks"
 
 function isDevMode() {
@@ -83,9 +84,6 @@ function extractIcon(
   if (icon.type === "external") return { type: "url", url: icon.external.url }
   return null
 }
-
-/** 画像ファイルとみなす拡張子 */
-const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif)$/i
 
 /**
  * files プロパティから安定 proxy URL ベースの TaskAttachment[] を生成する。
@@ -171,10 +169,6 @@ async function fetchTasks(statuses: TaskStatus[]): Promise<Task[]> {
     return []
   }
 }
-
-// 初回レンダで取得するステータス。完了/中止は件数が多くなりがちなので、
-// 該当カラムが画面に出たときに別途 fetch するようにし、初回コストを下げる。
-const INITIAL_STATUSES: TaskStatus[] = ["未着手", "進行中", "確認中", "一時中断"]
 
 // Cloudflare Workers (open-next) では tagCache 未設定時に updateTag が no-op に
 // なり、unstable_cache の値が永久に古くなる。個人用アプリで Notion API 呼び

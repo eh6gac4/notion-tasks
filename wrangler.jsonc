@@ -26,7 +26,25 @@
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "notion-tasks-opennext-cache"
 		}
+		// D1 移行時の添付ファイル置き場。d1_databases と同時に有効化する。
+		// ,{
+		// 	"binding": "ATTACHMENTS",
+		// 	"bucket_name": "notion-tasks-attachments"
+		// }
 	],
+	// D1 移行用。バックエンド切り替え(TASK_STORE=d1)まではコメントアウトのままにする。
+	// 有効化する前に:
+	//   npx wrangler d1 create notion-tasks
+	//   npx wrangler r2 bucket create notion-tasks-attachments
+	//   npx wrangler d1 execute notion-tasks --remote --file=./migrations/0001_init.sql
+	// 詳細は docs/backend-migration.md
+	// "d1_databases": [
+	// 	{
+	// 		"binding": "DB",
+	// 		"database_name": "notion-tasks",
+	// 		"database_id": "<wrangler d1 create の出力を貼る>"
+	// 	}
+	// ],
 	"kv_namespaces": [
 		{
 			// Run before first deploy: wrangler kv namespace create notion-tasks-tokens

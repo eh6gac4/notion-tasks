@@ -4,6 +4,8 @@ import type { PageObjectResponse } from "@notionhq/client/build/src/api-endpoint
 import type { InternalOrExternalFileWithNameResponse } from "@notionhq/client/build/src/api-endpoints/common"
 import { config } from "@/config"
 import { NOTION_PROPS } from "@/constants/notion"
+import { getTaskStore } from "@/lib/store"
+import type { AttachmentReadableStore } from "@/lib/store/types"
 
 // Notion の files プロパティに含まれる内部ファイル (file type) は
 // 署名付き S3 URL であり、リクエストごとに URL が変わりブラウザキャッシュが効かない。
@@ -42,6 +44,34 @@ async function resolveFileUrl(pageId: string, index: number): Promise<{ url: str
   return null
 }
 
+/**
+ * D1 バックエンド時は R2 から直接返す。Notion のような署名 URL の失効が無いので
+ * 上流 fetch は不要。TaskStore が readAttachment を持たない (= Notion 実装) 場合は
+ * null を返し、従来の Notion 経路にフォールバックする。
+ */
+async function resolveFromStore(
+  pageId: string,
+  index: number,
+): Promise<{ data: ArrayBuffer; contentType: string; name: string } | null> {
+  const store = getTaskStore() as Partial<AttachmentReadableStore>
+  if (typeof store.readAttachment !== "function") return null
+  return store.readAttachment(pageId, index)
+}
+
+function buildResponse(bytes: ArrayBuffer, contentType: string, name: string): Response {
+  const disposition = IMAGE_MIME_RE.test(contentType)
+    ? `inline; filename="${encodeURIComponent(name)}"`
+    : `attachment; filename="${encodeURIComponent(name)}"`
+  return new Response(bytes, {
+    status: 200,
+    headers: {
+      "content-type": contentType,
+      "cache-control": IMMUTABLE_CACHE,
+      "content-disposition": disposition,
+    },
+  })
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ pageId: string; index: string }> },
@@ -57,6 +87,17 @@ export async function GET(
   if (cache) {
     const hit = await cache.match(cacheKey)
     if (hit) return hit
+  }
+
+  try {
+    const stored = await resolveFromStore(pageId, index)
+    if (stored) {
+      const res = buildResponse(stored.data, stored.contentType, stored.name)
+      if (cache) await cache.put(cacheKey, res.clone())
+      return res
+    }
+  } catch (e) {
+    console.error("[/api/file] store error:", e)
   }
 
   let resolved: { url: string; name: string } | null = null
@@ -76,20 +117,7 @@ export async function GET(
   if (!upstream.ok) return new Response(null, { status: 502 })
 
   const contentType = upstream.headers.get("content-type") ?? "application/octet-stream"
-  const isImage = IMAGE_MIME_RE.test(contentType)
-  const disposition = isImage
-    ? `inline; filename="${encodeURIComponent(resolved.name)}"`
-    : `attachment; filename="${encodeURIComponent(resolved.name)}"`
-
-  const bytes = await upstream.arrayBuffer()
-  const res = new Response(bytes, {
-    status: 200,
-    headers: {
-      "content-type": contentType,
-      "cache-control": IMMUTABLE_CACHE,
-      "content-disposition": disposition,
-    },
-  })
+  const res = buildResponse(await upstream.arrayBuffer(), contentType, resolved.name)
   if (cache) await cache.put(cacheKey, res.clone())
   return res
 }

@@ -5,7 +5,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { isNotionClientError } from "@notionhq/client"
-import { updateTask, createTask, getTask, getTaskBlocks, updateTaskBlocks, getTaskComments, createTaskComment, getTasks, getTagOptions, getLocationOptions, uploadTaskAttachment, removeTaskAttachment } from "@/lib/notion"
+import { getTaskStore } from "@/lib/store"
 import { isDevMode, requireAuth } from "@/lib/require-auth"
 import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
 
@@ -20,7 +20,7 @@ export async function setSortAction(sort: SortConfig) {
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   await requireAuth()
   try {
-    await updateTask(id, { status })
+    await getTaskStore().updateTask(id, { status })
   } catch (e) {
     console.error("[updateTaskStatus] Notion error:", e)
     throw e
@@ -30,13 +30,13 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
 
 export async function createTaskAction(input: CreateTaskInput) {
   await requireAuth()
-  await createTask(input)
+  await getTaskStore().createTask(input)
   updateTag("tasks")
 }
 
 export async function updateTaskAction(id: string, input: UpdateTaskInput) {
   await requireAuth()
-  await updateTask(id, input)
+  await getTaskStore().updateTask(id, input)
   updateTag("tasks")
 }
 
@@ -47,57 +47,57 @@ export async function refreshTasksAction() {
 
 export async function fetchInitialDataAction(): Promise<{ tasks: Task[]; tagOptions: string[]; locationOptions: string[] }> {
   await requireAuth()
-  const [tasks, tagOptions, locationOptions] = await Promise.all([getTasks(), getTagOptions(), getLocationOptions()])
+  const [tasks, tagOptions, locationOptions] = await Promise.all([getTaskStore().getTasks(), getTaskStore().getTagOptions(), getTaskStore().getLocationOptions()])
   return { tasks, tagOptions, locationOptions }
 }
 
 export async function getCompletedTasksAction(): Promise<Task[]> {
   await requireAuth()
-  return getTasks({ statuses: ["完了"] })
+  return getTaskStore().getTasks({ statuses: ["完了"] })
 }
 
 export async function getCancelledTasksAction(): Promise<Task[]> {
   await requireAuth()
-  return getTasks({ statuses: ["中止"] })
+  return getTaskStore().getTasks({ statuses: ["中止"] })
 }
 
 export async function getBacklogTasksAction(): Promise<Task[]> {
   await requireAuth()
-  return getTasks({ statuses: ["バックログ"] })
+  return getTaskStore().getTasks({ statuses: ["バックログ"] })
 }
 
 export async function getSkipTasksAction(): Promise<Task[]> {
   await requireAuth()
-  return getTasks({ statuses: ["対応不要"] })
+  return getTaskStore().getTasks({ statuses: ["対応不要"] })
 }
 
 export async function getTasksByIdsAction(ids: string[]): Promise<Task[]> {
   await requireAuth()
   if (ids.length === 0) return []
-  const tasks = await Promise.all(ids.map((id) => getTask(id)))
+  const tasks = await Promise.all(ids.map((id) => getTaskStore().getTask(id)))
   return tasks.filter((t): t is Task => t !== null)
 }
 
 export async function getTaskBlocksAction(id: string): Promise<string> {
   await requireAuth()
-  return getTaskBlocks(id)
+  return getTaskStore().getTaskBlocks(id)
 }
 
 export async function updateTaskBlocksAction(id: string, markdown: string): Promise<void> {
   await requireAuth()
-  await updateTaskBlocks(id, markdown)
+  await getTaskStore().updateTaskBlocks(id, markdown)
 }
 
 export async function getTaskCommentsAction(id: string): Promise<TaskComment[]> {
   await requireAuth()
-  return getTaskComments(id)
+  return getTaskStore().getTaskComments(id)
 }
 
 export async function createTaskCommentAction(id: string, text: string): Promise<TaskComment> {
-  if (isDevMode()) return createTaskComment(id, text, "dev-user")
+  if (isDevMode()) return getTaskStore().createTaskComment(id, text, "dev-user")
   const session = await auth()
   if (!session?.user) redirect("/login")
-  return createTaskComment(id, text, session.user.name ?? "Unknown")
+  return getTaskStore().createTaskComment(id, text, session.user.name ?? "Unknown")
 }
 
 export async function uploadTaskAttachmentAction(
@@ -109,7 +109,7 @@ export async function uploadTaskAttachmentAction(
   console.error("[uploadTaskAttachmentAction] file type:", typeof file, file?.constructor?.name, "isFile:", file instanceof File, "isBlob:", file instanceof Blob)
   try {
     if (!(file instanceof File)) throw new Error(`ファイルが見つかりません (got ${file?.constructor?.name ?? typeof file})`)
-    const attachments = await uploadTaskAttachment(taskId, file)
+    const attachments = await getTaskStore().uploadTaskAttachment(taskId, file)
     updateTag("tasks")
     return attachments
   } catch (e) {
@@ -127,7 +127,7 @@ export async function removeTaskAttachmentAction(
 ): Promise<TaskAttachment[]> {
   await requireAuth()
   try {
-    const attachments = await removeTaskAttachment(taskId, index)
+    const attachments = await getTaskStore().removeTaskAttachment(taskId, index)
     updateTag("tasks")
     return attachments
   } catch (e) {
