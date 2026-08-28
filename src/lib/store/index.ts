@@ -1,5 +1,4 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare"
-import { D1TaskStore } from "./d1"
 import { notionTaskStore } from "./notion"
 import type { TaskStore } from "./types"
 
@@ -13,8 +12,11 @@ export type { TaskStore } from "./types"
  * 既定が notion なので、この関数を挟んだだけでは挙動は変わらない。
  * 移行は wrangler.jsonc のバインディングを有効にして TASK_STORE=d1 を
  * 設定した時点で切り替わる。
+ *
+ * D1 実装は動的 import する。Notion 運用時に D1TaskStore とその依存を
+ * バンドルへ載せないためで、この関数が async なのはそのため。
  */
-export function getTaskStore(): TaskStore {
+export async function getTaskStore(): Promise<TaskStore> {
   if ((process.env.TASK_STORE ?? "notion") !== "d1") return notionTaskStore
 
   const env = getCloudflareContext().env
@@ -23,5 +25,6 @@ export function getTaskStore(): TaskStore {
       "TASK_STORE=d1 ですが D1 バインディング DB がありません。wrangler.jsonc の d1_databases を有効にしてください。",
     )
   }
+  const { D1TaskStore } = await import("./d1")
   return new D1TaskStore(env.DB, env.ATTACHMENTS)
 }

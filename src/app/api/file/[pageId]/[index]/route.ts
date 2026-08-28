@@ -53,7 +53,7 @@ async function resolveFromStore(
   pageId: string,
   index: number,
 ): Promise<{ data: ArrayBuffer; contentType: string; name: string } | null> {
-  const store = getTaskStore() as Partial<AttachmentReadableStore>
+  const store = (await getTaskStore()) as Partial<AttachmentReadableStore>
   if (typeof store.readAttachment !== "function") return null
   return store.readAttachment(pageId, index)
 }
