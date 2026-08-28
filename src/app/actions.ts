@@ -4,10 +4,15 @@ import { updateTag } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { isNotionClientError } from "@notionhq/client"
 import { getTaskStore } from "@/lib/store"
 import { isDevMode, requireAuth } from "@/lib/require-auth"
 import type { AdvancedFilter, SortConfig, Task, TaskAttachment, TaskStatus, TaskComment, CreateTaskInput, UpdateTaskInput } from "@/types/task"
+
+// Server Action の例外は production だとメッセージがマスクされるため、
+// 原因メッセージだけを平文の Error に載せ直してクライアントへ渡す。
+function toClientError(e: unknown): Error {
+  return new Error(e instanceof Error ? e.message : String(e))
+}
 
 export async function setAdvancedFilterAction(filter: AdvancedFilter) {
   ;(await cookies()).set("filter_advanced", JSON.stringify(filter), { maxAge: 86400, path: "/" })
@@ -108,7 +113,6 @@ export async function uploadTaskAttachmentAction(
 ): Promise<TaskAttachment[]> {
   await requireAuth()
   const file = formData.get("file")
-  console.error("[uploadTaskAttachmentAction] file type:", typeof file, file?.constructor?.name, "isFile:", file instanceof File, "isBlob:", file instanceof Blob)
   try {
     if (!(file instanceof File)) throw new Error(`ファイルが見つかりません (got ${file?.constructor?.name ?? typeof file})`)
     const attachments = await (await getTaskStore()).uploadTaskAttachment(taskId, file)
@@ -116,10 +120,7 @@ export async function uploadTaskAttachmentAction(
     return attachments
   } catch (e) {
     console.error("[uploadTaskAttachmentAction] failed:", e)
-    if (isNotionClientError(e)) {
-      throw new Error(`Notion エラー: ${e.message}`)
-    }
-    throw e
+    throw toClientError(e)
   }
 }
 
@@ -134,9 +135,6 @@ export async function removeTaskAttachmentAction(
     return attachments
   } catch (e) {
     console.error("[removeTaskAttachmentAction] failed:", e)
-    if (isNotionClientError(e)) {
-      throw new Error(`Notion エラー: ${e.message}`)
-    }
-    throw e
+    throw toClientError(e)
   }
 }
