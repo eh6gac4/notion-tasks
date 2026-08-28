@@ -64,6 +64,17 @@ npx wrangler d1 execute notion-tasks --remote --file=./migrations/0001_init.sql
 
 ### 3. データ移行
 
+スクリプトは `.env.local` から env を読む。本番の `NOTION_TOKEN` は Cloudflare
+secret なので手元に無い場合は用意する (Google の 2 つは `src/config.ts` の
+`requireEnv` を通すためのダミーで可):
+
+```
+NOTION_TOKEN=<Notion integration token>
+NOTION_DATABASE_ID=b0181e55-5df9-49a5-9790-0ac7e50057f9
+GOOGLE_CLIENT_ID=dummy
+GOOGLE_CLIENT_SECRET=dummy
+```
+
 ```
 node scripts/migrate-notion-to-d1.mjs
 ```
@@ -102,19 +113,24 @@ npx wrangler secret put TASK_STORE   # → d1
 npm run test:unit
 ```
 
+## バックアップ
+
+Notion が持っていた版履歴の代わりに、切り替え後は D1 の内容をエクスポートして
+おく。手動なら:
+
+```
+npx wrangler d1 export notion-tasks --remote --output=notion-tasks-$(date +%Y%m%d).sql
+```
+
+出力は R2 なり手元なりに保管する。定期実行の自動化 (GitHub Actions で cron →
+R2 へ put) は移行が安定してから判断する。
+
 ## 残っている作業
 
-移行を完了させるには以下が必要。いずれもこのプロトタイプの範囲外。
-
-- [ ] **`/api/icon/[pageId]` の D1 対応。** 現状 Notion のアイコン (S3 由来) は
-      移行スクリプトが捨てている。絵文字アイコンはそのまま移る。
-- [ ] **"Open in Notion" ボタンの出し分け。** D1 で新規作成したタスクは
-      `task.url` が空になる (`src/components/TaskDetail.tsx:872`)。
-- [ ] **`src/app/actions.ts` の `isNotionClientError` 依存の除去。** D1 経路では
-      常に false になるだけで害はないが、Notion を切り離すなら消す。
-- [ ] **`option_sets` の管理 UI。** 現状は移行スクリプトが流し込んだきり。
-      新しいタグを使ったら候補に足す導線が要る。
-- [ ] **バックアップ。** `wrangler d1 export` を定期実行して R2 に置く。
-      Notion が持っていた版履歴の代わり。
+- [x] "Open in Notion" ボタンの出し分け (#165) — `task.url` が空なら出さない
+- [x] `src/app/actions.ts` の `isNotionClientError` 依存の除去 (#166)
+- [x] タグ/場所の候補補充 (#167) — D1 では保存時に `option_sets` へ自動昇格する
+- [ ] **`/api/icon/[pageId]` の D1 対応。** 画像アイコン (S3 由来) は移行しない方針。
+      絵文字アイコンはそのまま移る。Notion 切り離し時に route ごと削除する。
 - [ ] Notion を完全に切り離す段階で `@notionhq/client`、`src/lib/notion.ts` の
-      block 変換、`src/constants/notion.ts` を削除する。
+      block 変換、`src/constants/notion.ts`、`/api/icon` route を削除する。
