@@ -240,6 +240,8 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
           ts,
         ),
       ...this.tagStatements(id, input.tags ?? []),
+      ...this.optionStatements("tag", input.tags ?? []),
+      ...this.optionStatements("location", input.location ? [input.location] : []),
       ...this.relationStatements(id, "parent", input.parentTaskId ? [input.parentTaskId] : []),
       ...this.relationStatements(id, "next", input.nextTaskId ? [input.nextTaskId] : []),
     ]
@@ -287,6 +289,10 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
     if (input.tags !== undefined) {
       statements.push(this.db.prepare(`DELETE FROM task_tags WHERE task_id = ?`).bind(id))
       statements.push(...this.tagStatements(id, input.tags))
+      statements.push(...this.optionStatements("tag", input.tags))
+    }
+    if (input.location) {
+      statements.push(...this.optionStatements("location", [input.location]))
     }
     if (input.parentTaskIds !== undefined) {
       statements.push(
@@ -328,6 +334,25 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
     return tags.map((tag) =>
       this.db.prepare(`INSERT OR IGNORE INTO task_tags (task_id, tag) VALUES (?, ?)`).bind(taskId, tag),
     )
+  }
+
+  /**
+   * タスク保存時に、使われたタグ/場所を option_sets へ昇格させる。
+   * Notion では data source の select 定義が候補の正だが、D1 には定義が無いので
+   * 「保存された値がそのまま次回の候補になる」方式にする。既存値は PK 衝突で無視。
+   * sort_order は同 kind の現在最大 +1。
+   */
+  private optionStatements(kind: "tag" | "location", values: string[]) {
+    return values
+      .filter((v) => v.length > 0)
+      .map((value) =>
+        this.db
+          .prepare(
+            `INSERT OR IGNORE INTO option_sets (kind, value, sort_order)
+             SELECT ?, ?, COALESCE(MAX(sort_order), -1) + 1 FROM option_sets WHERE kind = ?`,
+          )
+          .bind(kind, value, kind),
+      )
   }
 
   private relationStatements(fromId: string, type: "parent" | "next", toIds: string[]) {

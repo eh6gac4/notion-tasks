@@ -141,6 +141,17 @@ describe("D1TaskStore", () => {
     expect(await store.getLocationOptions()).toEqual(["オフィス"])
   })
 
+  it("保存で使われたタグ/場所が option_sets に自動登録される", async () => {
+    await store.createTask({ title: "t", tags: ["新タグ"], location: "新拠点" })
+    expect(await store.getTagOptions()).toEqual(["新タグ"])
+    expect(await store.getLocationOptions()).toEqual(["新拠点"])
+
+    const t = await store.createTask({ title: "u" })
+    await store.updateTask(t.id, { tags: ["新タグ", "追加タグ"], location: "別拠点" })
+    expect(await store.getTagOptions()).toEqual(["新タグ", "追加タグ"])
+    expect(await store.getLocationOptions()).toEqual(["新拠点", "別拠点"])
+  })
+
   describe("添付ファイル", () => {
     const file = (name: string, body = "hello") =>
       new File([body], name, { type: "text/plain" })
