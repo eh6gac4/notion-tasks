@@ -119,34 +119,43 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
 
   /**
    * tasks 行に対して tag / assignee / relation / attachment をまとめて引き、
-   * JS 側で組み立てる。行ごとに引くと D1 の往復が件数分増えるため、
-   * 常に IN 句 1 回で取得する。
+   * JS 側で組み立てる。行ごとに引くと D1 の往復が件数分増えるため IN 句でまとめるが、
+   * D1 は 1 クエリあたりのバインド変数が 100 個までなので ID をチャンクする。
    */
   private async hydrate(rows: TaskRow[]): Promise<Task[]> {
     if (rows.length === 0) return []
     const ids = rows.map((r) => r.id)
-    const ph = placeholders(ids.length)
 
-    const [tagRes, assigneeRes, relOutRes, relInRes, attachRes] = await this.db.batch([
-      this.db.prepare(`SELECT task_id, tag FROM task_tags WHERE task_id IN (${ph})`).bind(...ids),
-      this.db.prepare(`SELECT task_id, assignee FROM task_assignees WHERE task_id IN (${ph})`).bind(...ids),
-      this.db.prepare(`SELECT from_id, to_id, type FROM task_relations WHERE from_id IN (${ph})`).bind(...ids),
-      this.db.prepare(`SELECT from_id, to_id, type FROM task_relations WHERE to_id IN (${ph})`).bind(...ids),
-      this.db
-        .prepare(`SELECT * FROM task_attachments WHERE task_id IN (${ph}) ORDER BY task_id, sort_order`)
-        .bind(...ids),
-    ])
-
-    const tags = groupBy(tagRes.results as Array<{ task_id: string; tag: string }>, (r) => r.task_id, (r) => r.tag)
-    const assignees = groupBy(
-      assigneeRes.results as Array<{ task_id: string; assignee: string }>,
-      (r) => r.task_id,
-      (r) => r.assignee,
-    )
-
+    type TagRow = { task_id: string; tag: string }
+    type AssigneeRow = { task_id: string; assignee: string }
     type Rel = { from_id: string; to_id: string; type: "parent" | "next" }
-    const out = (relOutRes.results ?? []) as Rel[]
-    const inn = (relInRes.results ?? []) as Rel[]
+
+    const tagRows: TagRow[] = []
+    const assigneeRows: AssigneeRow[] = []
+    const out: Rel[] = []
+    const inn: Rel[] = []
+    const attachRows: AttachmentRow[] = []
+
+    for (const chunk of chunked(ids, 100)) {
+      const ph = placeholders(chunk.length)
+      const [tagRes, assigneeRes, relOutRes, relInRes, attachRes] = await this.db.batch([
+        this.db.prepare(`SELECT task_id, tag FROM task_tags WHERE task_id IN (${ph})`).bind(...chunk),
+        this.db.prepare(`SELECT task_id, assignee FROM task_assignees WHERE task_id IN (${ph})`).bind(...chunk),
+        this.db.prepare(`SELECT from_id, to_id, type FROM task_relations WHERE from_id IN (${ph})`).bind(...chunk),
+        this.db.prepare(`SELECT from_id, to_id, type FROM task_relations WHERE to_id IN (${ph})`).bind(...chunk),
+        this.db
+          .prepare(`SELECT * FROM task_attachments WHERE task_id IN (${ph}) ORDER BY task_id, sort_order`)
+          .bind(...chunk),
+      ])
+      tagRows.push(...((tagRes.results ?? []) as TagRow[]))
+      assigneeRows.push(...((assigneeRes.results ?? []) as AssigneeRow[]))
+      out.push(...((relOutRes.results ?? []) as Rel[]))
+      inn.push(...((relInRes.results ?? []) as Rel[]))
+      attachRows.push(...((attachRes.results ?? []) as AttachmentRow[]))
+    }
+
+    const tags = groupBy(tagRows, (r) => r.task_id, (r) => r.tag)
+    const assignees = groupBy(assigneeRows, (r) => r.task_id, (r) => r.assignee)
 
     // 有向辺 from → to を、両向きのプロパティに展開する。
     //   parent: from の親が to      → 逆引きは to の子が from
@@ -157,7 +166,7 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
     const prevs = groupBy(inn.filter((r) => r.type === "next"), (r) => r.to_id, (r) => r.from_id)
 
     const attachments = new Map<string, AttachmentRow[]>()
-    for (const a of (attachRes.results ?? []) as AttachmentRow[]) {
+    for (const a of attachRows) {
       const list = attachments.get(a.task_id) ?? []
       list.push(a)
       attachments.set(a.task_id, list)
@@ -429,6 +438,10 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
   private async listAttachments(taskId: string, lastEditedTime: string): Promise<TaskAttachment[]> {
     return toAttachments(await this.attachmentRows(taskId), taskId, lastEditedTime)
   }
+}
+
+function* chunked<T>(items: T[], size: number): Generator<T[]> {
+  for (let i = 0; i < items.length; i += size) yield items.slice(i, i + size)
 }
 
 function groupBy<T, V>(rows: T[] | undefined, key: (row: T) => string, value: (row: T) => V): Map<string, V[]> {
