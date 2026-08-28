@@ -30,6 +30,7 @@
     "serwist": "^9.5.12"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
     "@opennextjs/cloudflare": "^1.19.2",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
