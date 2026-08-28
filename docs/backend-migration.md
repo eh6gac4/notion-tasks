@@ -69,6 +69,8 @@ node scripts/migrate-notion-to-d1.mjs
 ```
 
 Notion 側は read-only で、`.migration/` に成果物を吐くだけ。
+**完了 / 中止 / 対応不要のタスクは移行対象外** (`MIGRATED_STATUSES`)。
+これらを親/次に持つリレーションも合わせてスキップされる。
 
 - `.migration/0002_seed.sql` … tasks / tags / assignees / relations / comments / option_sets
 - `.migration/attachments/` … 添付ファイルの実体
