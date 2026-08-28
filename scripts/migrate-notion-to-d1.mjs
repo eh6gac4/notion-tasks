@@ -29,10 +29,11 @@ import { build } from "esbuild"
 import { config as loadEnv } from "dotenv"
 import { Client } from "@notionhq/client"
 
-// 完了 / 中止 / 対応不要 は移行しない (件数が多く、D1 では参照しない終端状態)。
+// 完了 / 中止 / 対応不要 / アーカイブ済み は移行しない
+// (件数が多く、D1 では参照しない終端状態)。
 // これらを親/次に持つリレーションは known セットの判定で自然にスキップされる。
 const MIGRATED_STATUSES = [
-  "バックログ", "未着手", "進行中", "確認中", "一時中断", "アーカイブ済み",
+  "バックログ", "未着手", "進行中", "確認中", "一時中断",
 ]
 
 const NOTION_FILES_PROP = "添付ファイル"
