@@ -29,9 +29,10 @@ import { build } from "esbuild"
 import { config as loadEnv } from "dotenv"
 import { Client } from "@notionhq/client"
 
-const ALL_STATUSES = [
-  "バックログ", "未着手", "進行中", "確認中", "一時中断",
-  "完了", "中止", "対応不要", "アーカイブ済み",
+// 完了 / 中止 / 対応不要 は移行しない (件数が多く、D1 では参照しない終端状態)。
+// これらを親/次に持つリレーションは known セットの判定で自然にスキップされる。
+const MIGRATED_STATUSES = [
+  "バックログ", "未着手", "進行中", "確認中", "一時中断", "アーカイブ済み",
 ]
 
 const NOTION_FILES_PROP = "添付ファイル"
@@ -96,7 +97,7 @@ async function main() {
   const notion = new Client({ auth: process.env.NOTION_TOKEN })
 
   console.log("Notion からタスクを取得中...")
-  const tasks = (await lib.getTasks({ statuses: ALL_STATUSES })).slice(0, limit)
+  const tasks = (await lib.getTasks({ statuses: MIGRATED_STATUSES })).slice(0, limit)
   console.log(`  ${tasks.length} 件`)
 
   const known = new Set(tasks.map((t) => t.id))
