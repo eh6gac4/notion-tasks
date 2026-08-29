@@ -1,8 +1,9 @@
 # Notion → Cloudflare D1 バックエンド移行
 
-Notion API を唯一のデータストアにしている現状から、Cloudflare D1 (+ 添付は R2) へ
-移行するための土台。**この時点ではまだ切り替わっていない** — 既定は Notion のままで、
-`TASK_STORE=d1` を設定して初めて D1 が使われる。
+Notion API を唯一のデータストアにしていた状態から、Cloudflare D1 (+ 添付は R2) へ
+移行した記録。**本番は 2026-08-29 に `TASK_STORE=d1` へ切替済み。** コード上の既定は
+Notion のままで、`TASK_STORE=notion` に戻せば旧実装へロールバックできる (Notion 側は
+一切書き換えていない)。
 
 ## なぜ移行するか
 
@@ -127,6 +128,8 @@ R2 へ put) は移行が安定してから判断する。
 
 ## 残っている作業
 
+- [x] 本番切替 (2026-08-29) — `wrangler.jsonc` の D1/R2 バインディング有効化 (#169) +
+      `TASK_STORE=d1` secret 設定
 - [x] "Open in Notion" ボタンの出し分け (#165) — `task.url` が空なら出さない
 - [x] `src/app/actions.ts` の `isNotionClientError` 依存の除去 (#166)
 - [x] タグ/場所の候補補充 (#167) — D1 では保存時に `option_sets` へ自動昇格する

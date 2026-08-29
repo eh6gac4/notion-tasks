@@ -9,9 +9,8 @@ export type { TaskStore } from "./types"
  *   未設定 / "notion" → 既存の Notion 実装 (dev では in-memory mock)
  *   "d1"              → Cloudflare D1 + R2
  *
- * 既定が notion なので、この関数を挟んだだけでは挙動は変わらない。
- * 移行は wrangler.jsonc のバインディングを有効にして TASK_STORE=d1 を
- * 設定した時点で切り替わる。
+ * 本番は 2026-08-29 に TASK_STORE=d1 へ切り替え済み。ローカルや保険として
+ * TASK_STORE=notion に戻せば Notion 実装に復帰する。
  *
  * D1 実装は動的 import する。Notion 運用時に D1TaskStore とその依存を
  * バンドルへ載せないためで、この関数が async なのはそのため。
