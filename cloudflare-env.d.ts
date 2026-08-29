@@ -5,7 +5,7 @@
 // D1/R2 の型は inline import 型で参照する。
 interface CloudflareEnv {
   TOKEN_STORE: KVNamespace
-  // D1 移行用。wrangler.jsonc 側のバインディングを有効にするまで存在しないため optional。
-  DB?: import("@cloudflare/workers-types").D1Database
-  ATTACHMENTS?: import("@cloudflare/workers-types").R2Bucket
+  // D1 バックエンド (2026-08-29 本番切替済み)。wrangler.jsonc で恒常的に定義。
+  DB: import("@cloudflare/workers-types").D1Database
+  ATTACHMENTS: import("@cloudflare/workers-types").R2Bucket
 }
