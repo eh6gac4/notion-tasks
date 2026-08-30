@@ -58,3 +58,7 @@ public/sw.js.map
 
 # scripts/migrate-notion-to-d1.mjs の出力 (Notion の実データを含む)
 /.migration
+
+# Playwright
+playwright-report/
+test-results/
