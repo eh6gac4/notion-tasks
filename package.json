@@ -13,6 +13,8 @@
     "test": "playwright test",
     "test:chrome": "playwright test --project='Desktop Chrome'",
     "test:iphone": "playwright test --project='iPhone 15 (touch)'",
+    "test:visual": "bash scripts/visual-regression.sh",
+    "test:visual:update": "bash scripts/visual-regression.sh --update-snapshots",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
