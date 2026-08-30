@@ -1,26 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 176" width="192" height="192">
   <defs>
     <linearGradient id="field" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff2d55"/>
-      <stop offset="100%" stop-color="#d4123f"/>
+      <stop offset="0%" stop-color="#16060c"/>
+      <stop offset="100%" stop-color="#0b0008"/>
     </linearGradient>
     <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
-      <circle cx="6" cy="6" r="1.6" fill="#2a0410" fill-opacity="0.4"/>
+      <circle cx="6" cy="6" r="1.6" fill="#dc143c" fill-opacity="0.14"/>
     </pattern>
-    <radialGradient id="vignetteFill" cx="50%" cy="45%" r="65%">
-      <stop offset="0%" stop-color="#ff2d55" stop-opacity="1"/>
-      <stop offset="34%" stop-color="#ff2d55" stop-opacity="1"/>
-      <stop offset="78%" stop-color="#ff2d55" stop-opacity="0"/>
+    <radialGradient id="glow" cx="50%" cy="45%" r="62%">
+      <stop offset="0%" stop-color="#dc143c" stop-opacity="0.45"/>
+      <stop offset="45%" stop-color="#dc143c" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#dc143c" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
   <rect width="176" height="176" fill="url(#field)"/>
   <rect width="176" height="176" fill="url(#dots)"/>
-  <rect width="176" height="176" fill="url(#vignetteFill)"/>
+  <rect width="176" height="176" fill="url(#glow)"/>
 
-  <!-- N-check monogram -->
-  <g fill="none" stroke="#2a0410" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M 50 128 L 50 48 L 96 104 L 96 48"/>
-    <path d="M 96 104 L 118 128 L 140 66"/>
+  <!-- 封筒 + チェック(タスク + メール) -->
+  <g fill="none" stroke="#ff2d55" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="13" d="M 44 58 L 128 58 Q 142 58 142 72 L 142 120 Q 142 134 128 134 L 44 134 Q 30 134 30 120 L 30 72 Q 30 58 44 58 Z"/>
+    <path stroke-width="16" d="M 36 66 L 73 100 L 134 42"/>
   </g>
 </svg>

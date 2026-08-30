@@ -6,7 +6,7 @@ export function cyberIconJsx(size: number) {
       style={{
         width: "100%",
         height: "100%",
-        background: "linear-gradient(155deg, #ff2d55 0%, #d4123f 100%)",
+        background: "linear-gradient(155deg, #16060c 0%, #0b0008 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -16,20 +16,25 @@ export function cyberIconJsx(size: number) {
         {!isSmall && [
           <defs key="defs">
             <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
-              <circle cx="6" cy="6" r="1.6" fill="#2a0410" fillOpacity="0.4" />
+              <circle cx="6" cy="6" r="1.6" fill="#dc143c" fillOpacity="0.14" />
             </pattern>
-            <radialGradient id="vignetteFill" cx="50%" cy="45%" r="65%">
-              <stop offset="0%" stopColor="#ff2d55" stopOpacity="1" />
-              <stop offset="34%" stopColor="#ff2d55" stopOpacity="1" />
-              <stop offset="78%" stopColor="#ff2d55" stopOpacity="0" />
+            <radialGradient id="glow" cx="50%" cy="45%" r="62%">
+              <stop offset="0%" stopColor="#dc143c" stopOpacity="0.45" />
+              <stop offset="45%" stopColor="#dc143c" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#dc143c" stopOpacity="0" />
             </radialGradient>
           </defs>,
           <rect key="dots" width="176" height="176" fill="url(#dots)" />,
-          <rect key="vignette" width="176" height="176" fill="url(#vignetteFill)" />,
+          <rect key="glow" width="176" height="176" fill="url(#glow)" />,
         ]}
-        <g stroke="#2a0410" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" fill="none">
-          <path d="M 50 128 L 50 48 L 96 104 L 96 48" />
-          <path d="M 96 104 L 118 128 L 140 66" />
+        <g stroke="#ff2d55" strokeLinecap="round" strokeLinejoin="round" fill="none">
+          {/* 封筒本体 = メール */}
+          <path
+            strokeWidth="13"
+            d="M 44 58 L 128 58 Q 142 58 142 72 L 142 120 Q 142 134 128 134 L 44 134 Q 30 134 30 120 L 30 72 Q 30 58 44 58 Z"
+          />
+          {/* 封筒フラップ左辺からそのまま立ち上がるチェック = タスク完了 */}
+          <path strokeWidth="16" d="M 36 66 L 73 100 L 134 42" />
         </g>
       </svg>
     </div>
