@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 同一ブランチの古い実行はキャンセルする。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests (vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # node:sqlite (fakeD1) を使うため Node 22 必須。
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps
+
+      - name: Install Playwright system deps
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
+
+      - name: Run Playwright
+        run: npm run test
+        env:
+          # playwright.config.ts の webServer は CI で `npm run dev` を起動する。
+          # dev サーバー(照合側)と auth.setup.ts(入力側)の両方がこの値を読む。
+          APP_USERNAME: ci-user
+          APP_PASSWORD: ci-pass
+          NEXTAUTH_SECRET: ci-playwright-not-a-real-secret
+          AUTH_SECRET: ci-playwright-not-a-real-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

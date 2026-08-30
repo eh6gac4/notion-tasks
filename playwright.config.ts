@@ -52,7 +52,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "docker compose rm -sf dev && docker compose up --force-recreate dev",
+    // CI では Docker を使わずランナー上で直接 dev サーバーを起動する。
+    // ローカルは従来どおり docker compose 経由（CLAUDE.md の開発フロー）。
+    command: process.env.CI
+      ? "npm run dev"
+      : "docker compose rm -sf dev && docker compose up --force-recreate dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
