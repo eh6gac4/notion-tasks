@@ -27,7 +27,7 @@ const pixelMplus = localFont({
 
 export const metadata: Metadata = {
   title: "To-do",
-  description: "Notion タスク管理",
+  description: "タスクとメールの管理",
   appleWebApp: {
     capable: true,
     title: "To-do",

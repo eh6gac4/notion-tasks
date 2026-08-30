@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "To-do",
     short_name: "To-do",
-    description: "Notion タスク管理",
+    description: "タスクとメールの管理",
     start_url: "/",
     scope: "/",
     display: "standalone",
