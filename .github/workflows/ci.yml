@@ -60,6 +60,8 @@ jobs:
           NEXTAUTH_SECRET: ci-playwright-not-a-real-secret
           AUTH_SECRET: ci-playwright-not-a-real-secret
           NEXTAUTH_URL: http://localhost:3000
+          # 視覚回帰は runner 上だと描画が baseline と一致しないため専用の visual ジョブに任せる。
+          SKIP_VISUAL: "1"
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
@@ -68,3 +70,60 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  visual:
+    name: Visual regression (Playwright container)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # baseline は Playwright 公式コンテナで撮影されている (scripts/visual-regression.sh)。
+      # 同じコンテナ内で照合することで描画差分をなくす。
+      - name: Run visual regression
+        run: bash scripts/visual-regression.sh
+        env:
+          APP_USERNAME: ci-user
+          APP_PASSWORD: ci-pass
+          NEXTAUTH_SECRET: ci-playwright-not-a-real-secret
+          AUTH_SECRET: ci-playwright-not-a-real-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Upload diff report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report
+          path: playwright-report/
+          retention-days: 7
+
+  sw-smoke:
+    name: Service Worker smoke (prod build)
+    runs-on: ubuntu-latest
+    env:
+      # config.ts の requireEnv を通すためのダミー値。next build / next start は
+      # ルートを実行しないため実際の値は不要。
+      NOTION_TOKEN: dummy
+      NOTION_DATABASE_ID: dummy
+      GOOGLE_CLIENT_ID: dummy
+      GOOGLE_CLIENT_SECRET: dummy
+      APP_USERNAME: ci-user
+      APP_PASSWORD: ci-pass
+      NEXTAUTH_SECRET: ci-not-a-real-secret
+      AUTH_SECRET: ci-not-a-real-secret
+      NEXTAUTH_URL: http://localhost:3123
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build (next build --webpack)
+        run: npm run build
+      - name: Smoke test /sw.js
+        run: bash scripts/sw-smoke.sh

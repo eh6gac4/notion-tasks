@@ -10,9 +10,11 @@ export default defineConfig({
   retries: 2,
   workers: 1,
   fullyParallel: false,
-  // 視覚回帰は baseline が CI ランナーの描画と一致しないため CI では除外する
-  // （baseline を CI 環境で再生成する運用が必要。#173 で追跡）。ローカルでは流す。
-  grepInvert: process.env.CI ? [/視覚回帰/] : undefined,
+  // 視覚回帰の baseline は Playwright 公式コンテナ (mcr.microsoft.com/playwright)
+  // で撮影する。CI の通常 e2e ジョブは runner 上で描画が一致しないため SKIP_VISUAL=1
+  // で除外し、専用ジョブ（scripts/visual-regression.sh、ローカルは npm run test:visual）
+  // が同じコンテナ内で照合する。
+  grepInvert: process.env.SKIP_VISUAL === "1" ? [/視覚回帰/] : undefined,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
