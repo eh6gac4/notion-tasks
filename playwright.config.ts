@@ -10,20 +10,9 @@ export default defineConfig({
   retries: 2,
   workers: 1,
   fullyParallel: false,
-  // CI で既知の失敗を一時除外する（テストのバグ・視覚回帰 baseline の環境差・
-  // sw.js が dev サーバーで出ない件・iPhone で不安定な 1 件）。修正は #173 で追跡。
-  // ローカルでは全件流す。「親タスク変更」は serial な describe なので丸ごと除外する。
-  grepInvert: process.env.CI
-    ? [
-        /T4-02: Notion Task Conversion Workflow/,
-        /T4-03: AI-Assisted Email Draft Generation Flow/,
-        /T4-04: Full Inbox Keyboard Navigation & Shortcut Suppression/,
-        /視覚回帰/,
-        /\/sw\.js が SKIP_WAITING メッセージを受け付ける/,
-        /親タスク変更/,
-        /ステータス変更で他カラムへ移動する/,
-      ]
-    : undefined,
+  // 視覚回帰は baseline が CI ランナーの描画と一致しないため CI では除外する
+  // （baseline を CI 環境で再生成する運用が必要。#173 で追跡）。ローカルでは流す。
+  grepInvert: process.env.CI ? [/視覚回帰/] : undefined,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://localhost:3000",
