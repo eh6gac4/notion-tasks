@@ -11,6 +11,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      visual: ${{ steps.filter.outputs.visual }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # 視覚回帰は毎回 Playwright コンテナ (914MB) を pull する。描画に関わる
+          # 変更があったときだけ visual ジョブを走らせて pull 回数を減らす。
+          filters: |
+            visual:
+              - 'src/**'
+              - 'public/**'
+              - 'e2e/snapshot.spec.ts'
+              - 'e2e/helpers.ts'
+              - 'e2e/auth.setup.ts'
+              - 'e2e/snapshots/**'
+              - 'playwright.config.ts'
+              - 'next.config.ts'
+              - 'postcss.config.mjs'
+              - 'scripts/visual-regression.sh'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
+
   unit:
     name: Unit tests (vitest)
     runs-on: ubuntu-latest
@@ -73,7 +100,12 @@ jobs:
 
   visual:
     name: Visual regression (Playwright container)
+    needs: changes
+    if: needs.changes.outputs.visual == 'true'
     runs-on: ubuntu-latest
+    # コンテナ image (914MB) は毎回 pull する（約 36s）。docker save + actions/cache は
+    # 3.4GB tar の load が pull より遅く、10GB のキャッシュ枠を圧迫して e2e ジョブの
+    # browsers キャッシュを追い出すため採用しない。実行頻度を changes ジョブで絞る方針。
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
