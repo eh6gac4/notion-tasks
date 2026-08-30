@@ -181,13 +181,19 @@ test.describe("ボード", () => {
       const title = await card.locator("[data-testid='task-title']").innerText()
       expect(title.length).toBeGreaterThan(0)
 
+      // カード本文には前/次タスクのタイトルもバッジとして出るため、hasText で全体を
+      // 引くと別カードにも一致する。task-title 要素の一致でカードを絞る。
+      const cardByTitle = (col: ReturnType<typeof page.locator>) =>
+        col.locator(TASK_ITEM).filter({
+          has: page.locator("[data-testid='task-title']", { hasText: title }),
+        })
+
       const select = card.locator("select[aria-label='ステータスを変更']")
       await select.selectOption("確認中")
 
       // 同名のカードが「確認中」カラムに移動していることを確認
-      const movedCard = page.locator(`${COLUMN("確認中")} ${TASK_ITEM}`, { hasText: title })
-      await expect(movedCard).toBeVisible({ timeout: 5_000 })
-      await expect(wipCol.locator(TASK_ITEM, { hasText: title })).toHaveCount(0, { timeout: 5_000 })
+      await expect(cardByTitle(page.locator(COLUMN("確認中")))).toHaveCount(1, { timeout: 5_000 })
+      await expect(cardByTitle(wipCol)).toHaveCount(0, { timeout: 5_000 })
     })
   })
 })

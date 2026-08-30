@@ -195,15 +195,15 @@ test.describe("親タスク変更", () => {
     await openTaskDetail(TARGET_TITLE)
 
     await page.locator("[data-testid='parent-set-button']").click()
-    await expect(page.locator("[data-testid='parent-picker-modal']")).toBeVisible({ timeout: 5_000 })
+    await expect(page.locator("[data-testid='picker-modal']")).toBeVisible({ timeout: 5_000 })
 
-    await page.locator("[data-testid='parent-picker-search']").fill("サーバー監視")
+    await page.locator("[data-testid='picker-search']").fill("サーバー監視")
     const candidate = page
-      .locator("[data-testid='parent-picker-candidate']", { hasText: NEW_PARENT_TITLE })
+      .locator("[data-testid='picker-candidate']", { hasText: NEW_PARENT_TITLE })
       .first()
     await candidate.click()
 
-    await expect(page.locator("[data-testid='parent-picker-modal']")).not.toBeVisible({ timeout: 5_000 })
+    await expect(page.locator("[data-testid='picker-modal']")).not.toBeVisible({ timeout: 5_000 })
     await expect(
       page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }),
     ).toBeVisible({ timeout: 5_000 })
@@ -224,9 +224,9 @@ test.describe("親タスク変更", () => {
     ).toBeVisible({ timeout: 5_000 })
 
     await page.locator("[data-testid='parent-set-button']").click()
-    await page.locator("[data-testid='parent-picker-clear']").click()
+    await page.locator("[data-testid='picker-clear']").click()
 
-    await expect(page.locator("[data-testid='parent-picker-modal']")).not.toBeVisible({ timeout: 5_000 })
+    await expect(page.locator("[data-testid='picker-modal']")).not.toBeVisible({ timeout: 5_000 })
     await expect(
       page.locator("[data-testid='parent-task-item']", { hasText: NEW_PARENT_TITLE }),
     ).not.toBeVisible({ timeout: 5_000 })

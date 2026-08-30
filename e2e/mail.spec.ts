@@ -38,8 +38,10 @@ test.describe('Notion Mail E2E Flow Suite', () => {
   });
 
   test('T4-02: Notion Task Conversion Workflow', async ({ page }) => {
-    // 1. Ensure page 3-pane layout is loaded
-    await expect(page.getByText('Q3 Product Roadmap Review & Notion Tasks Integration')).toBeVisible();
+    // 1. Open the target email so the detail pane (with action buttons) renders
+    await page
+      .getByRole('option', { name: /Q3 Product Roadmap Review & Notion Tasks Integration/ })
+      .click();
 
     // 2. Click Notion Taskify button in email detail view
     await page.getByRole('button', { name: /Taskify to Notion/i }).click();
@@ -61,6 +63,11 @@ test.describe('Notion Mail E2E Flow Suite', () => {
   });
 
   test('T4-03: AI-Assisted Email Draft Generation Flow', async ({ page }) => {
+    // 0. Open an email so the detail pane (with action buttons) renders
+    await page
+      .getByRole('option', { name: /Q3 Product Roadmap Review & Notion Tasks Integration/ })
+      .click();
+
     // 1. Click AI Draft Reply button in detail pane
     await page.getByRole('button', { name: /AI Draft Reply/i }).click();
     await expect(page.getByTestId('ai-draft-modal')).toBeVisible();
@@ -89,21 +96,27 @@ test.describe('Notion Mail E2E Flow Suite', () => {
   });
 
   test('T4-04: Full Inbox Keyboard Navigation & Shortcut Suppression', async ({ page }) => {
-    // 1. Press 'j' key to navigate down email list
+    // 一覧(inbox)は mail-1 → mail-2 の順。詳細ヘッダの見出しで選択中のメールを判定する。
+    const detailHeading = (subject: string) => page.getByRole('heading', { name: subject });
+
+    // 1. 'j' twice: 未選択 → mail-1 → mail-2
     await page.keyboard.press('j');
-    await expect(page.getByText('Weekly Cyberpunk UI Sync & Retro Theme Mockups')).toBeVisible();
+    await expect(detailHeading('Q3 Product Roadmap Review & Notion Tasks Integration')).toBeVisible();
+    await page.keyboard.press('j');
+    await expect(detailHeading('Weekly Cyberpunk UI Sync & Retro Theme Mockups')).toBeVisible();
 
-    // 2. Press 'k' key to navigate back up email list
+    // 2. 'k' で mail-2 → mail-1 に戻る
     await page.keyboard.press('k');
-    await expect(page.getByText('Q3 Product Roadmap Review & Notion Tasks Integration')).toBeVisible();
+    await expect(detailHeading('Q3 Product Roadmap Review & Notion Tasks Integration')).toBeVisible();
 
-    // 3. Focus search input and type 'j' and 'c' (shortcuts should be suppressed)
-    const searchInput = page.getByPlaceholder('Search mail...');
-    await searchInput.focus();
+    // 3. モバイルでは詳細表示中に一覧(検索欄)が隠れるため、先に一覧へ戻す
+    const backToList = page.getByRole('button', { name: /Back to List/i });
+    if (await backToList.isVisible()) await backToList.click();
+
+    // 4. 検索欄にフォーカスした状態では j / c ショートカットが抑止される
+    await page.getByPlaceholder('Search mail...').focus();
     await page.keyboard.press('j');
     await page.keyboard.press('c');
-
-    // 4. Verify compose modal did NOT open while search input is focused
     await expect(page.getByTestId('compose-modal')).toBeHidden();
   });
 });
