@@ -6,6 +6,11 @@ import type {
   TaskStatus,
   UpdateTaskInput,
 } from "@/types/task"
+import type {
+  CreateRecurringTaskInput,
+  RecurringTask,
+  UpdateRecurringTaskInput,
+} from "@/types/recurring"
 
 /**
  * タスクの永続化層インターフェース。
@@ -38,6 +43,33 @@ export interface TaskStore {
   /** 添付ファイル。戻り値は更新後の全件。 */
   uploadTaskAttachment(taskId: string, file: File): Promise<TaskAttachment[]>
   removeTaskAttachment(taskId: string, index: number): Promise<TaskAttachment[]>
+}
+
+export type GenerateResult = {
+  /** 実際に作成したタスク数 */
+  created: number
+  /** ルールごとの内訳。ログと手動実行時の確認用 */
+  perRule: Array<{ ruleId: string; title: string; dates: string[] }>
+}
+
+/**
+ * 定期タスク(繰り返しルール)の永続化層インターフェース。
+ *
+ * 実装:
+ * - `recurring-d1.ts`     : Cloudflare D1 (本番)
+ * - `../mock-recurring.ts`: dev / e2e 用のインメモリ
+ *
+ * 発生日の計算と生成ポリシーは `src/lib/recurring-plan.ts` を両実装が共有する。
+ */
+export interface RecurringStore {
+  listRules(): Promise<RecurringTask[]>
+  getRule(id: string): Promise<RecurringTask | null>
+  createRule(input: CreateRecurringTaskInput): Promise<RecurringTask>
+  updateRule(id: string, input: UpdateRecurringTaskInput): Promise<RecurringTask>
+  /** ルールだけを消す。生成済みのタスクは残す。 */
+  deleteRule(id: string): Promise<void>
+  /** 未生成の回をタスク化する。冪等。 */
+  generateDueTasks(today: string): Promise<GenerateResult>
 }
 
 /** 添付ファイルの実体を返せる store(proxy route `/api/file/[pageId]/[index]` 用) */

@@ -1,8 +1,9 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare"
+import { isDevMode } from "@/lib/require-auth"
 import { notionTaskStore } from "./notion"
-import type { TaskStore } from "./types"
+import type { RecurringStore, TaskStore } from "./types"
 
-export type { TaskStore } from "./types"
+export type { RecurringStore, TaskStore } from "./types"
 
 /**
  * 使用するバックエンドを環境変数 `TASK_STORE` で選ぶ。
@@ -26,4 +27,31 @@ export async function getTaskStore(): Promise<TaskStore> {
   }
   const { D1TaskStore } = await import("./d1")
   return new D1TaskStore(env.DB, env.ATTACHMENTS)
+}
+
+/**
+ * 定期タスク (繰り返しルール) のストア。
+ *
+ * ルールの実体は D1 にしかない。dev では D1 が無いのでインメモリの差し替え
+ * 実装を返す (これが無いと /recurring が開けない)。分岐を TASK_STORE ではなく
+ * dev 判定に置いているのは、本番で TASK_STORE=notion へ切り戻したときに
+ * 「UI は正常に見えるがルールが揮発する」状態を作らないため。
+ *
+ * 発生日の計算 (recurrence.ts) と生成ポリシー (recurring-plan.ts) は
+ * 両実装で共有しているので、dev と本番で挙動はズレない。
+ */
+export async function getRecurringStore(): Promise<RecurringStore> {
+  if (isDevMode()) {
+    const { mockRecurringStore } = await import("@/lib/mock-recurring")
+    return mockRecurringStore
+  }
+
+  const env = getCloudflareContext().env
+  if (!env.DB) {
+    throw new Error("D1 バインディング DB がありません。wrangler.jsonc の d1_databases を確認してください。")
+  }
+
+  const { D1TaskStore } = await import("./d1")
+  const { RecurringTaskStore } = await import("./recurring-d1")
+  return new RecurringTaskStore(env.DB, new D1TaskStore(env.DB, env.ATTACHMENTS))
 }

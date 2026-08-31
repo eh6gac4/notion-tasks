@@ -41,11 +41,13 @@ type AttachmentRow = {
   size: number
 }
 
-function nowIso(): string {
+// recurring-d1.ts も同じ DB へ書くため、created_time / last_edited_time の
+// 形式と id の採番を 1 箇所に保つ目的で export している。
+export function nowIso(): string {
   return new Date().toISOString()
 }
 
-function newId(): string {
+export function newId(): string {
   return crypto.randomUUID()
 }
 

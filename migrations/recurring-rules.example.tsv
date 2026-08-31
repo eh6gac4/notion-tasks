@@ -1,0 +1,7 @@
+# 繰り返しルールの一括投入用 TSV (列の区切りはタブ)。
+# 使い方:  node scripts/import-recurring.mjs migrations/recurring-rules.example.tsv
+# 列の意味は docs/recurring-import.md を参照。
+# 空欄でよい列は空のまま残す。行頭 # の行と空行は無視される。
+title	freq	interval	byweekday	bymonthday	bymonth	due_time	lead_days	start_date	end_date	status	priority	location	tags	body
+燃えるゴミを出す	weekly	1	1,4			07:00	0	2026-09-01			medium	自宅	home	玄関のゴミをまとめる
+家賃の振込	monthly	1		27		10:00	3	2026-09-01			high	銀行	money	残高を確認してから振り込む

@@ -1,17 +1,21 @@
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import type { D1Database, R2Bucket } from "@cloudflare/workers-types"
 
 /**
  * node:sqlite の上に D1 の使う分だけの API を被せたテスト用スタブ。
- * 実際の migrations/0001_init.sql をそのまま流し込むので、
- * スキーマと D1TaskStore の SQL が噛み合っているかまで検証できる。
+ * migrations/*.sql を番号順にそのまま流し込むので、スキーマと各ストアの SQL が
+ * 噛み合っているかまで検証できる。マイグレーションを足せば自動で取り込まれる。
  */
 export function createFakeD1(): D1Database {
   const db = new DatabaseSync(":memory:")
   db.exec("PRAGMA foreign_keys = ON")
-  db.exec(readFileSync(resolve("migrations/0001_init.sql"), "utf-8"))
+
+  const dir = resolve("migrations")
+  for (const file of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {
+    db.exec(readFileSync(resolve(dir, file), "utf-8"))
+  }
 
   const makeStatement = (sql: string, values: unknown[] = []) => ({
     bind: (...next: unknown[]) => makeStatement(sql, next),
