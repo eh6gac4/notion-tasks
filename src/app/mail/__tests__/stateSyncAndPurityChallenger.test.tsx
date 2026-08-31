@@ -3,10 +3,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MailManager } from '@/components/mail/MailManager';
 import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
+import { submitSearch } from '@/test/mailDomHelpers';
 import { AIDraftModal } from '@/components/mail/AIDraftModal';
 import { MailComposeModal } from '@/components/mail/MailComposeModal';
 import { TaskifyModal } from '@/components/mail/TaskifyModal';
-import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
+import { INITIAL_MOCK_EMAILS, getFilteredEmails, searchMockEmails } from '@/lib/mockMailData';
 import { Email } from '@/types/mail';
 
 // src/app/actions.ts を vi.mock するテスト(TaskDetail.test.tsx 等)と同じパターン。
@@ -14,9 +15,10 @@ import { Email } from '@/types/mail';
 // next/server の解決に失敗するため、モジュール境界でモックする。
 // vi.mock は hoist されるため、実装は動的 import 経由で取得する(TDZ 回避)。
 vi.mock('@/app/mail/actions', async () => {
-  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  const { mockFetchMails, mockSearchMails } = await import('@/test/mailTestHelpers');
   return {
     fetchMailsAction: vi.fn(mockFetchMails),
+    searchMailsAction: vi.fn(mockSearchMails),
     fetchMailBodyAction: vi.fn().mockResolvedValue(null),
     markAsReadAction: vi.fn().mockResolvedValue(undefined),
     toggleStarAction: vi.fn().mockResolvedValue(undefined),
@@ -28,31 +30,24 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
     vi.restoreAllMocks();
   });
 
-  describe('Requirement 1: Search Filter Navigation Sync', () => {
-    it('navigates strictly within search-filtered emails using j and k without jumping to hidden emails', () => {
+  describe('Requirement 1: Search Result Navigation Sync', () => {
+    it('navigates strictly within search results using j and k without jumping to hidden emails', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      // Search for 'UI' which matches mail-1 (Alex Rivers) and mail-2 (Kaito Tanaka), filtering out mail-6 (Elena Rostova)
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'UI' } });
-      fireEvent.blur(searchInput);
-
-      const matchingEmails = INITIAL_MOCK_EMAILS.filter(
-        (e) =>
-          e.folder === 'inbox' &&
-          (e.subject.toLowerCase().includes('ui') ||
-            e.sender.name.toLowerCase().includes('ui') ||
-            e.sender.email.toLowerCase().includes('ui') ||
-            e.body.toLowerCase().includes('ui'))
-      );
+      const matchingEmails = searchMockEmails('UI');
       expect(matchingEmails.length).toBeGreaterThan(1);
 
-      // Press 'j' -> since nothing is selected yet, snaps to the first matching email (mail-1)
+      await submitSearch('UI');
+      await waitFor(() => {
+        expect(screen.getByText(`${matchingEmails.length} messages`)).toBeInTheDocument();
+      });
+
+      // Press 'j' -> since nothing is selected yet, snaps to the first matching email
       fireEvent.keyDown(window, { key: 'j' });
       const detailSubject = screen.getByRole('heading', { level: 2 });
       expect(detailSubject).toHaveTextContent(matchingEmails[0].subject);
 
-      // Press 'j' -> moves strictly to matching email 2 (mail-2), skipping non-matching items
+      // Press 'j' -> moves strictly to matching email 2, skipping non-matching items
       fireEvent.keyDown(window, { key: 'j' });
       expect(detailSubject).toHaveTextContent(matchingEmails[1].subject);
 
@@ -69,29 +64,28 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       expect(detailSubject).toHaveTextContent(matchingEmails[0].subject);
     });
 
-    it('snaps selection to first visible search-filtered email when selectedId was filtered out', () => {
+    it('snaps selection to first visible search result when selectedId is not in the results', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      // Initially mail-1 (Alex Rivers) is selected.
-      // Now search for 'Kaito' (only matches mail-2).
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'Kaito' } });
-      fireEvent.blur(searchInput);
+      // Search for 'Kaito' (only matches mail-2).
+      await submitSearch('Kaito');
+      await waitFor(() => {
+        expect(screen.getByText('1 messages')).toBeInTheDocument();
+      });
 
-      // Press 'j' shortcut -> since mail-1 is hidden (currentIndex = -1 in filteredEmails), it snaps to matching email (mail-2)
+      // Press 'j' shortcut -> nothing is selected, so it snaps to the only result (mail-2)
       fireEvent.keyDown(window, { key: 'j' });
       const detailSubject = screen.getByRole('heading', { level: 2 });
       expect(detailSubject).toHaveTextContent('Weekly Cyberpunk UI Sync & Retro Theme Mockups');
     });
 
-    it('does not throw or jump to hidden emails when zero emails match search query', () => {
+    it('does not throw or jump to hidden emails when zero emails match search query', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'NON_MATCHING_SEARCH_QUERY_XYZ' } });
-      fireEvent.blur(searchInput);
-
-      expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      await submitSearch('NON_MATCHING_SEARCH_QUERY_XYZ');
+      await waitFor(() => {
+        expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      });
 
       // Pressing j or k should be a no-op when zero emails match
       expect(() => {

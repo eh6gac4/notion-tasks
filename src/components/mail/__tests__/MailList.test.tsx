@@ -81,10 +81,19 @@ describe('MailList Component', () => {
     // (j/k ナビゲーションと表示を同じリストで揃えるため、フィルタは親に一本化している)。
     it('renders exactly the emails it is given while a search is active', () => {
       const matched = defaultProps.emails.filter((email) => email.sender.name === 'Kaito Tanaka');
-      render(<MailList {...defaultProps} emails={matched} searchQuery="Cyberpunk" />);
+      render(<MailList {...defaultProps} emails={matched} searchQuery="Cyberpunk" activeSearch="Cyberpunk" />);
 
       expect(screen.getByText('Kaito Tanaka')).toBeInTheDocument();
       expect(screen.queryByText('Alex Rivers')).not.toBeInTheDocument();
+    });
+
+    it('calls onSearchSubmit with the typed query when the search form is submitted', () => {
+      const onSearchSubmit = vi.fn();
+      render(<MailList {...defaultProps} searchQuery="Roadmap" onSearchSubmit={onSearchSubmit} />);
+
+      fireEvent.submit(screen.getByRole('search'));
+
+      expect(onSearchSubmit).toHaveBeenCalledWith('Roadmap');
     });
   });
 
@@ -95,10 +104,19 @@ describe('MailList Component', () => {
       expect(screen.getByText('No emails in this folder.')).toBeInTheDocument();
     });
 
-    it('renders no search match message when a search leaves no emails', () => {
-      render(<MailList {...defaultProps} emails={[]} searchQuery="NonExistentTerm999" />);
+    it('renders no search match message when a submitted search leaves no emails', () => {
+      render(
+        <MailList {...defaultProps} emails={[]} searchQuery="NonExistentTerm999" activeSearch="NonExistentTerm999" />
+      );
 
       expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+    });
+
+    // 打鍵の途中で「該当なし」が出ないよう、空状態の文言は確定済みの検索語で決める。
+    it('keeps the folder empty state while a query is typed but not yet submitted', () => {
+      render(<MailList {...defaultProps} emails={[]} searchQuery="NonExistentTerm999" activeSearch="" />);
+
+      expect(screen.getByText('No emails in this folder.')).toBeInTheDocument();
     });
 
     it('calls onSearchChange when user types in search input field', () => {
@@ -111,14 +129,15 @@ describe('MailList Component', () => {
       expect(onSearchChange).toHaveBeenCalledWith('Roadmap');
     });
 
-    it('clears search query when clicking clear search (✕) button', () => {
-      const onSearchChange = vi.fn();
-      render(<MailList {...defaultProps} searchQuery="test" onSearchChange={onSearchChange} />);
+    // 空での確定が検索解除の合図。入力欄の値も確定に合わせて親が空にするため、
+    // ✕ が呼ぶのは onSearchSubmit だけでよい。
+    it('submits an empty query when clicking clear search (✕) button', () => {
+      const onSearchSubmit = vi.fn();
+      render(<MailList {...defaultProps} searchQuery="test" activeSearch="test" onSearchSubmit={onSearchSubmit} />);
 
-      const clearBtn = screen.getByLabelText('Clear search');
-      fireEvent.click(clearBtn);
+      fireEvent.click(screen.getByLabelText('Clear search'));
 
-      expect(onSearchChange).toHaveBeenCalledWith('');
+      expect(onSearchSubmit).toHaveBeenCalledWith('');
     });
 
     it('selects email when pressing Enter or Space key on email row button', () => {

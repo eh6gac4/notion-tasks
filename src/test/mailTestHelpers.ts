@@ -1,5 +1,5 @@
 import { MailFolder, MailPage } from '@/types/mail';
-import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
+import { INITIAL_MOCK_EMAILS, getFilteredEmails, searchMockEmails } from '@/lib/mockMailData';
 import { MailManagerProps } from '@/components/mail/MailManager';
 
 // src/lib/gmail.ts の dev フォールバック(getMails/getMailLabels/getUnreadCounts)と
@@ -41,4 +41,9 @@ export function mockFetchMails(folder: MailFolder, label?: string): Promise<Mail
     ? INITIAL_MOCK_EMAILS.filter((e) => e.labels?.includes(label))
     : getFilteredEmails(INITIAL_MOCK_EMAILS, folder);
   return Promise.resolve({ emails: filtered });
+}
+
+// mockFetchMails と同上、searchMailsAction のモック実装。
+export function mockSearchMails(query: string): Promise<MailPage> {
+  return Promise.resolve({ emails: searchMockEmails(query) });
 }

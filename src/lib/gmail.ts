@@ -2,7 +2,7 @@ import { Email, EmailSender, MailFolder, MailPage } from "@/types/mail"
 import { config } from "@/config"
 import { isDevMode } from "@/lib/require-auth"
 import { getGoogleRefreshToken } from "@/lib/token-store"
-import { INITIAL_MOCK_EMAILS, getFilteredEmails } from "@/lib/mockMailData"
+import { INITIAL_MOCK_EMAILS, getFilteredEmails, searchMockEmails } from "@/lib/mockMailData"
 import {
   GMAIL_BATCH_URL,
   buildBatchBody,
@@ -358,10 +358,9 @@ function toEmail(message: GmailMessage, idToName: Map<string, string>, bodyOverr
 }
 
 // ---- 一覧・詳細取得 ----
-async function fetchMailsFromGmail(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
-  const { q: folderQuery, includeSpamTrash } = folderToQuery(folder)
-  const q = label ? `label:"${label}"` : folderQuery
-
+// q は呼び出し側で組み立てる。フォルダ・ラベル・検索でクエリの作り方だけが違い、
+// 以降の一覧取得(ID 一覧 → batch でヘッダ取得)は完全に共通のため。
+async function fetchMailsFromGmail(q: string, includeSpamTrash: boolean, pageToken?: string): Promise<MailPage> {
   const [listData, labelsCache] = await Promise.all([
     gmailGet<{ messages?: { id: string }[]; nextPageToken?: string }>("/messages", {
       q,
@@ -452,7 +451,22 @@ export function getMails(folder: MailFolder, label?: string, pageToken?: string)
       : getFilteredEmails(INITIAL_MOCK_EMAILS, folder)
     return Promise.resolve({ emails: filtered })
   }
-  return fetchMailsFromGmail(folder, label, pageToken)
+  const { q, includeSpamTrash } = folderToQuery(folder)
+  return fetchMailsFromGmail(label ? `label:"${label}"` : q, includeSpamTrash, pageToken)
+}
+
+// フォルダ横断の全文検索。一覧の body は snippet(本文冒頭)しか持たないため、
+// クライアント側の絞り込みでは本文中間や未読み込みのメールに到達できない。
+export function searchMails(query: string, pageToken?: string): Promise<MailPage> {
+  const trimmed = query.trim()
+  if (!trimmed) return Promise.resolve({ emails: [] })
+  if (isDevMode()) return Promise.resolve({ emails: searchMockEmails(trimmed) })
+
+  // フォルダ・ラベルでは絞らず全メールを対象にする。ゴミ箱・迷惑メールは
+  // includeSpamTrash=false で除外されるため、クエリ側の除外指定は要らない。
+  // 検索語はエスケープしない。from:/subject:/has:attachment 等の演算子を
+  // そのまま Gmail に解釈させるのが狙いのため。
+  return fetchMailsFromGmail(trimmed, false, pageToken)
 }
 
 export function getMailBody(id: string): Promise<Email | null> {

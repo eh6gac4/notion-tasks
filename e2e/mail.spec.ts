@@ -119,4 +119,27 @@ test.describe('Notion Mail E2E Flow Suite', () => {
     await page.keyboard.press('c');
     await expect(page.getByTestId('compose-modal')).toBeHidden();
   });
+
+  test('T4-05: Search hits body text outside the current folder and clears back to it', async ({ page }) => {
+    const searchInput = page.getByPlaceholder('Search mail...');
+    // 'handoff' は mail-3(archive)の本文の終盤にしか現れない。件名にも無く、
+    // 一覧が持つ snippet(本文冒頭)にも入らないため、サーバー検索でしか当たらない。
+    const archivedSubject = 'API Spec Update: Antigravity Agent Orchestration';
+
+    // 1. inbox 表示のままでは archive のメールは一覧に無い
+    await expect(page.getByText(archivedSubject)).toBeHidden();
+
+    // 2. 検索は Enter で確定する。入力しただけでは一覧は動かない。
+    await searchInput.fill('handoff');
+    await expect(page.getByText(archivedSubject)).toBeHidden();
+
+    await searchInput.press('Enter');
+    await expect(page.getByText(archivedSubject)).toBeVisible();
+    await expect(page.getByText('1 messages')).toBeVisible();
+
+    // 3. ✕ で検索を解除すると元のフォルダ表示に戻る
+    await page.getByRole('button', { name: /Clear search/i }).click();
+    await expect(searchInput).toHaveValue('');
+    await expect(page.getByText(archivedSubject)).toBeHidden();
+  });
 });

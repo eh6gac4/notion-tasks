@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useTransition, useDeferredValue } from 'react';
+import React, { useState, useMemo, useRef, useTransition } from 'react';
 import Link from 'next/link';
 import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
 import { useMailShortcuts } from '@/hooks/useMailShortcuts';
-import { fetchMailsAction, fetchMailBodyAction, markAsReadAction, toggleStarAction, toggleArchiveAction } from '@/app/mail/actions';
+import { fetchMailsAction, searchMailsAction, fetchMailBodyAction, markAsReadAction, toggleStarAction, toggleArchiveAction } from '@/app/mail/actions';
 import { MailSidebar } from '@/components/mail/MailSidebar';
 import { MailList } from '@/components/mail/MailList';
 import { MailDetail } from '@/components/mail/MailDetail';
@@ -19,6 +19,14 @@ const generateMailId = (): string => `mail-${Date.now()}`;
 // フォルダ/ラベル単位のキャッシュキー。ラベル表示はフォルダに依存しないため label 単独で持つ。
 const mailCacheKey = (folder: MailFolder, label: string | null): string =>
   label ? `label:${label}` : `folder:${folder}`;
+
+// 検索結果はフォルダを跨ぐため、フォルダ/ラベルのキャッシュ枠とは別の名前空間に置く。
+const SEARCH_CACHE_PREFIX = 'search:';
+const searchCacheKey = (query: string): string => `${SEARCH_CACHE_PREFIX}${query}`;
+
+// 検索キーは打った語の数だけ増えるので、直近ぶんだけ残して古い順に捨てる。
+// 捨てないと、全キーを走査する patchCachedEmail が既読・スター操作のたびに重くなる。
+const SEARCH_CACHE_LIMIT = 5;
 
 // 送信モック(対象外機能)で生成したローカル限定メールかどうかの判定。
 // Gmail 上に実在しないため、サーバーへの既読化・スター操作を送らない。
@@ -40,7 +48,10 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
   const [allLabels] = useState<string[]>(initialLabels);
   const [unreadCounts, setUnreadCounts] = useState<Record<MailFolder, number>>(initialUnreadCounts);
+  // 入力中の文字列と、Enter で確定してサーバー検索に投げた文字列を分ける。
+  // 確定前に一覧が動くと、打鍵の途中で「該当なし」が出てしまうため。
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeSearch, setActiveSearch] = useState<string>('');
   const [isComposeOpen, setIsComposeOpen] = useState<boolean>(false);
   const [composeInitialDraft, setComposeInitialDraft] = useState<Partial<ComposeDraft> | undefined>(undefined);
   const [taskifyEmail, setTaskifyEmail] = useState<Email | null>(null);
@@ -62,22 +73,6 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   }
   const mailCache = mailCacheRef.current;
 
-  // 入力のたびに全件フィルタすると打鍵が詰まるため、検索語の反映を遅延させる。
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-
-  // Compute search filtered emails (folder/label のフィルタは fetchMailsAction 側で完了済み)
-  const filteredEmails = useMemo(() => {
-    if (!deferredSearchQuery.trim()) return emails;
-    const q = deferredSearchQuery.toLowerCase();
-    return emails.filter(
-      (email) =>
-        email.subject.toLowerCase().includes(q) ||
-        email.sender.name.toLowerCase().includes(q) ||
-        email.sender.email.toLowerCase().includes(q) ||
-        email.body.toLowerCase().includes(q)
-    );
-  }, [emails, deferredSearchQuery]);
-
   // Selected email state (default to null for mobile responsive view)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // 本文の遅延取得中のメール ID。一覧取得は snippet しか含まないため、詳細を開いたタイミングで
@@ -92,27 +87,69 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     setNextPageToken(page.nextPageToken);
   };
 
-  // フォルダ/ラベル切替の共通処理。キャッシュがあれば即座に描画し、
-  // いずれの場合もサーバーから取り直して最新に揃える。
-  const loadMailPage = (folder: MailFolder, label: string | null) => {
-    const key = mailCacheKey(folder, label);
-    const cached = mailCache.get(key);
-    const localForFolder = label ? [] : localOnlyEmails.filter((email) => email.folder === folder);
+  // キャッシュへの唯一の書き込み口。ついでに古い検索結果を捨てる。
+  const setCachedPage = (key: string, page: MailPage) => {
+    mailCache.set(key, page);
+    const searchKeys = Array.from(mailCache.keys()).filter((k) => k.startsWith(SEARCH_CACHE_PREFIX));
+    searchKeys.slice(0, -SEARCH_CACHE_LIMIT).forEach((k) => mailCache.delete(k));
+  };
 
+  // 一覧取得の共通処理。キャッシュがあれば即座に描画し、いずれの場合も
+  // サーバーから取り直して最新に揃える(stale-while-revalidate)。
+  // フォルダ/ラベルと検索で違うのは「どのキーか」「何を呼ぶか」だけなので、そこだけ引数に取る。
+  const loadPage = (key: string, fetchPage: () => Promise<MailPage>, prepend: Email[] = []) => {
+    const cached = mailCache.get(key);
     if (cached) {
-      setEmails([...localForFolder, ...cached.emails]);
+      setEmails([...prepend, ...cached.emails]);
       setNextPageToken(cached.nextPageToken);
     }
 
     startMailTransition(async () => {
-      const page = await fetchMailsAction(folder, label ?? undefined);
-      mailCache.set(key, page);
-      applyMailPage(page, (_prev, fetched) => [...localForFolder, ...fetched]);
+      const page = await fetchPage();
+      setCachedPage(key, page);
+      applyMailPage(page, (_prev, fetched) => [...prepend, ...fetched]);
     });
   };
 
-  // Handle folder switching — サーバーから該当フォルダのメールを取得する。
+  // フォルダ/ラベルの表示に切り替える。フォルダ一覧を出すことは検索から抜けることでもあるため、
+  // 検索状態のリセットもここに集約する(呼び出し側ごとに書くと漏れる)。
   // ローカル限定メール(送信モック)のうち対象フォルダに属するものは先頭に合成する。
+  const loadMailPage = (folder: MailFolder, label: string | null) => {
+    setSearchQuery('');
+    setActiveSearch('');
+    const localForFolder = label ? [] : localOnlyEmails.filter((email) => email.folder === folder);
+    loadPage(
+      mailCacheKey(folder, label),
+      () => fetchMailsAction(folder, label ?? undefined),
+      localForFolder
+    );
+  };
+
+  // 検索の確定 — Gmail 側の全文検索に投げ、フォルダを跨いだ結果で一覧を差し替える。
+  // ローカル限定メール(送信モック)は Gmail 上に無いので検索結果には合成しない。
+  const handleSearchSubmit = (query: string) => {
+    const trimmed = query.trim();
+
+    // 空で確定(✕ を含む)したら検索を抜け、元のフォルダ表示に戻す。
+    // 未確定の入力を消しただけなら一覧は既にフォルダ表示なので、取り直さない。
+    if (!trimmed) {
+      setSearchQuery('');
+      if (!activeSearch) return;
+      setSelectedId(null);
+      loadMailPage(activeFolder, activeLabel);
+      return;
+    }
+
+    setSearchQuery(trimmed);
+    setActiveSearch(trimmed);
+    setSelectedId(null);
+    loadPage(searchCacheKey(trimmed), () => searchMailsAction(trimmed));
+  };
+
+  // 現在表示中の一覧のキャッシュキー。検索中は検索結果、それ以外はフォルダ/ラベル。
+  const listKey = activeSearch ? searchCacheKey(activeSearch) : mailCacheKey(activeFolder, activeLabel);
+
+  // Handle folder switching — サーバーから該当フォルダのメールを取得する
   const handleSelectFolder = (folder: MailFolder) => {
     setActiveFolder(folder);
     setActiveLabel(null);
@@ -127,16 +164,17 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     loadMailPage(activeFolder, label);
   };
 
-  // Handle "load more" — 現在のフォルダ/ラベルの続きを取得して末尾に追加する
+  // Handle "load more" — 現在のフォルダ/ラベル(検索中は検索結果)の続きを取得して末尾に追加する
   const handleLoadMore = () => {
     if (!nextPageToken) return;
     startLoadMoreTransition(async () => {
-      const page = await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
+      const page = activeSearch
+        ? await searchMailsAction(activeSearch, nextPageToken)
+        : await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
       // 追加読み込み分もキャッシュに足し、再訪時に読み込み済みの範囲まで復元されるようにする。
       // キャッシュはサーバー由来のメールだけを持つので、表示リストではなく前回のキャッシュに継ぎ足す。
-      const key = mailCacheKey(activeFolder, activeLabel);
-      mailCache.set(key, {
-        emails: [...(mailCache.get(key)?.emails ?? []), ...page.emails],
+      setCachedPage(listKey, {
+        emails: [...(mailCache.get(listKey)?.emails ?? []), ...page.emails],
         nextPageToken: page.nextPageToken,
       });
       applyMailPage(page, (prev, fetched) => [...prev, ...fetched]);
@@ -226,9 +264,11 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
       const toggledEmails = toggleStarred(prevEmails);
       // starred フォルダを表示中の場合、emails はサーバーから取得した固定リストなので
       // (旧実装のような都度フィルタが無い)、unstar したメールは明示的にリストから除く。
-      const nextEmails = activeFolder === 'starred' ? getFilteredEmails(toggledEmails, 'starred') : toggledEmails;
+      // 検索中の一覧はフォルダに紐付かないため、この除去は行わない。
+      const isStarredList = !activeSearch && activeFolder === 'starred';
+      const nextEmails = isStarredList ? getFilteredEmails(toggledEmails, 'starred') : toggledEmails;
 
-      if (activeFolder === 'starred' && selectedId === id) {
+      if (isStarredList && selectedId === id) {
         if (nextEmails.length === 0) {
           setSelectedId(null);
         } else {
@@ -261,8 +301,9 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
     const nextFolder: MailFolder = willArchive ? 'archive' : 'inbox';
 
     // inbox / archive 表示中は操作後に対象がそのフォルダの条件を満たさなくなるためリストから除く。
-    // ラベル表示中はフォルダ条件で絞っていないので残す。
-    const leavesCurrentList = !activeLabel && (activeFolder === 'inbox' || activeFolder === 'archive');
+    // ラベル表示中・検索結果表示中はフォルダ条件で絞っていないので残す。
+    const leavesCurrentList =
+      !activeSearch && !activeLabel && (activeFolder === 'inbox' || activeFolder === 'archive');
 
     const applyFolder = (list: Email[]) =>
       list.map((email) => (email.id === id ? { ...email, folder: nextFolder } : email));
@@ -358,7 +399,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
 
   // Register global keyboard shortcuts hook ('j', 'k', 'c')
   useMailShortcuts({
-    emails: filteredEmails,
+    emails,
     selectedId,
     onSelectEmail: handleSelectEmail,
     onOpenCompose: () => handleOpenCompose(),
@@ -405,7 +446,9 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
 
         <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-dim)]">
           <span className="hidden md:inline">
-            {activeLabel ? (
+            {activeSearch ? (
+              <>Search: <strong className="text-[var(--text)]">{activeSearch}</strong></>
+            ) : activeLabel ? (
               <>Label: <strong className="text-[var(--text)] uppercase">{activeLabel}</strong></>
             ) : (
               <>Folder: <strong className="text-[var(--text)] uppercase">{activeFolder}</strong></>
@@ -463,7 +506,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
 
         {/* Pane 2: Email List */}
         <MailList
-          emails={filteredEmails}
+          emails={emails}
           selectedId={selectedId}
           onSelectEmail={handleSelectEmail}
           onToggleStar={handleToggleStar}
@@ -471,6 +514,8 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
           activeFolder={activeFolder}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onSearchSubmit={handleSearchSubmit}
+          activeSearch={activeSearch}
           hasMore={!!nextPageToken}
           isLoadingMore={isLoadingMore}
           onLoadMore={handleLoadMore}

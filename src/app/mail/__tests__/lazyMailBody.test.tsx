@@ -8,9 +8,10 @@ import { Email } from '@/types/mail';
 // メール詳細を開いたタイミングで本文(bodyHtml 含む)を遅延取得する挙動の検証。
 // src/app/mail/__tests__/page.test.tsx と同じモック境界パターンを使う。
 vi.mock('@/app/mail/actions', async () => {
-  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  const { mockFetchMails, mockSearchMails } = await import('@/test/mailTestHelpers');
   return {
     fetchMailsAction: vi.fn(mockFetchMails),
+    searchMailsAction: vi.fn(mockSearchMails),
     fetchMailBodyAction: vi.fn(),
     markAsReadAction: vi.fn().mockResolvedValue(undefined),
     toggleStarAction: vi.fn().mockResolvedValue(undefined),

@@ -17,6 +17,11 @@ export interface MailListProps {
   activeFolder?: MailFolder;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  /** Enter で確定したとき、および ✕ で消したときに呼ばれる。空文字なら検索解除。
+   *  入力欄の値も呼び出し側が確定値に揃えるため、✕ は onSearchChange を呼ばない。 */
+  onSearchSubmit?: (query: string) => void;
+  /** 確定済みの検索語。空なら非検索状態。 */
+  activeSearch?: string;
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -186,6 +191,8 @@ export function MailList({
   onToggleArchive,
   searchQuery = '',
   onSearchChange,
+  onSearchSubmit,
+  activeSearch = '',
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
@@ -255,7 +262,16 @@ export function MailList({
     <div className={`w-full md:w-80 flex-shrink-0 bg-[var(--bg)] border-r border-[var(--border)] flex-col min-h-0 ${selectedId ? 'hidden md:flex' : 'flex'}`}>
       {/* Search Header */}
       <div className="p-3 border-b border-[var(--border)] bg-[var(--surface)] space-y-2">
-        <div className="relative flex items-center">
+        {/* 検索は Enter で確定してサーバー(Gmail)側の全文検索に投げる。
+            打鍵ごとに API を叩かないよう、form の submit を唯一の起点にする。 */}
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearchSubmit?.(searchQuery);
+          }}
+          className="relative flex items-center"
+        >
           <input
             type="text"
             value={searchQuery}
@@ -266,7 +282,7 @@ export function MailList({
           />
           {searchQuery && (
             <button
-              onClick={() => onSearchChange?.('')}
+              onClick={() => onSearchSubmit?.('')}
               type="button"
               className="absolute right-2 text-[var(--text-dim)] hover:text-[var(--text)] text-xs font-mono"
               aria-label="Clear search"
@@ -274,10 +290,12 @@ export function MailList({
               ✕
             </button>
           )}
-        </div>
+        </form>
         <div className="text-[10px] text-[var(--text-faint)] font-mono px-1 flex justify-between">
           <span>{emails.length} messages</span>
-          <span className="text-[var(--accent)] font-pixel">j / k to navigate</span>
+          <span className="text-[var(--accent)] font-pixel">
+            {searchQuery && searchQuery.trim() !== activeSearch ? 'enter to search all mail' : 'j / k to navigate'}
+          </span>
         </div>
       </div>
 
@@ -285,7 +303,7 @@ export function MailList({
       <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]" role="listbox" aria-label="Email list">
         {emails.length === 0 ? (
           <div className="p-8 text-center text-xs text-[var(--text-dim)] font-mono">
-            {searchQuery ? 'No emails match your search.' : 'No emails in this folder.'}
+            {activeSearch ? 'No emails match your search.' : 'No emails in this folder.'}
           </div>
         ) : (
           emails.map((email) => (
