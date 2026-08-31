@@ -1,7 +1,7 @@
 "use server"
 
 import { requireAuth } from "@/lib/require-auth"
-import { getMails, getMailBody, toggleMailStar, markMailAsRead, setMailArchived, getMailLabels, getUnreadCounts, createEmptyUnreadCounts, GmailReauthRequiredError } from "@/lib/gmail"
+import { getMails, searchMails, getMailBody, toggleMailStar, markMailAsRead, setMailArchived, getMailLabels, getUnreadCounts, createEmptyUnreadCounts, GmailReauthRequiredError } from "@/lib/gmail"
 import type { Email, MailFolder, MailPage } from "@/types/mail"
 
 // fulfilled ならその値、rejected ならログを出して既定値にフォールバックする。
@@ -48,6 +48,12 @@ export async function fetchInitialMailDataAction(): Promise<MailInitialData> {
 export async function fetchMailsAction(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
   await requireAuth()
   return getMails(folder, label, pageToken)
+}
+
+// 検索はフォルダ/ラベルを跨ぐため fetchMailsAction とは別 action にする。
+export async function searchMailsAction(query: string, pageToken?: string): Promise<MailPage> {
+  await requireAuth()
+  return searchMails(query, pageToken)
 }
 
 export async function fetchMailBodyAction(id: string): Promise<Email | null> {

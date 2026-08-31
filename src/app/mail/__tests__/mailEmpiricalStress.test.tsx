@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MailManager } from '@/components/mail/MailManager';
 import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
+import { submitSearch, clearSearch } from '@/test/mailDomHelpers';
 import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
 
 // src/app/actions.ts を vi.mock するテスト(TaskDetail.test.tsx 等)と同じパターン。
@@ -10,9 +11,10 @@ import { INITIAL_MOCK_EMAILS, getFilteredEmails } from '@/lib/mockMailData';
 // next/server の解決に失敗するため、モジュール境界でモックする。
 // vi.mock は hoist されるため、実装は動的 import 経由で取得する(TDZ 回避)。
 vi.mock('@/app/mail/actions', async () => {
-  const { mockFetchMails } = await import('@/test/mailTestHelpers');
+  const { mockFetchMails, mockSearchMails } = await import('@/test/mailTestHelpers');
   return {
     fetchMailsAction: vi.fn(mockFetchMails),
+    searchMailsAction: vi.fn(mockSearchMails),
     fetchMailBodyAction: vi.fn().mockResolvedValue(null),
     markAsReadAction: vi.fn().mockResolvedValue(undefined),
     toggleStarAction: vi.fn().mockResolvedValue(undefined),
@@ -91,64 +93,97 @@ describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () 
   });
 
   describe('Check 2: Search Query Handling & Edge Cases', () => {
-    it('handles non-matching query and renders empty state correctly', () => {
+    it('does not filter the list until the query is submitted', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
+      const inboxCount = getFilteredEmails(INITIAL_MOCK_EMAILS, 'inbox').length;
       const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'XYZ_NON_EXISTENT_SEARCH_999' } });
+      fireEvent.change(searchInput, { target: { value: 'Kaito' } });
 
-      expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      // Typing alone must not touch the list — the search runs on Enter.
+      expect(screen.getByText(`${inboxCount} messages`)).toBeInTheDocument();
+
+      await submitSearch('Kaito');
+      await waitFor(() => {
+        expect(screen.getByText('1 messages')).toBeInTheDocument();
+      });
+    });
+
+    it('handles non-matching query and renders empty state correctly', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
+
+      await submitSearch('XYZ_NON_EXISTENT_SEARCH_999');
+
+      await waitFor(() => {
+        expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      });
       expect(screen.getByText('0 messages')).toBeInTheDocument();
     });
 
-    it('handles special characters without crashing or throwing SyntaxError', () => {
+    it('handles special characters without crashing or throwing SyntaxError', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      const specialQuery = '[regex]*?()+^\\$#@!';
+      await submitSearch('[regex]*?()+^\\$#@!');
 
-      expect(() => {
-        fireEvent.change(searchInput, { target: { value: specialQuery } });
-      }).not.toThrow();
-
-      expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('No emails match your search.')).toBeInTheDocument();
+      });
     });
 
-    it('handles case-insensitive search queries', () => {
+    it('handles case-insensitive search queries', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'kAiTo' } });
+      await submitSearch('kAiTo');
 
-      expect(screen.getAllByText('Kaito Tanaka').length).toBeGreaterThan(0);
+      await waitFor(() => {
+        expect(screen.getAllByText('Kaito Tanaka').length).toBeGreaterThan(0);
+      });
       expect(screen.getByText('1 messages')).toBeInTheDocument();
     });
 
-    it('clears search query when clear button (✕) is clicked', () => {
+    // 'handoff' は mail-3(archive)の本文の終盤にしか現れない。件名にも無く、一覧が持つ
+    // snippet(本文冒頭)にも入らないため、冒頭一致の旧実装では当たらなかった語。
+    it('matches text in the middle of the body of a mail outside the current folder', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      const searchInput = screen.getByPlaceholderText('Search mail...');
-      fireEvent.change(searchInput, { target: { value: 'Kaito' } });
+      await submitSearch('handoff');
 
-      const clearBtn = screen.getByRole('button', { name: /Clear search/i });
-      fireEvent.click(clearBtn);
-
-      expect(searchInput).toHaveValue('');
+      await waitFor(() => {
+        expect(screen.getAllByText('API Spec Update: Antigravity Agent Orchestration').length).toBeGreaterThan(0);
+      });
     });
 
-    it('ensures j/k shortcuts operate only on search-filtered list', () => {
+    it('returns to the folder listing when the clear button (✕) is clicked', async () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
-      const searchInput = screen.getByPlaceholderText('Search mail...');
+      await submitSearch('Kaito');
+      await waitFor(() => {
+        expect(screen.getByText('1 messages')).toBeInTheDocument();
+      });
+
+      await clearSearch();
+
+      expect(screen.getByPlaceholderText('Search mail...')).toHaveValue('');
+      const inboxCount = getFilteredEmails(INITIAL_MOCK_EMAILS, 'inbox').length;
+      await waitFor(() => {
+        expect(screen.getByText(`${inboxCount} messages`)).toBeInTheDocument();
+      });
+    });
+
+    it('ensures j/k shortcuts operate only on the search results', async () => {
+      render(<MailManager {...getDefaultMailManagerProps()} />);
+
       // Search for Kaito (only mail-2 matches, mail-1 and mail-6 hidden)
-      fireEvent.change(searchInput, { target: { value: 'Kaito' } });
-      fireEvent.blur(searchInput);
+      await submitSearch('Kaito');
+      await waitFor(() => {
+        expect(screen.getByText('1 messages')).toBeInTheDocument();
+      });
 
       // Press 'j' shortcut -> since nothing is selected yet, snaps to single matching item (mail-2 Kaito Tanaka)
       fireEvent.keyDown(window, { key: 'j' });
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Weekly Cyberpunk UI Sync & Retro Theme Mockups');
 
-      // Press 'j' shortcut AGAIN -> stays at last item of filteredEmails (mail-2) instead of navigating to hidden mail-6
+      // Press 'j' shortcut AGAIN -> stays at the last result instead of navigating to a hidden email
       fireEvent.keyDown(window, { key: 'j' });
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Weekly Cyberpunk UI Sync & Retro Theme Mockups');
     });

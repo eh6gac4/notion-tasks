@@ -164,6 +164,21 @@ Elena`,
   },
 ];
 
+// dev モードの検索。本番の Gmail 検索(全メール対象・ゴミ箱除く)に対応する近似で、
+// gmail.ts の dev フォールバックとテストの期待値の両方がここを参照する。
+// 定義を 1 か所に集めないと、片方だけ変えてもテストが緑のままになる。
+export function searchMockEmails(query: string): Email[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return getFilteredEmails(INITIAL_MOCK_EMAILS, 'all').filter(
+    (email) =>
+      email.subject.toLowerCase().includes(q) ||
+      email.sender.name.toLowerCase().includes(q) ||
+      email.sender.email.toLowerCase().includes(q) ||
+      email.body.toLowerCase().includes(q)
+  );
+}
+
 export function getFilteredEmails(emails: Email[], folder: MailFolder): Email[] {
   if (folder === 'all') {
     return emails.filter((email) => email.folder !== 'trash');
