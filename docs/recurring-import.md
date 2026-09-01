@@ -79,3 +79,39 @@ node scripts/import-recurring.mjs --suggest
 - **前回ぶんが未完了でも次が生成される。** Notion の繰り返しテンプレートと同じ挙動。
 - 生成は冪等。同じ回が二度作られることはない（`recurring_task_instances` が台帳になっている）。
 - cron が数日止まっていた場合、最大 30 日ぶんまで遡って取りこぼしを埋める。それより古い回は生成されない。
+
+## デプロイ
+
+定期タスクの機能は 3 つの要素からなり、デプロイ経路がそれぞれ違う。
+
+| 要素 | 反映方法 |
+|------|----------|
+| D1 スキーマ | `wrangler d1 execute` で手動適用（下記） |
+| 本体アプリ（`/recurring`） | main への push で `.github/workflows/deploy.yml` が自動デプロイ |
+| cron Worker | `npm run deploy:recurring` で手動デプロイ |
+
+**本体は手動デプロイ不要。** main にマージすれば自動で反映される。
+
+スキーマは本体より先に適用する。順序が逆だと、テーブルが無い状態で `/recurring` が開かれてエラーになる。
+
+```
+npx wrangler d1 execute notion-tasks --remote --file=./migrations/0002_recurring_tasks.sql
+```
+
+cron Worker は本体とは別デプロイで、これを打つまで自動生成は始まらない。
+
+```
+npm run deploy:recurring
+```
+
+手動実行エンドポイントを使う場合はシークレットを設定する。未設定なら 404 を返すだけで、cron 自体は動く。
+
+```
+npx wrangler secret put CRON_SECRET -c wrangler.recurring.jsonc
+```
+
+### 注意: 素の `wrangler deploy` は使えない
+
+このリポジトリで `wrangler deploy -c wrangler.recurring.jsonc` を直接叩くと、wrangler が Next.js プロジェクトを検出して `opennextjs-cloudflare deploy` へ委譲し、`-c` が無視されて本体のデプロイが走る。`npm run deploy:recurring` は `OPEN_NEXT_DEPLOY=1` を付けてこれを抑止しているので、必ずこちらを使う。
+
+`--dry-run` はこの委譲経路を通らないため、`npm run check:recurring` が通っても実デプロイで初めて表面化する。
