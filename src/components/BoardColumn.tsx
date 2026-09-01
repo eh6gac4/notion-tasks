@@ -44,6 +44,7 @@ export function BoardColumn({
   searchQuery,
   advancedFilter,
   sort,
+  refreshToken,
   isLoading,
   onSelect,
 }: {
@@ -55,6 +56,7 @@ export function BoardColumn({
   searchQuery: string
   advancedFilter: AdvancedFilter
   sort: SortConfig
+  refreshToken?: number
   isLoading?: boolean
   onSelect: (task: Task) => void
 }) {
@@ -71,7 +73,6 @@ export function BoardColumn({
   )
   const propsHasLazy = propLazyTasks.length > 0
   const [lazyTasks, setLazyTasks] = useState<Task[] | null>(null)
-  const [isLoadingLazy, setIsLoadingLazy] = useState(false)
   const [hasLoadError, setHasLoadError] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -87,35 +88,31 @@ export function BoardColumn({
     const obs = new IntersectionObserver((entries) => {
       if (!entries.some((e) => e.isIntersecting)) return
       obs.disconnect()
-      setIsLoadingLazy(true)
       fetcher()
         .then((t) => setLazyTasks(t))
         .catch(() => setHasLoadError(true))
-        .finally(() => setIsLoadingLazy(false))
     }, { threshold: 0.05 })
     obs.observe(el)
     return () => obs.disconnect()
   }, [isLazyStatus, propsHasLazy, lazyTasks, lazyStatus])
 
-  // タブ復帰時にバックグラウンドで fetch し直す。
-  // まだロードされていない (lazyTasks === null) 場合は既存の IntersectionObserver に任せる。
+  // 親 (TaskManager) が tasks を再取得するたびに refreshToken が増える。lazy カラムの
+  // 中身は親の tasks に含まれないため、このタイミングで自前に fetch し直さないと
+  // ステータス変更後も古い一覧が残る (例: バックログ→未着手 にしてもバックログ列に残る)。
+  // タブ復帰時の再取得も親が refreshToken を進めるのでここに集約される。
+  // まだロードされていない (lazyTasks === null) 場合は IntersectionObserver に任せる。
+  const prevRefreshTokenRef = useRef(refreshToken)
   useEffect(() => {
-    if (!isLazyStatus) return
-    function onVisible() {
-      if (document.visibilityState !== "visible") return
-      if (lazyTasks === null) return // まだ表示されていない場合は fetch しない
-      if (!lazyStatus) return
-      const fetcher = getLazyFetcher(lazyStatus)
-      if (!fetcher) return
-      setIsLoadingLazy(true)
-      fetcher()
-        .then((t) => setLazyTasks(t))
-        .catch(() => setHasLoadError(true))
-        .finally(() => setIsLoadingLazy(false))
-    }
-    document.addEventListener("visibilitychange", onVisible)
-    return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [isLazyStatus, lazyTasks, lazyStatus])
+    if (prevRefreshTokenRef.current === refreshToken) return
+    prevRefreshTokenRef.current = refreshToken
+    if (!lazyStatus) return
+    if (lazyTasks === null) return
+    const fetcher = getLazyFetcher(lazyStatus)
+    if (!fetcher) return
+    fetcher()
+      .then((t) => setLazyTasks(t))
+      .catch(() => setHasLoadError(true))
+  }, [refreshToken, lazyTasks, lazyStatus])
 
   const q = searchQuery.trim().toLowerCase()
   const filtered = useMemo(() => {
