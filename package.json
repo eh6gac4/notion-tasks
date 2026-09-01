@@ -21,8 +21,8 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "deploy:recurring": "wrangler deploy -c wrangler.recurring.jsonc",
-    "check:recurring": "wrangler deploy --dry-run -c wrangler.recurring.jsonc"
+    "deploy:recurring": "OPEN_NEXT_DEPLOY=1 wrangler deploy -c wrangler.recurring.jsonc",
+    "check:recurring": "OPEN_NEXT_DEPLOY=1 wrangler deploy --dry-run -c wrangler.recurring.jsonc"
   },
   "dependencies": {
     "@notionhq/client": "^5.19.0",

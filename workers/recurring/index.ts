@@ -7,6 +7,8 @@
 // ビルドパイプラインに一切触れずに済む。
 //
 // デプロイ: npm run deploy:recurring
+// 素の `wrangler deploy` は使えない (Next.js プロジェクトと検出されて本体の
+// デプロイに化ける)。理由と手順は docs/recurring-import.md の「デプロイ」を参照。
 
 import type { D1Database, ExecutionContext, ScheduledController } from "@cloudflare/workers-types"
 import { todayInTokyo } from "@/lib/recurrence"
