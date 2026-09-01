@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": "./workers/recurring/index.ts",
+	"name": "notion-tasks-recurring",
+	"compatibility_date": "2026-04-21",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	// UTC 15:00 = 日本時間の翌 0:00。日付の変わり目に、その日ぶんのタスクを生やす。
+	"triggers": {
+		"crons": [
+			"0 15 * * *"
+		]
+	},
+	// 本体 (wrangler.jsonc) と同じ D1 を見る。database_id を変えないこと。
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "notion-tasks",
+			"database_id": "c09d95cd-7b34-49e0-985e-0dda0248b86d"
+		}
+	],
+	// 手動実行エンドポイント用のシークレット。
+	// 設定: npx wrangler secret put CRON_SECRET -c wrangler.recurring.jsonc
+	// 未設定のままなら手動実行は 404 を返すだけで、cron は問題なく動く。
+	"observability": {
+		"enabled": true
+	}
+}

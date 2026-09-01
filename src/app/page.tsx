@@ -42,6 +42,9 @@ export default async function Page({
             ✦ To-do
           </h1>
           <div className="flex items-center gap-3">
+            <Link href="/recurring" className="inline-flex items-center h-9 px-2 text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
+              repeat
+            </Link>
             <Link href="/mail" className="inline-flex items-center h-9 px-2 text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors">
               mail
             </Link>
