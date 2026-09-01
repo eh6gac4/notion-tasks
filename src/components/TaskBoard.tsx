@@ -34,10 +34,12 @@ export const TaskBoard = forwardRef<
     searchQuery: string
     advancedFilter: AdvancedFilter
     sort: SortConfig
+    // 親が tasks を再取得するたびに増える世代カウンタ。lazy fetch カラムの再取得トリガ。
+    refreshToken?: number
     isLoading?: boolean
     onSelect: (task: Task) => void
   }
->(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, isLoading, onSelect }, ref) {
+>(function TaskBoard({ tasks, searchQuery, advancedFilter, sort, refreshToken, isLoading, onSelect }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {
@@ -84,6 +86,7 @@ export const TaskBoard = forwardRef<
           searchQuery={searchQuery}
           advancedFilter={advancedFilter}
           sort={sort}
+          refreshToken={refreshToken}
           isLoading={isLoading}
           onSelect={onSelect}
         />

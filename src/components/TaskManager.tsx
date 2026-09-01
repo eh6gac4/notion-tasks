@@ -46,6 +46,10 @@ export function TaskManager({
   // 選択時に Task オブジェクトを直接受け取って fallback として保持する。
   const [externalSelectedTask, setExternalSelectedTask] = useState<Task | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  // lazy fetch カラム (完了/中止/対応不要/バックログ) は親 tasks に含まれないため、
+  // refresh() で親を再取得しても列の中身が更新されない。世代カウンタを配って
+  // ロード済みの lazy カラムだけ再 fetch させる。
+  const [refreshToken, setRefreshToken] = useState(0)
   const advancedActive = isAdvancedFilterActive(advancedFilter)
   const sortActive = isSortActive(sort)
 
@@ -116,6 +120,7 @@ export function TaskManager({
         setTasks(data.tasks)
         setTagOptions(data.tagOptions)
         setLocationOptions(data.locationOptions)
+        setRefreshToken((n) => n + 1)
       })
     }
     document.addEventListener("visibilitychange", onVisible)
@@ -133,6 +138,7 @@ export function TaskManager({
       setTasks(data.tasks)
       setTagOptions(data.tagOptions)
       setLocationOptions(data.locationOptions)
+      setRefreshToken((n) => n + 1)
     })
   }, [])
 
@@ -247,6 +253,7 @@ export function TaskManager({
               searchQuery={searchQuery}
               advancedFilter={advancedFilter}
               sort={sort}
+              refreshToken={refreshToken}
               isLoading={isInitialLoading}
               onSelect={handleSelect}
             />
