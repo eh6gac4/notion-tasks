@@ -161,7 +161,7 @@ export function RecurringFormSheet({
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
       <div
-        className="relative rounded-none px-4 pt-4 pb-8 safe-bottom max-h-[85svh] overflow-y-auto overscroll-contain lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-lg"
+        className="relative rounded-none px-4 pt-4 pb-[calc(32px+var(--safe-bottom))] max-h-[85svh] overflow-y-auto overscroll-contain lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-lg"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",

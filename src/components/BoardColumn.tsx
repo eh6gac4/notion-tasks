@@ -248,7 +248,7 @@ export function BoardColumn({
         </span>
       </header>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-11">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-[calc(44px+var(--safe-bottom))]">
         {showLoading ? (
           <div
             data-testid="board-column-loader"

@@ -36,7 +36,7 @@ export default async function Page({
 
   return (
     <div className="flex flex-col h-full">
-      <header className="sticky top-0 z-20 bg-[var(--bg)] border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 bg-[var(--bg)] border-b border-[var(--border)] pt-[var(--safe-top)]">
         <div className="flex items-center justify-between px-4 lg:px-6 h-14">
           <h1 className="font-pixel text-sm font-bold text-[var(--accent)] accent-glow-text-sm tracking-widest uppercase">
             ✦ To-do

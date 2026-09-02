@@ -45,7 +45,7 @@ export function Settings() {
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
 
           <div
-            className="relative rounded-none-2xl px-5 pt-4 pb-10 safe-bottom max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+            className="relative rounded-none-2xl px-5 pt-4 pb-[calc(40px+var(--safe-bottom))] max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
             style={{
               backgroundColor: "var(--surface)",
               borderTop: "1px solid var(--border-strong)",

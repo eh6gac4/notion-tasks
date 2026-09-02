@@ -29,8 +29,8 @@ export function VersionTag() {
       className="font-pixel"
       style={{
         position: "fixed",
-        bottom: "12px",
-        left: "12px",
+        bottom: "calc(12px + var(--safe-bottom))",
+        left: "calc(12px + var(--safe-left))",
         zIndex: 9999,
         background: "rgba(11, 0, 8, 0.85)",
         border: `1px solid ${isDev ? "rgba(245, 158, 11, 0.45)" : "rgba(220, 20, 60, 0.35)"}`,
