@@ -39,6 +39,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Dynamic Island / ホームインジケーター領域まで描画を広げ、env(safe-area-inset-*) を
+  // 有効化する。個々の余白は globals.css の .safe-* ユーティリティで確保する。
+  viewportFit: "cover",
   colorScheme: "dark",
   themeColor: "#dc143c",
 }

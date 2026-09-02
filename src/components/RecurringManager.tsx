@@ -70,7 +70,7 @@ export function RecurringManager({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4" data-testid="recurring-manager">
+    <div className="flex-1 overflow-y-auto px-4 lg:px-6 pt-4 pb-[calc(16px+var(--safe-bottom))]" data-testid="recurring-manager">
       <div className="flex items-center gap-4 mb-4">
         <button
           type="button"

@@ -67,7 +67,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
   return (
     <div
       ref={panelRef}
-      className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto"
+      className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto pb-[var(--safe-bottom)]"
     >
       {/* Top Detail Bar / Header */}
       <div className="p-4 md:p-6 border-b border-[var(--border)] bg-[var(--bg)] space-y-4">

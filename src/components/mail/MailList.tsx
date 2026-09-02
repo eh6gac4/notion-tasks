@@ -300,7 +300,7 @@ export function MailList({
       </div>
 
       {/* Email List Items */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]" role="listbox" aria-label="Email list">
+      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)] pb-[var(--safe-bottom)]" role="listbox" aria-label="Email list">
         {emails.length === 0 ? (
           <div className="p-8 text-center text-xs text-[var(--text-dim)] font-mono">
             {activeSearch ? 'No emails match your search.' : 'No emails in this folder.'}

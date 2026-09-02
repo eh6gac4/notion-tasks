@@ -42,7 +42,7 @@ export function MailToast({
   return (
     <div
       data-testid="mail-toast"
-      className={`fixed bottom-4 right-4 z-50 border-2 px-4 py-3 font-mono text-xs shadow-[4px_4px_0px_var(--accent-dark)] transition-all flex items-center gap-3 ${
+      className={`fixed bottom-[calc(16px+var(--safe-bottom))] right-[calc(16px+var(--safe-right))] z-50 border-2 px-4 py-3 font-mono text-xs shadow-[4px_4px_0px_var(--accent-dark)] transition-all flex items-center gap-3 ${
         typeStyles[type] || typeStyles.info
       }`}
       role="status"

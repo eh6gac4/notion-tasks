@@ -413,7 +413,7 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)] select-none">
       {/* Top Bar Header */}
-      <header className="h-12 bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
+      <header className="h-[calc(48px+var(--safe-top))] pt-[var(--safe-top)] bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <Link
             href="/"

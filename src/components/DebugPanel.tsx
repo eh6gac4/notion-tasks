@@ -121,8 +121,8 @@ export function DebugPanel() {
       className="font-pixel"
       style={{
         position: "fixed",
-        bottom: "12px",
-        right: "12px",
+        bottom: "calc(12px + var(--safe-bottom))",
+        right: "calc(12px + var(--safe-right))",
         zIndex: 9999,
         fontSize: "10px",
         letterSpacing: "0.05em",

@@ -11,7 +11,7 @@ export function TaskCreate({ tagOptions, locationOptions }: { tagOptions: string
       {/* FAB */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-8 right-6 lg:bottom-6 lg:right-8 z-10 w-14 h-14 rounded-none flex items-center justify-center text-2xl transition-all active:scale-95 lg:hover:scale-110"
+        className="fixed bottom-[calc(32px+var(--safe-bottom))] right-[calc(24px+var(--safe-right))] lg:bottom-6 lg:right-8 z-10 w-14 h-14 rounded-none flex items-center justify-center text-2xl transition-all active:scale-95 lg:hover:scale-110"
         style={{
           backgroundColor: "var(--accent)",
           color: "var(--bg)",

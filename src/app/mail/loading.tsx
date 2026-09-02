@@ -6,7 +6,7 @@ export default function MailLoading() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
       {/* Top Bar */}
-      <header className="h-12 bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
+      <header className="h-[calc(48px+var(--safe-top))] pt-[var(--safe-top)] bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <div className="h-3 w-12 bg-[var(--surface-2)] animate-pulse" />
           <span className="text-[var(--border-strong)]">|</span>

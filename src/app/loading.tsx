@@ -3,7 +3,7 @@ import { CyberLoader } from "@/components/CyberLoader"
 export default function Loading() {
   return (
     <div className="flex flex-col h-full">
-      <header className="sticky top-0 z-20 bg-[var(--bg)] border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 bg-[var(--bg)] border-b border-[var(--border)] pt-[var(--safe-top)]">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="h-3 w-16 bg-[var(--surface-2)] rounded-none animate-pulse" />
           <div className="h-3 w-20 bg-[var(--surface)] rounded-none animate-pulse" />

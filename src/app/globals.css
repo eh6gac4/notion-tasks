@@ -55,6 +55,14 @@
 
   /* カード hover 時のエレベーション */
   --elev-card-hover: 4px 4px 0px var(--accent-dark);
+
+  /* iOS のセーフエリア (Dynamic Island / ホームインジケーター)。画面端に接する要素は
+     この変数を余白に加算する。env() は Tailwind の任意値内でカンマのエスケープが
+     必要になるため変数に包む。非対応環境・PC では 0px。 */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
 }
 
 body {

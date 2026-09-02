@@ -429,7 +429,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
       <div
         ref={panelRef}
         data-testid="task-detail"
-        className="relative rounded-none-2xl px-4 pt-4 pb-8 max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-w-2xl lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto"
+        className="relative rounded-none-2xl px-4 pt-4 pb-[calc(32px+var(--safe-bottom))] max-h-[85svh] overflow-y-auto lg:rounded-none lg:w-full lg:max-w-2xl lg:max-h-[80vh] lg:pb-6 lg:border lg:border-[var(--border-strong)] lg:mx-auto"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",

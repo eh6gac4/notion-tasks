@@ -79,7 +79,7 @@ export function TaskPickerModal({
     <div data-testid="picker-modal" className="fixed inset-0 z-[70] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
-        className="relative flex flex-col rounded-none-2xl pt-4 pb-0 safe-bottom h-[85svh] lg:h-auto lg:max-h-[80vh] lg:rounded-none lg:w-full lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
+        className="relative flex flex-col rounded-none-2xl pt-4 pb-[var(--safe-bottom)] h-[85svh] lg:h-auto lg:max-h-[80vh] lg:rounded-none lg:w-full lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"
         style={{
           backgroundColor: "var(--surface)",
           borderTop: "1px solid var(--border-strong)",
