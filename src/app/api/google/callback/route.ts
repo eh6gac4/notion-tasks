@@ -30,6 +30,13 @@ export async function GET(request: NextRequest) {
   const state = params.get("state")
   const savedState = request.cookies.get(STATE_COOKIE)?.value
   if (!savedState || state !== savedState) {
+    // 「cookie が届いていない」のか「別の state の cookie が届いている」のかは
+    // 対処がまったく違うため、値そのものではなく識別に足る情報だけ残す。
+    console.error("[google-oauth] state 検証に失敗しました", {
+      cookieNames: request.cookies.getAll().map((c) => c.name),
+      state: state?.slice(0, 8) ?? null,
+      savedState: savedState?.slice(0, 8) ?? null,
+    })
     // cookie が無い(セッション切れ・別ブラウザ)場合と state 不一致(CSRF/リプレイ)を
     // 区別せず同じエラーにまとめる。ユーザーへの案内は「もう一度やり直す」で共通のため。
     return redirectToMail("invalid_state")
