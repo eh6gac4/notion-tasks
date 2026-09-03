@@ -31,7 +31,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "To-do",
-    statusBarStyle: "black-translucent",
+    // black-translucent は Web コンテンツをステータスバー背後まで描画させる。iOS 26 は
+    // その領域に Liquid Glass の scroll edge effect を自動適用するため、直下の sticky
+    // ヘッダーまでぼける。black にしてステータスバー帯を OS 側に描かせ、ぼけを回避する。
+    statusBarStyle: "black",
     startupImage: splashStartupImages(),
   },
 }
