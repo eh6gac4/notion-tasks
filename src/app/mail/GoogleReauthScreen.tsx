@@ -5,6 +5,7 @@ const REAUTH_REASON_MESSAGES: Record<string, string> = {
   invalid_state: "連携リクエストの検証に失敗しました。",
   token_exchange_failed: "Google とのトークン交換に失敗しました。",
   no_refresh_token: "Google から再連携用のトークンを取得できませんでした。",
+  verify_failed: "取得したトークンで Gmail に接続できませんでした。",
 }
 
 export function GoogleReauthScreen({ reason }: { reason?: string }) {

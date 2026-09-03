@@ -18,7 +18,7 @@ export const config = {
   google: {
     clientId:     requireEnv("GOOGLE_CLIENT_ID"),
     clientSecret: requireEnv("GOOGLE_CLIENT_SECRET"),
-    // refresh token は KV(TOKEN_STORE)に永続化される可変値であり、他の必須 env とは
+    // refresh token は D1(app_tokens)に永続化される可変値であり、他の必須 env とは
     // 性質が異なるため config には含めない(src/lib/token-store.ts 参照)。
   },
 } as const

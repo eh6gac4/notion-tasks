@@ -48,12 +48,12 @@ export class GmailReauthRequiredError extends Error {
 // isolate が再利用される間は再取得を避け、期限切れ間際(30秒前)で更新する。
 let cachedAccessToken: { token: string; expiresAt: number } | null = null
 
-async function getAccessToken(): Promise<string> {
-  const now = Date.now()
-  if (cachedAccessToken && cachedAccessToken.expiresAt > now + 30_000) {
-    return cachedAccessToken.token
-  }
-  const refreshToken = await getGoogleRefreshToken()
+/**
+ * 与えられた refresh token でアクセストークンを 1 本取る。キャッシュには触らない。
+ * 再認可(callback)が新しい refresh token を保存する前の疎通確認にも使うため、
+ * 「保存済みトークンを読む」処理とは分けてある。
+ */
+export async function fetchAccessToken(refreshToken: string): Promise<{ token: string; expiresIn: number }> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -72,8 +72,27 @@ async function getAccessToken(): Promise<string> {
     throw new Error(`[gmail] アクセストークン取得に失敗しました: ${res.status} ${body}`)
   }
   const data = (await res.json()) as { access_token: string; expires_in: number }
-  cachedAccessToken = { token: data.access_token, expiresAt: now + data.expires_in * 1000 }
-  return cachedAccessToken.token
+  return { token: data.access_token, expiresIn: data.expires_in }
+}
+
+/**
+ * refresh token が差し替わったときに呼ぶ。旧トークンで得たアクセストークンは
+ * 最長 1 時間有効なままなので、明示的に捨てないと同じ isolate が再認可後も
+ * 古い権限のトークンを使い続ける。
+ */
+export function clearAccessTokenCache(): void {
+  cachedAccessToken = null
+}
+
+async function getAccessToken(): Promise<string> {
+  const now = Date.now()
+  if (cachedAccessToken && cachedAccessToken.expiresAt > now + 30_000) {
+    return cachedAccessToken.token
+  }
+  const refreshToken = await getGoogleRefreshToken()
+  const { token, expiresIn } = await fetchAccessToken(refreshToken)
+  cachedAccessToken = { token, expiresAt: now + expiresIn * 1000 }
+  return token
 }
 
 type GmailParams = Record<string, string | string[]>

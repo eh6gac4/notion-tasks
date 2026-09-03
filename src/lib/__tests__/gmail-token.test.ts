@@ -45,7 +45,7 @@ describe("getAccessToken (getMails 経由)", () => {
     await expect(getMails("inbox")).rejects.not.toThrow(GmailReauthRequiredError)
   })
 
-  it("KV に保存された refresh token を使ってトークン取得を試みる", async () => {
+  it("保存された refresh token を使ってトークン取得を試みる", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,

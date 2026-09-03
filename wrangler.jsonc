@@ -42,15 +42,9 @@
 			"database_id": "c09d95cd-7b34-49e0-985e-0dda0248b86d"
 		}
 	],
-	"kv_namespaces": [
-		{
-			// Run before first deploy: wrangler kv namespace create notion-tasks-tokens
-			// Gmail の refresh token を保存する。GOOGLE_REFRESH_TOKEN env は
-			// KV に値が無い場合の初回ブートストラップ用に残す(src/lib/token-store.ts 参照)。
-			"binding": "TOKEN_STORE",
-			"id": "e9edef0748424b7da4b4b85c4f4842b5"
-		}
-	],
+	// Gmail の refresh token は KV(TOKEN_STORE)から D1 の app_tokens へ移した(理由は
+	// src/lib/token-store.ts)。旧 namespace e9edef0748424b7da4b4b85c4f4842b5 は
+	// 稼働確認後に削除する。
 	"routes": [
 		{
 			"pattern": "todo.eh6gac4.work",
