@@ -27,4 +27,16 @@ describe("GET /api/google/authorize", () => {
     expect(setCookie).toContain("google_oauth_state=")
     expect(setCookie).toContain("HttpOnly")
   })
+
+  // この経路が二重に実行されても cookie と認可 URL の state がズレないための性質。
+  // リクエストごとに新しい state を作ると、片方の Set-Cookie が
+  // もう片方のリダイレクト先を上書きして invalid_state になる。
+  it("有効な state cookie が既にあれば同じ値を使い回す", async () => {
+    const req = new NextRequest("https://example.com/api/google/authorize")
+    req.cookies.set("google_oauth_state", "existing-state")
+    const res = await GET(req)
+
+    expect(new URL(res.headers.get("location")!).searchParams.get("state")).toBe("existing-state")
+    expect(res.headers.get("set-cookie")).toContain("google_oauth_state=existing-state")
+  })
 })
