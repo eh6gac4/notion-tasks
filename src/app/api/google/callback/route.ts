@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/require-auth"
 import { config } from "@/config"
 import { setGoogleRefreshToken } from "@/lib/token-store"
+import { clearAccessTokenCache, fetchAccessToken } from "@/lib/gmail"
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token"
 const STATE_COOKIE = "google_oauth_state"
@@ -62,6 +63,19 @@ export async function GET(request: NextRequest) {
     return redirectToMail("no_refresh_token")
   }
 
+  // 保存する前に、そのトークンで実際にアクセストークンが取れるかを確かめる。
+  // refresh_token が返ってきたことと使えることは別で、ここを見ないと
+  // 「連携は成功したのにメールが見えないまま」という無言の失敗になる。
+  try {
+    await fetchAccessToken(data.refresh_token)
+  } catch (error) {
+    console.error("[google-oauth] 取得した refresh_token での疎通確認に失敗しました", error)
+    return redirectToMail("verify_failed")
+  }
+
   await setGoogleRefreshToken(data.refresh_token)
+  // 旧 refresh token で取ったアクセストークンがこの isolate に残っていると、
+  // 再認可後もそちらが使われてしまうため捨てる。
+  clearAccessTokenCache()
   return redirectToMail()
 }

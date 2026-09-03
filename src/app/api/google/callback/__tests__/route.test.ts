@@ -5,6 +5,10 @@ vi.mock("@/lib/require-auth", () => ({ requireAuth: vi.fn().mockResolvedValue(un
 const setGoogleRefreshToken = vi.fn()
 vi.mock("@/lib/token-store", () => ({ setGoogleRefreshToken }))
 
+const fetchAccessToken = vi.fn()
+const clearAccessTokenCache = vi.fn()
+vi.mock("@/lib/gmail", () => ({ fetchAccessToken, clearAccessTokenCache }))
+
 const { GET } = await import("../route")
 const { NextRequest } = await import("next/server")
 
@@ -17,6 +21,9 @@ function requestWithState(url: string, cookieState?: string) {
 describe("GET /api/google/callback", () => {
   beforeEach(() => {
     setGoogleRefreshToken.mockReset()
+    fetchAccessToken.mockReset()
+    fetchAccessToken.mockResolvedValue({ token: "access-token", expiresIn: 3600 })
+    clearAccessTokenCache.mockReset()
     global.fetch = vi.fn()
   })
 
@@ -51,9 +58,28 @@ describe("GET /api/google/callback", () => {
     )
     const res = await GET(req)
 
+    expect(fetchAccessToken).toHaveBeenCalledWith("new-refresh-token")
     expect(setGoogleRefreshToken).toHaveBeenCalledWith("new-refresh-token")
+    expect(clearAccessTokenCache).toHaveBeenCalled()
     expect(new URL(res.headers.get("location")!).pathname).toBe("/mail")
     expect(new URL(res.headers.get("location")!).searchParams.get("reauth")).toBeNull()
+  })
+
+  it("取得した refresh_token で疎通確認できない場合は保存せず reauth=verify_failed を付ける", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ refresh_token: "broken-refresh-token" }),
+    }) as unknown as typeof fetch
+    fetchAccessToken.mockRejectedValue(new Error("invalid_grant"))
+
+    const req = requestWithState(
+      "https://example.com/api/google/callback?code=abc&state=match",
+      "match",
+    )
+    const res = await GET(req)
+
+    expect(setGoogleRefreshToken).not.toHaveBeenCalled()
+    expect(new URL(res.headers.get("location")!).searchParams.get("reauth")).toBe("verify_failed")
   })
 
   it("レスポンスに refresh_token が無い場合は保存せず reauth=no_refresh_token を付ける", async () => {

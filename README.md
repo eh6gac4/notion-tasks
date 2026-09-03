@@ -42,7 +42,7 @@ npm run dev
 2. 承認済みリダイレクトURIに `https://<デプロイ先ドメイン>/api/google/callback` を追加（ローカル確認用に `http://localhost:3000/api/google/callback` も追加可）
 3. クライアントID・シークレットを `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` に設定
 4. 初回のみ、任意の方法（OAuth Playground 等）で `gmail.modify` スコープの refresh token を発行し `GOOGLE_REFRESH_TOKEN` に設定
-5. 以降、この token が失効した場合は `/mail` を開くと表示される「Google と再連携する」ボタンから再取得できる（`wrangler kv namespace create` で作成した KV に自動保存される。手順は `wrangler.jsonc` の `kv_namespaces` コメント参照）
+5. 以降、この token が失効した場合は `/mail` を開くと表示される「Google と再連携する」ボタンから再取得できる（D1 の `app_tokens` テーブルに自動保存される。テーブル作成は `migrations/0003_app_tokens.sql` を適用する）
 
 ## デプロイ (Vercel)
 
