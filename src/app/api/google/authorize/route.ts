@@ -9,17 +9,13 @@ const STATE_COOKIE = "google_oauth_state"
 export async function GET(request: NextRequest) {
   await requireAuth()
 
-  // 有効な state cookie が既にあれば使い回す。この経路が二重に実行されると
-  // (Service Worker の navigation preload 等)、リクエストごとに新しい state を
-  // 作る実装では cookie と認可 URL の state がズレて invalid_state になる。
+  // 有効な state cookie が既にあれば使い回す。この経路が二重に実行されると、
+  // リクエストごとに新しい state を作る実装では cookie と認可 URL の state が
+  // ズレて invalid_state になる(実際に Service Worker 経由で二重実行されていた。
+  // 経路自体は src/app/sw.ts でキャッシュ層から外して塞いである)。
   // 同じ値を返せば、何回実行されても両者は必ず一致する。
   const state = request.cookies.get(STATE_COOKIE)?.value ?? crypto.randomUUID()
   const redirectUri = new URL("/api/google/callback", request.nextUrl.origin).toString()
-
-  // invalid_state の原因切り分け用。callback 側の state 検証ログと突き合わせて
-  // 「この経路が何回走ったか」「同じ state を返せているか」を見る。
-  // 原因が確定したら消す。
-  console.log("[google-oauth] authorize", { state: state.slice(0, 8), redirectUri })
 
   const url = new URL(GOOGLE_AUTH_URL)
   url.searchParams.set("client_id", config.google.clientId)

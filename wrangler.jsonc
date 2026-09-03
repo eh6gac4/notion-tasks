@@ -42,9 +42,9 @@
 			"database_id": "c09d95cd-7b34-49e0-985e-0dda0248b86d"
 		}
 	],
-	// Gmail の refresh token は KV(TOKEN_STORE)から D1 の app_tokens へ移した(理由は
-	// src/lib/token-store.ts)。旧 namespace e9edef0748424b7da4b4b85c4f4842b5 は
-	// 稼働確認後に削除する。
+	// Gmail の refresh token は KV(TOKEN_STORE)から D1 の app_tokens へ移した。
+	// 理由は src/lib/token-store.ts。旧 namespace e9edef0748424b7da4b4b85c4f4842b5 は
+	// 参照が無くなったため不要。
 	"routes": [
 		{
 			"pattern": "todo.eh6gac4.work",
