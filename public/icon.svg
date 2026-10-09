@@ -1,26 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 176" width="192" height="192">
   <defs>
-    <linearGradient id="field" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#16060c"/>
-      <stop offset="100%" stop-color="#0b0008"/>
+    <linearGradient id="field" x1="0" y1="0" x2="176" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#190b13"/>
+      <stop offset="1" stop-color="#0b0008"/>
     </linearGradient>
-    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
-      <circle cx="6" cy="6" r="1.6" fill="#dc143c" fill-opacity="0.14"/>
-    </pattern>
-    <radialGradient id="glow" cx="50%" cy="45%" r="62%">
-      <stop offset="0%" stop-color="#dc143c" stop-opacity="0.45"/>
-      <stop offset="45%" stop-color="#dc143c" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#dc143c" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="ink" x1="48" y1="121" x2="126" y2="51" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#dc143c"/>
+      <stop offset="0.6" stop-color="#ff2d55"/>
+      <stop offset="1" stop-color="#ff859a"/>
+    </linearGradient>
   </defs>
-
   <rect width="176" height="176" fill="url(#field)"/>
-  <rect width="176" height="176" fill="url(#dots)"/>
-  <rect width="176" height="176" fill="url(#glow)"/>
-
-  <!-- 封筒 + チェック(タスク + メール) -->
-  <g fill="none" stroke="#ff2d55" stroke-linecap="round" stroke-linejoin="round">
-    <path stroke-width="13" d="M 44 58 L 128 58 Q 142 58 142 72 L 142 120 Q 142 134 128 134 L 44 134 Q 30 134 30 120 L 30 72 Q 30 58 44 58 Z"/>
-    <path stroke-width="16" d="M 36 66 L 73 100 L 134 42"/>
+  <!-- 右上を開いた封筒。折り目がそのままチェックへつながる。 -->
+  <g fill="none" stroke="url(#ink)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 96 58 H 58 Q 48 58 48 68 V 111 Q 48 121 58 121 H 118 Q 128 121 128 111 V 88" stroke-width="7"/>
+    <path d="M 49 70 L 79 96 L 126 51" stroke-width="9"/>
   </g>
 </svg>
