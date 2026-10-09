@@ -1,26 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 176" width="192" height="192">
-  <defs>
-    <linearGradient id="field" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#16060c"/>
-      <stop offset="100%" stop-color="#0b0008"/>
-    </linearGradient>
-    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
-      <circle cx="6" cy="6" r="1.6" fill="#dc143c" fill-opacity="0.14"/>
-    </pattern>
-    <radialGradient id="glow" cx="50%" cy="45%" r="62%">
-      <stop offset="0%" stop-color="#dc143c" stop-opacity="0.45"/>
-      <stop offset="45%" stop-color="#dc143c" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#dc143c" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-
-  <rect width="176" height="176" fill="url(#field)"/>
-  <rect width="176" height="176" fill="url(#dots)"/>
-  <rect width="176" height="176" fill="url(#glow)"/>
-
-  <!-- 封筒 + チェック(タスク + メール) -->
-  <g fill="none" stroke="#ff2d55" stroke-linecap="round" stroke-linejoin="round">
-    <path stroke-width="13" d="M 44 58 L 128 58 Q 142 58 142 72 L 142 120 Q 142 134 128 134 L 44 134 Q 30 134 30 120 L 30 72 Q 30 58 44 58 Z"/>
-    <path stroke-width="16" d="M 36 66 L 73 100 L 134 42"/>
-  </g>
+  <rect width="176" height="176" fill="#0b0008"/>
+  <!-- 中央の安全領域に収めた封筒 + チェック -->
+  <rect x="40" y="58" width="96" height="66" rx="14" fill="#ff2d55"/>
+  <path d="M 52 78 L 77 101 L 124 57" fill="none" stroke="#fff4f6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
