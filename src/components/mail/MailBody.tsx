@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { renderWithLinks } from '@/lib/linkify';
 import { CyberLoader } from '@/components/CyberLoader';
 
@@ -16,7 +16,7 @@ export interface MailBodyProps {
 // (トラッキングピクセル対策)。
 function buildSrcDoc(html: string, allowExternalImages: boolean): string {
   const imgSrc = allowExternalImages ? 'https: data:' : 'data:';
-  return `<!doctype html>
+  const srcDoc = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -40,14 +40,29 @@ function buildSrcDoc(html: string, allowExternalImages: boolean): string {
 </head>
 <body>${html}</body>
 </html>`;
+
+  // base の指定だけでは本文中の target="_self" 等を上書きできない。
+  // iframe に渡す前に、すべてのリンクを外部で開く設定へ統一する。
+  const doc = new DOMParser().parseFromString(srcDoc, 'text/html');
+  doc.querySelectorAll('a[href], area[href]').forEach((link) => {
+    link.setAttribute('target', '_blank');
+    const rel = new Set((link.getAttribute('rel') ?? '').split(/\s+/).filter(Boolean));
+    rel.delete('opener');
+    rel.add('noopener');
+    rel.add('noreferrer');
+    link.setAttribute('rel', [...rel].join(' '));
+  });
+  return `<!doctype html>\n${doc.documentElement.outerHTML}`;
 }
 
 export function MailBody({ body, bodyHtml, isLoading }: MailBodyProps) {
   const [showExternalImages, setShowExternalImages] = useState(false);
 
-  const srcDoc = useMemo(() => {
-    if (!bodyHtml) return null;
-    return buildSrcDoc(bodyHtml, showExternalImages);
+  // DOMParser はブラウザ API。サーバー描画中は呼ばず、iframe の設置時に使う。
+  const setMailFrame = useCallback((frame: HTMLIFrameElement | null) => {
+    if (frame && bodyHtml) {
+      frame.srcdoc = buildSrcDoc(bodyHtml, showExternalImages);
+    }
   }, [bodyHtml, showExternalImages]);
 
   if (isLoading) {
@@ -58,7 +73,7 @@ export function MailBody({ body, bodyHtml, isLoading }: MailBodyProps) {
     );
   }
 
-  if (srcDoc !== null) {
+  if (bodyHtml) {
     return (
       <div className="flex flex-col min-h-0">
         {!showExternalImages && (
@@ -77,7 +92,7 @@ export function MailBody({ body, bodyHtml, isLoading }: MailBodyProps) {
           key={showExternalImages ? 'with-images' : 'no-images'}
           title="メール本文"
           sandbox="allow-popups allow-popups-to-escape-sandbox"
-          srcDoc={srcDoc}
+          ref={setMailFrame}
           className="w-full h-[60vh] md:h-[70vh] border-0"
         />
       </div>
