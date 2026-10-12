@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Email, MailFolder } from '@/types/mail';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 // スワイプでアーカイブを確定する横方向の移動量(px)
 const SWIPE_THRESHOLD = 80;
@@ -25,6 +26,8 @@ export interface MailListProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  onRefresh?: () => Promise<void>;
+  isLoading?: boolean;
 }
 
 function formatDate(isoString: string): string {
@@ -196,7 +199,14 @@ export function MailList({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  onRefresh,
+  isLoading = false,
 }: MailListProps) {
+  const { scrollRef, distance, isRefreshing, isReady } = usePullToRefresh({
+    onRefresh,
+    disabled: isLoading || isLoadingMore,
+  });
+
   // スワイプ中の行と移動量。touchend で確定し、しきい値を超えていればアーカイブする。
   const [swipe, setSwipe] = useState<{ id: string; dx: number } | null>(null);
   // touchend のハンドラを再生成せずに最新のスワイプ量を読むための写し。
@@ -300,38 +310,52 @@ export function MailList({
       </div>
 
       {/* Email List Items */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)] pb-[var(--safe-bottom)]" role="listbox" aria-label="Email list">
-        {emails.length === 0 ? (
-          <div className="p-8 text-center text-xs text-[var(--text-dim)] font-mono">
-            {activeSearch ? 'No emails match your search.' : 'No emails in this folder.'}
-          </div>
-        ) : (
-          emails.map((email) => (
-            <MailListItem
-              key={email.id}
-              email={email}
-              isSelected={email.id === selectedId}
-              swipeDx={swipe?.id === email.id ? swipe.dx : 0}
-              onRowClick={handleRowClick}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onToggleStar={handleToggleStar}
-            />
-          ))
-        )}
-        {hasMore && (
-          <div className="p-3">
-            <button
-              type="button"
-              onClick={onLoadMore}
-              disabled={isLoadingMore}
-              className="w-full py-2 text-xs font-mono text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
-            >
-              {isLoadingMore ? 'Loading...' : 'Load more'}
-            </button>
-          </div>
-        )}
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-[var(--safe-bottom)]">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center justify-center gap-2 overflow-hidden text-xs font-mono text-[var(--accent)]"
+          style={{ height: isRefreshing ? 48 : distance }}
+        >
+          {isRefreshing ? (
+            <><span className="inline-block w-3 h-3 rounded-full border-2 border-current border-t-transparent motion-safe:animate-spin" aria-hidden="true" />Refreshing...</>
+          ) : distance > 0 ? (
+            <><span aria-hidden="true">{isReady ? '↑' : '↓'}</span>{isReady ? 'Release to refresh' : 'Pull to refresh'}</>
+          ) : null}
+        </div>
+        <div className="divide-y divide-[var(--border)]" role="listbox" aria-label="Email list">
+          {emails.length === 0 ? (
+            <div className="p-8 text-center text-xs text-[var(--text-dim)] font-mono">
+              {activeSearch ? 'No emails match your search.' : 'No emails in this folder.'}
+            </div>
+          ) : (
+            emails.map((email) => (
+              <MailListItem
+                key={email.id}
+                email={email}
+                isSelected={email.id === selectedId}
+                swipeDx={swipe?.id === email.id ? swipe.dx : 0}
+                onRowClick={handleRowClick}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onToggleStar={handleToggleStar}
+              />
+            ))
+          )}
+          {hasMore && (
+            <div className="p-3">
+              <button
+                type="button"
+                onClick={onLoadMore}
+                disabled={isLoadingMore || isLoading || isRefreshing}
+                className="w-full py-2 text-xs font-mono text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
+              >
+                {isLoadingMore ? 'Loading...' : 'Load more'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

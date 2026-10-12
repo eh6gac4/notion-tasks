@@ -149,6 +149,30 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   // 現在表示中の一覧のキャッシュキー。検索中は検索結果、それ以外はフォルダ/ラベル。
   const listKey = activeSearch ? searchCacheKey(activeSearch) : mailCacheKey(activeFolder, activeLabel);
 
+  const currentListKeyRef = useRef(listKey);
+  React.useEffect(() => {
+    currentListKeyRef.current = listKey;
+  }, [listKey]);
+
+  // 表示中の検索/ラベル/フォルダの先頭ページを取り直す。失敗時は現在の一覧を保持する。
+  const handleRefresh = async () => {
+    if (isMailLoading || isLoadingMore) return;
+    const key = listKey;
+    try {
+      const page = activeSearch
+        ? await searchMailsAction(activeSearch)
+        : await fetchMailsAction(activeFolder, activeLabel ?? undefined);
+      setCachedPage(key, page);
+      // 待機中に別の一覧へ移動していたら、表示を古い一覧に戻さない。
+      if (currentListKeyRef.current !== key) return;
+      const prepend = activeSearch || activeLabel
+        ? [] : localOnlyEmails.filter((email) => email.folder === activeFolder);
+      applyMailPage(page, (_prev, fetched) => [...prepend, ...fetched]);
+    } catch {
+      showToast('メールの更新に失敗しました', 'error');
+    }
+  };
+
   // Handle folder switching — サーバーから該当フォルダのメールを取得する
   const handleSelectFolder = (folder: MailFolder) => {
     setActiveFolder(folder);
@@ -519,6 +543,8 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
           hasMore={!!nextPageToken}
           isLoadingMore={isLoadingMore}
           onLoadMore={handleLoadMore}
+          onRefresh={handleRefresh}
+          isLoading={isMailLoading}
         />
 
         {/* Pane 3: Email Detail */}
