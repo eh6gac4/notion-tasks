@@ -67,7 +67,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
   return (
     <div
       ref={panelRef}
-      className="flex-1 bg-[var(--surface)] flex flex-col min-h-0 overflow-y-auto w-full md:w-auto pb-[var(--safe-bottom)] select-text"
+      className="flex-1 bg-[var(--surface)] flex flex-col min-w-0 min-h-0 overflow-y-auto w-full md:w-auto pb-[var(--safe-bottom)] select-text"
     >
       {/* Top Detail Bar / Header */}
       <div className="p-4 md:p-6 border-b border-[var(--border)] bg-[var(--bg)] space-y-4">
@@ -81,7 +81,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
         </button>
         {/* Subject & Folder Badge */}
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-pixel font-bold text-[var(--text)] tracking-wide">
+          <h2 className="min-w-0 wrap-anywhere text-lg font-pixel font-bold text-[var(--text)] tracking-wide">
             {email.subject}
           </h2>
           <span className="px-2 py-1 bg-[var(--surface-2)] text-[var(--accent)] text-xs font-pixel uppercase tracking-wider border border-[var(--border-accent)] flex-shrink-0">
@@ -102,13 +102,13 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
         )}
 
         {/* Sender Info Row */}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[var(--accent-dark)] text-white font-pixel font-bold flex items-center justify-center border border-[var(--border-strong)] text-sm shadow-[2px_2px_0px_var(--accent)]">
+        <div className="flex flex-col items-start md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 max-w-full">
+            <div className="w-10 h-10 shrink-0 bg-[var(--accent-dark)] text-white font-pixel font-bold flex items-center justify-center border border-[var(--border-strong)] text-sm shadow-[2px_2px_0px_var(--accent)]">
               {email.sender.avatar || getSenderInitials(email.sender.name)}
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0 wrap-anywhere">
+              <div className="flex items-center flex-wrap gap-2">
                 <span className="text-sm font-bold text-[var(--text)]">
                   {email.sender.name}
                 </span>
@@ -128,7 +128,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
         </div>
 
         {/* Action Buttons (Notion Taskify & AI Draft Stubs for M1/M3) */}
-        <div className="flex items-center gap-3 pt-2 border-t border-[var(--border)]">
+        <div className="flex items-center flex-wrap gap-3 pt-2 border-t border-[var(--border)]">
           <button
             type="button"
             onClick={() => onTaskify?.(email)}
