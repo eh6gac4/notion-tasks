@@ -4,7 +4,7 @@
 // 遷移直後から最終レイアウトを見せる。
 export default function MailLoading() {
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+    <div className="flex flex-col h-dvh overflow-hidden bg-[var(--bg)] text-[var(--text)]">
       {/* Top Bar */}
       <header className="h-[calc(48px+var(--safe-top))] pt-[var(--safe-top)] bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
