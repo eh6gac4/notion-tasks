@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useRef, useTransition } from 'react';
+import React, { useState, useMemo, useRef, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { MailFolder, Email, ComposeDraft, MailPage } from '@/types/mail';
 import { getFilteredEmails } from '@/lib/mockMailData';
@@ -33,13 +33,14 @@ const SEARCH_CACHE_LIMIT = 5;
 const isLocalOnlyEmail = (id: string): boolean => id.startsWith('mail-');
 
 export interface MailManagerProps {
+  initialSelectedId?: string;
   initialEmails: Email[];
   initialNextPageToken?: string;
   initialLabels: string[];
   initialUnreadCounts: Record<MailFolder, number>;
 }
 
-export function MailManager({ initialEmails, initialNextPageToken, initialLabels, initialUnreadCounts }: MailManagerProps) {
+export function MailManager({ initialEmails, initialSelectedId, initialNextPageToken, initialLabels, initialUnreadCounts }: MailManagerProps) {
   const [emails, setEmails] = useState<Email[]>(initialEmails);
   // 送信モック(対象外機能)で生成したメールは Gmail 上に存在しないため、フォルダ切替時の
   // サーバー再フェッチでは戻ってこない。別 state で保持し、フォルダ一致時に合成する。
@@ -74,7 +75,23 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   const mailCache = mailCacheRef.current;
 
   // Selected email state (default to null for mobile responsive view)
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId ?? null);
+  useEffect(() => {
+    const email = initialEmails.find((item) => item.id === initialSelectedId);
+    if (!email || email.isRead) return;
+    let cancelled = false;
+    markAsReadAction(email.id).then(() => {
+      if (cancelled) return;
+      setEmails((prev) => prev.map((item) => item.id === email.id ? { ...item, isRead: true } : item));
+      setUnreadCounts((prev) => ({ ...prev, [email.folder]: Math.max(0, prev[email.folder] - 1) }));
+    }).catch(() => {
+      if (!cancelled) {
+        setToastMessage('既読状態の更新に失敗しました');
+        setToastType('error');
+      }
+    });
+    return () => { cancelled = true; };
+  }, [initialEmails, initialSelectedId]);
   // 本文の遅延取得中のメール ID。一覧取得は snippet しか含まないため、詳細を開いたタイミングで
   // 本文(bodyHtml 含む)を取りに行く。
   const [loadingBodyId, setLoadingBodyId] = useState<string | null>(null);
