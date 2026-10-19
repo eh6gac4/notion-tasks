@@ -100,7 +100,7 @@ export function AIDraftModal({
             type="button"
             onClick={onClose}
             aria-label="Close AI draft modal"
-            className="text-[var(--text-dim)] hover:text-[var(--text)] font-mono text-sm px-2 py-1"
+            className="text-[var(--text-dim)] hover:text-[var(--text)] font-pixel text-sm px-2 py-1"
           >
             ✕
           </button>
@@ -110,13 +110,13 @@ export function AIDraftModal({
         {isGenerating ? (
           <div data-testid="ai-draft-loading" className="py-8 flex flex-col items-center justify-center space-y-4">
             <CyberLoader size="md" />
-            <p className="text-xs font-mono text-[var(--accent)] font-pixel tracking-wider animate-pulse">
+            <p className="text-xs font-pixel text-[var(--accent)] tracking-wider animate-pulse">
               GENERATING AI DRAFT...
             </p>
           </div>
         ) : generatedDraft ? (
           /* Draft Preview Result */
-          <div className="space-y-3 font-mono text-xs">
+          <div className="space-y-3 font-pixel text-xs">
             <div className="flex justify-between items-center text-[var(--accent)] font-pixel text-xs">
               <span>Generated Draft Preview:</span>
               <button
@@ -155,7 +155,7 @@ export function AIDraftModal({
           </div>
         ) : (
           /* Prompt Form */
-          <div className="space-y-4 font-mono text-xs">
+          <div className="space-y-4 font-pixel text-xs">
             <div>
               <label className="block text-[var(--text-dim)] mb-1">
                 Prompt Instruction (How should AI respond?):

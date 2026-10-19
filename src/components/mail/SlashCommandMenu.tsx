@@ -161,7 +161,7 @@ export function SlashCommandMenu({
     <div
       ref={menuRef}
       data-testid="slash-command-menu"
-      className="absolute z-50 w-72 bg-[var(--surface)] border-2 border-[var(--accent)] shadow-[4px_4px_0px_var(--accent-dark)] overflow-hidden font-mono text-xs"
+      className="absolute z-50 w-72 bg-[var(--surface)] border-2 border-[var(--accent)] shadow-[4px_4px_0px_var(--accent-dark)] overflow-hidden font-pixel text-xs"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
       role="listbox"
       aria-label="Slash Commands"
@@ -173,7 +173,7 @@ export function SlashCommandMenu({
 
       <div className="max-h-56 overflow-y-auto py-1">
         {filteredOptions.length === 0 ? (
-          <div className="px-3 py-3 text-center text-[var(--text-dim)] font-mono text-xs">
+          <div className="px-3 py-3 text-center text-[var(--text-dim)] font-pixel text-xs">
             No commands matching &quot;{filterText}&quot;
           </div>
         ) : (

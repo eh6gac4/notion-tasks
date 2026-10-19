@@ -435,13 +435,13 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
   }, [emails, selectedId]);
 
   return (
-    <div className="flex flex-col h-dvh overflow-hidden bg-[var(--bg)] text-[var(--text)] select-none">
+    <div className="font-pixel flex flex-col h-dvh overflow-hidden bg-[var(--bg)] text-[var(--text)] select-none">
       {/* Top Bar Header */}
       <header className="h-[calc(48px+var(--safe-top))] pt-[var(--safe-top)] bg-[var(--surface)] border-b border-[var(--border)] px-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors flex items-center gap-1"
+            className="text-xs font-pixel text-[var(--text-dim)] hover:text-[var(--accent)] transition-colors flex items-center gap-1"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -463,12 +463,12 @@ export function MailManager({ initialEmails, initialNextPageToken, initialLabels
           <span className="text-[var(--border-strong)]">|</span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-pixel font-bold text-[var(--accent)] tracking-wider">
-              ✦ NOTION MAIL
+              ✦ MAIL
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-mono text-[var(--text-dim)]">
+        <div className="flex items-center gap-4 text-xs font-pixel text-[var(--text-dim)]">
           <span className="hidden md:inline">
             {activeSearch ? (
               <>Search: <strong className="text-[var(--text)]">{activeSearch}</strong></>

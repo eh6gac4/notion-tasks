@@ -116,7 +116,7 @@ export function MailComposeModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('edit')}
-                className={`px-2 py-1 text-[10px] font-mono transition-colors ${
+                className={`px-2 py-1 text-[10px] font-pixel transition-colors ${
                   activeTab === 'edit'
                     ? 'bg-[var(--accent)] text-white font-bold'
                     : 'text-[var(--text-dim)] hover:text-[var(--text)]'
@@ -127,7 +127,7 @@ export function MailComposeModal({
               <button
                 type="button"
                 onClick={() => setActiveTab('preview')}
-                className={`px-2 py-1 text-[10px] font-mono transition-colors ${
+                className={`px-2 py-1 text-[10px] font-pixel transition-colors ${
                   activeTab === 'preview'
                     ? 'bg-[var(--accent)] text-white font-bold'
                     : 'text-[var(--text-dim)] hover:text-[var(--text)]'
@@ -142,14 +142,14 @@ export function MailComposeModal({
             type="button"
             onClick={onClose}
             aria-label="Close compose modal"
-            className="text-[var(--text-dim)] hover:text-[var(--text)] font-mono text-sm px-2 py-1"
+            className="text-[var(--text-dim)] hover:text-[var(--text)] font-pixel text-sm px-2 py-1"
           >
             ✕
           </button>
         </div>
 
         {/* Form Fields */}
-        <form onSubmit={handleSubmit} className="space-y-3 font-mono text-xs flex-1 flex flex-col min-h-0">
+        <form onSubmit={handleSubmit} className="space-y-3 font-pixel text-xs flex-1 flex flex-col min-h-0">
           <div>
             <label className="block text-[var(--text-dim)] mb-1">To:</label>
             <input
@@ -190,7 +190,7 @@ export function MailComposeModal({
                 onChange={handleBodyChange}
                 placeholder="Write your email body here... (Type '/' for Notion slash commands)"
                 data-testid="compose-body-textarea"
-                className="w-full flex-1 bg-[var(--bg)] border border-[var(--border-strong)] p-2 text-[var(--text)] focus:outline-none focus:border-[var(--accent)] resize-none font-mono leading-relaxed"
+                className="w-full flex-1 bg-[var(--bg)] border border-[var(--border-strong)] p-2 text-[var(--text)] focus:outline-none focus:border-[var(--accent)] resize-none font-pixel leading-relaxed"
               />
             ) : (
               <div

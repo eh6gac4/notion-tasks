@@ -30,7 +30,7 @@ describe('MailPage Orchestrator & Integration Suite', () => {
       render(<MailManager {...getDefaultMailManagerProps()} />);
 
       // Top bar header
-      expect(screen.getByText('✦ NOTION MAIL')).toBeInTheDocument();
+      expect(screen.getByText('✦ MAIL')).toBeInTheDocument();
 
       // Pane 1: Sidebar
       expect(screen.getByText('Inbox')).toBeInTheDocument();
