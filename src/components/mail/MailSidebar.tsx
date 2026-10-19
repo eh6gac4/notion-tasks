@@ -180,7 +180,7 @@ export function MailSidebar({
           <path d="M12 5v14M5 12h14" />
         </svg>
         <span>Compose</span>
-        <span className="ml-auto text-xs opacity-75 font-mono px-1 border border-white/30 rounded-none">
+        <span className="ml-auto text-xs opacity-75 font-pixel px-1 border border-white/30 rounded-none">
           c
         </span>
       </button>

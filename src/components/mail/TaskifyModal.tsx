@@ -109,14 +109,14 @@ export function TaskifyModal({
             type="button"
             onClick={onClose}
             aria-label="Close taskify modal"
-            className="text-[var(--text-dim)] hover:text-[var(--text)] font-mono text-sm px-2 py-1"
+            className="text-[var(--text-dim)] hover:text-[var(--text)] font-pixel text-sm px-2 py-1"
           >
             ✕
           </button>
         </div>
 
         {/* Task Form */}
-        <form onSubmit={handleSubmit} className="space-y-3 font-mono text-xs">
+        <form onSubmit={handleSubmit} className="space-y-3 font-pixel text-xs">
           <div>
             <label className="block text-[var(--text-dim)] mb-1">Task Title:</label>
             <input

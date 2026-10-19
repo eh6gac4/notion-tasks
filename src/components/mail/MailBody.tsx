@@ -77,7 +77,7 @@ export function MailBody({ body, bodyHtml, isLoading }: MailBodyProps) {
     return (
       <div className="flex flex-col min-h-0">
         {!showExternalImages && (
-          <div className="flex items-center justify-between gap-4 px-6 py-2 bg-[var(--surface-2)] border-b border-[var(--border)] text-xs font-mono text-[var(--text-dim)]">
+          <div className="flex items-center justify-between gap-4 px-6 py-2 bg-[var(--surface-2)] border-b border-[var(--border)] text-xs font-pixel text-[var(--text-dim)]">
             <span>外部画像はブロックされています</span>
             <button
               type="button"
@@ -100,7 +100,7 @@ export function MailBody({ body, bodyHtml, isLoading }: MailBodyProps) {
   }
 
   return (
-    <div className="p-6 text-sm text-[var(--text)] font-sans leading-relaxed whitespace-pre-wrap">
+    <div className="p-6 text-sm text-[var(--text)] font-pixel leading-relaxed whitespace-pre-wrap">
       {renderWithLinks(body)}
     </div>
   );

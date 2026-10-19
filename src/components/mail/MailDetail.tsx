@@ -50,7 +50,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
         <h3 className="text-base font-pixel font-bold text-[var(--text)] mb-2">
           No Email Selected
         </h3>
-        <p className="text-xs text-[var(--text-dim)] max-w-sm font-mono">
+        <p className="text-xs text-[var(--text-dim)] max-w-sm font-pixel">
           Select an email from the list or use <kbd className="px-1 py-1 bg-[var(--surface-2)] border border-[var(--border)] text-[var(--accent)] font-pixel text-xs">j</kbd> / <kbd className="px-1 py-1 bg-[var(--surface-2)] border border-[var(--border)] text-[var(--accent)] font-pixel text-xs">k</kbd> keys to navigate.
         </p>
       </div>
@@ -74,7 +74,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
         {/* Mobile Back Button */}
         <button
           onClick={onBack}
-          className="md:hidden flex items-center gap-2 text-xs font-mono text-[var(--text-dim)] hover:text-[var(--accent)] mb-2"
+          className="md:hidden flex items-center gap-2 text-xs font-pixel text-[var(--text-dim)] hover:text-[var(--accent)] mb-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           Back to List
@@ -112,17 +112,17 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
                 <span className="text-sm font-bold text-[var(--text)]">
                   {email.sender.name}
                 </span>
-                <span className="text-xs text-[var(--text-dim)] font-mono">
+                <span className="text-xs text-[var(--text-dim)] font-pixel">
                   &lt;{email.sender.email}&gt;
                 </span>
               </div>
-              <div className="text-xs text-[var(--text-faint)] font-mono mt-1">
+              <div className="text-xs text-[var(--text-faint)] font-pixel mt-1">
                 to {email.recipients.join(', ')}
               </div>
             </div>
           </div>
 
-          <div className="text-xs text-[var(--text-dim)] font-mono flex-shrink-0">
+          <div className="text-xs text-[var(--text-dim)] font-pixel flex-shrink-0">
             {formattedDate}
           </div>
         </div>
@@ -132,7 +132,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
           <button
             type="button"
             onClick={() => onTaskify?.(email)}
-            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-mono font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-pixel font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +157,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
           <button
             type="button"
             onClick={() => onAIDraft?.(email)}
-            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-mono font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-pixel font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -179,7 +179,7 @@ export function MailDetail({ email, isBodyLoading, onTaskify, onAIDraft, onToggl
           <button
             type="button"
             onClick={() => onToggleArchive?.(email.id)}
-            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-mono font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
+            className="px-3 py-2 bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] text-xs font-pixel font-semibold border border-[var(--border-strong)] hover:border-[var(--accent)] transition-colors flex items-center gap-2"
             aria-label={isArchived ? 'Unarchive email' : 'Archive email'}
           >
             {isArchived ? (

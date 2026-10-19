@@ -42,18 +42,18 @@ export function MailToast({
   return (
     <div
       data-testid="mail-toast"
-      className={`fixed bottom-[calc(16px+var(--safe-bottom))] right-[calc(16px+var(--safe-right))] z-50 border-2 px-4 py-3 font-mono text-xs shadow-[4px_4px_0px_var(--accent-dark)] transition-all flex items-center gap-3 ${
+      className={`fixed bottom-[calc(16px+var(--safe-bottom))] right-[calc(16px+var(--safe-right))] z-50 border-2 px-4 py-3 font-pixel text-xs shadow-[4px_4px_0px_var(--accent-dark)] transition-all flex items-center gap-3 ${
         typeStyles[type] || typeStyles.info
       }`}
       role="status"
       aria-live="polite"
     >
       <span className="font-pixel font-bold text-sm">{typeIcons[type] || 'ℹ'}</span>
-      <span className="flex-1 font-mono">{message}</span>
+      <span className="flex-1 font-pixel">{message}</span>
       <button
         type="button"
         onClick={onClose}
-        className="text-[var(--text-dim)] hover:text-[var(--text)] font-mono ml-2"
+        className="text-[var(--text-dim)] hover:text-[var(--text)] font-pixel ml-2"
         aria-label="Close notification"
       >
         ✕

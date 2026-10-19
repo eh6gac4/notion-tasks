@@ -124,7 +124,7 @@ const MailListItem = React.memo(function MailListItem({
               {email.sender.name}
             </span>
           </div>
-          <span className="text-[10px] text-[var(--text-faint)] font-mono flex-shrink-0">
+          <span className="text-[10px] text-[var(--text-faint)] font-pixel flex-shrink-0">
             {formatDate(email.date)}
           </span>
         </div>
@@ -287,21 +287,21 @@ export function MailList({
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
             placeholder="Search mail..."
-            className="w-full bg-[var(--bg)] text-[var(--text)] placeholder-[var(--text-faint)] text-xs px-3 py-2 border border-[var(--border-strong)] focus:outline-none focus:border-[var(--accent)] font-mono"
+            className="w-full bg-[var(--bg)] text-[var(--text)] placeholder-[var(--text-faint)] text-xs px-3 py-2 border border-[var(--border-strong)] focus:outline-none focus:border-[var(--accent)] font-pixel"
             aria-label="Search mail"
           />
           {searchQuery && (
             <button
               onClick={() => onSearchSubmit?.('')}
               type="button"
-              className="absolute right-2 text-[var(--text-dim)] hover:text-[var(--text)] text-xs font-mono"
+              className="absolute right-2 text-[var(--text-dim)] hover:text-[var(--text)] text-xs font-pixel"
               aria-label="Clear search"
             >
               ✕
             </button>
           )}
         </form>
-        <div className="text-[10px] text-[var(--text-faint)] font-mono px-1 flex justify-between">
+        <div className="text-[10px] text-[var(--text-faint)] font-pixel px-1 flex justify-between">
           <span>{emails.length} messages</span>
           <span className="text-[var(--accent)] font-pixel">
             {searchQuery && searchQuery.trim() !== activeSearch ? 'enter to search all mail' : 'j / k to navigate'}
@@ -314,7 +314,7 @@ export function MailList({
         <div
           role="status"
           aria-live="polite"
-          className="flex items-center justify-center gap-2 overflow-hidden text-xs font-mono text-[var(--accent)]"
+          className="flex items-center justify-center gap-2 overflow-hidden text-xs font-pixel text-[var(--accent)]"
           style={{ height: isRefreshing ? 48 : distance }}
         >
           {isRefreshing ? (
@@ -325,7 +325,7 @@ export function MailList({
         </div>
         <div className="divide-y divide-[var(--border)]" role="listbox" aria-label="Email list">
           {emails.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[var(--text-dim)] font-mono">
+            <div className="p-8 text-center text-xs text-[var(--text-dim)] font-pixel">
               {activeSearch ? 'No emails match your search.' : 'No emails in this folder.'}
             </div>
           ) : (
@@ -349,7 +349,7 @@ export function MailList({
                 type="button"
                 onClick={onLoadMore}
                 disabled={isLoadingMore || isLoading || isRefreshing}
-                className="w-full py-2 text-xs font-mono text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
+                className="w-full py-2 text-xs font-pixel text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
               >
                 {isLoadingMore ? 'Loading...' : 'Load more'}
               </button>
