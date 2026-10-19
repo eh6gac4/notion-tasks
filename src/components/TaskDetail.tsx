@@ -12,6 +12,8 @@ import { parseDue, buildDue, snapTimeTo5Min, formatDueShort } from "@/lib/due-da
 import { DueDateTimeInput } from "./DueDateTimeInput"
 import { TagSelector } from "./TagSelector"
 import { useTasksRefresh } from "./TasksRefreshContext"
+import Link from "next/link"
+import { getTaskSourceLink } from "@/lib/mail-link"
 
 export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = [], onSelectTask = () => {}, onClose }: {
   task: Task
@@ -24,6 +26,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const [, startTransition] = useTransition()
   const [visible, setVisible] = useState(false)
   const refreshTasks = useTasksRefresh()
+  const sourceLink = task.sourceUrl ? getTaskSourceLink(task.sourceUrl) : null
 
   // 子/親タスク解決: in-memory の allTasks から引き、欠落 ID (完了/中止など
   // lazy fetch 未取得) は getTasksByIdsAction で補完する。
@@ -539,12 +542,13 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
             </Row>
           )}
 
-          {task.sourceUrl && (
+          {sourceLink && (
             <Row label="URL">
-              <a href={task.sourceUrl} target="_blank" rel="noopener noreferrer"
+              <Link href={sourceLink}
+                {...(sourceLink.startsWith("/mail?") ? {} : { target: "_blank", rel: "noopener noreferrer" })}
                 className="text-sm text-[var(--accent)] underline break-all hover:opacity-80">
-                {task.sourceUrl}
-              </a>
+                {sourceLink}
+              </Link>
             </Row>
           )}
 

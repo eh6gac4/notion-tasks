@@ -172,6 +172,13 @@ describe("TaskDetail レンダリング", () => {
     expect(link.closest("a")).toHaveAttribute("href", "https://example.com")
   })
 
+  it("Gmail の sourceUrl は同じタブの mail 詳細リンクに置き換える", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ sourceUrl: "https://mail.google.com/mail/u/0/#inbox/18abcdef01234567" })} onClose={() => {}} />)
+    const link = screen.getByRole("link", { name: "/mail?messageId=18abcdef01234567" })
+    expect(link).toHaveAttribute("href", "/mail?messageId=18abcdef01234567")
+    expect(link).not.toHaveAttribute("target")
+  })
+
   it("サブタスクセクションと追加ボタンを常に表示する", () => {
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
     expect(screen.getByTestId("subtask-section")).toBeInTheDocument()
