@@ -11,7 +11,7 @@ export default function MailLoading() {
           <div className="h-3 w-12 bg-[var(--surface-2)] animate-pulse" />
           <span className="text-[var(--border-strong)]">|</span>
           <span className="text-sm font-pixel font-bold text-[var(--accent)] tracking-wider">
-            ✦ NOTION MAIL
+            ✦ MAIL
           </span>
         </div>
         <div className="h-3 w-20 bg-[var(--surface-2)] animate-pulse" />
