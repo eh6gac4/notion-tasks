@@ -207,6 +207,18 @@ export function MailList({
     disabled: isLoading || isLoadingMore,
   });
 
+  // 同じスクロール操作で、親の loading 更新前に複数回要求しない。
+  const loadMoreRequestedRef = useRef(false);
+  useEffect(() => {
+    if (!isLoadingMore) loadMoreRequestedRef.current = false;
+  }, [isLoadingMore, emails]);
+
+  const requestMore = () => {
+    if (!hasMore || !onLoadMore || isLoading || isLoadingMore || isRefreshing || loadMoreRequestedRef.current) return;
+    loadMoreRequestedRef.current = true;
+    onLoadMore();
+  };
+
   // スワイプ中の行と移動量。touchend で確定し、しきい値を超えていればアーカイブする。
   const [swipe, setSwipe] = useState<{ id: string; dx: number } | null>(null);
   // touchend のハンドラを再生成せずに最新のスワイプ量を読むための写し。
@@ -310,7 +322,15 @@ export function MailList({
       </div>
 
       {/* Email List Items */}
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-[var(--safe-bottom)]">
+      <div
+        ref={scrollRef}
+        onScroll={(event) => {
+          const list = event.currentTarget;
+          if (list.clientHeight > 0 && list.scrollTop > 0 &&
+              list.scrollHeight - list.scrollTop - list.clientHeight <= 96) requestMore();
+        }}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-[var(--safe-bottom)]"
+      >
         <div
           role="status"
           aria-live="polite"
@@ -347,7 +367,7 @@ export function MailList({
             <div className="p-3">
               <button
                 type="button"
-                onClick={onLoadMore}
+                onClick={requestMore}
                 disabled={isLoadingMore || isLoading || isRefreshing}
                 className="w-full py-2 text-xs font-pixel text-[var(--text-dim)] border border-[var(--border-strong)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
               >

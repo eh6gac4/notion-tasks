@@ -205,20 +205,30 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
     loadMailPage(activeFolder, label);
   };
 
+  const loadMoreInFlightRef = useRef(false);
+
   // Handle "load more" — 現在のフォルダ/ラベル(検索中は検索結果)の続きを取得して末尾に追加する
   const handleLoadMore = () => {
-    if (!nextPageToken) return;
+    if (!nextPageToken || isMailLoading || loadMoreInFlightRef.current) return;
+    loadMoreInFlightRef.current = true;
+    const key = listKey;
     startLoadMoreTransition(async () => {
-      const page = activeSearch
-        ? await searchMailsAction(activeSearch, nextPageToken)
-        : await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
-      // 追加読み込み分もキャッシュに足し、再訪時に読み込み済みの範囲まで復元されるようにする。
-      // キャッシュはサーバー由来のメールだけを持つので、表示リストではなく前回のキャッシュに継ぎ足す。
-      setCachedPage(listKey, {
-        emails: [...(mailCache.get(listKey)?.emails ?? []), ...page.emails],
-        nextPageToken: page.nextPageToken,
-      });
-      applyMailPage(page, (prev, fetched) => [...prev, ...fetched]);
+      try {
+        const page = activeSearch
+          ? await searchMailsAction(activeSearch, nextPageToken)
+          : await fetchMailsAction(activeFolder, activeLabel ?? undefined, nextPageToken);
+        setCachedPage(key, {
+          emails: [...(mailCache.get(key)?.emails ?? []), ...page.emails],
+          nextPageToken: page.nextPageToken,
+        });
+        // 待機中にフォルダや検索を切り替えた場合、古い一覧を混ぜない。
+        if (currentListKeyRef.current !== key) return;
+        applyMailPage(page, (prev, fetched) => [...prev, ...fetched]);
+      } catch {
+        if (currentListKeyRef.current === key) showToast('メールの追加読み込みに失敗しました', 'error');
+      } finally {
+        loadMoreInFlightRef.current = false;
+      }
     });
   };
 
