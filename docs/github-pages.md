@@ -9,9 +9,14 @@ GitHub Pagesの公開元は `gh-pages` ブランチのルート。公開用ブ�
 作業ブランチ上で変更をコミットし、PRで保持した後に実行する。
 
 ```sh
-git subtree split --prefix=site -b publish-branding
-git push origin publish-branding:gh-pages
-git branch -D publish-branding
+git fetch origin
+pages_tree=$(git rev-parse HEAD:site)
+if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+  pages_commit=$(git commit-tree "$pages_tree" -p origin/gh-pages -m "Update public pages")
+else
+  pages_commit=$(git commit-tree "$pages_tree" -m "Publish public pages")
+fi
+git push origin "$pages_commit":refs/heads/gh-pages
 ```
 
 初回の公開元はリポジトリの Settings → Pages で `Deploy from a branch`、`gh-pages`、`/ (root)` を指定する。
