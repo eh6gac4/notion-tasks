@@ -72,9 +72,8 @@ describe('メール一覧の自動追加読み込み', () => {
     scrollTo();
     await screen.findByText('メールの追加読み込みに失敗しました');
     expect(screen.getByText(props.initialEmails[0].subject)).toBeInTheDocument();
-    const retry = screen.getByRole('button', { name: 'Load more' });
-    await waitFor(() => expect(retry).toBeEnabled());
-    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
     await screen.findByText(addedEmail.subject);
     expect(fetchMailsAction).toHaveBeenCalledTimes(2);
   });
@@ -99,7 +98,7 @@ describe('メール一覧の自動追加読み込み', () => {
     render(<MailManager {...props} />);
     fireEvent.change(screen.getByRole('textbox', { name: 'Search mail' }), { target: { value: 'invoice' } });
     fireEvent.submit(screen.getByRole('search'));
-    await screen.findByRole('button', { name: 'Load more' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeEnabled());
     vi.mocked(searchMailsAction).mockResolvedValueOnce({ emails: [addedEmail] });
     scrollTo();
     await screen.findByText(addedEmail.subject);
