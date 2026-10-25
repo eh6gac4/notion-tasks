@@ -1,6 +1,10 @@
 # Google OAuth向け公開ページ
 
-`site/` にアプリ紹介・プライバシーポリシー・利用規約を置く。Next.jsとは独立した静的HTMLで、ビルドは不要。
+`site/notion-tasks/` にアプリ紹介・プライバシーポリシー・利用規約を置く。Next.jsとは独立した静的HTMLで、ビルドは不要。
+
+`site/index.html` はサービス一覧とし、別のサービスも `site/<サービス名>/` に追加できる。ルートの旧 `privacy.html` と `terms.html` は移転案内として残す。
+
+独自ドメインはこのリポジトリのPagesに紐づく。別リポジトリのPagesを同じドメインの別パスで直接配信する場合は、ユーザーサイトへのドメイン集約等の別構成が必要になる。
 
 ## 公開
 
@@ -33,12 +37,14 @@ DNSがCloudflareの場合はDNS onlyにし、PagesでHTTPSの証明書発行が�
 
 | 項目 | URL |
 | --- | --- |
-| ホームページ | https://about.eh6gac4.work/ |
-| プライバシーポリシー | https://about.eh6gac4.work/privacy.html |
-| 利用規約 | https://about.eh6gac4.work/terms.html |
+| ホームページ | https://about.eh6gac4.work/notion-tasks/ |
+| プライバシーポリシー | https://about.eh6gac4.work/notion-tasks/privacy.html |
+| 利用規約 | https://about.eh6gac4.work/notion-tasks/terms.html |
 | 承認済みドメイン | eh6gac4.work |
 
 審査で所有権確認が必要な場合は、同じGoogle Cloudプロジェクトのオーナーまたは編集者のGoogleアカウントでSearch Consoleのドメインプロパティ `eh6gac4.work` を確認する。DNSのTXT値はSearch Consoleが発行する値を使用する。
+
+パスの変更だけならDNS・CNAME・証明書の変更は不要。Google側に旧URLを登録済みの場合は、上記3項目を新しいURLへ更新する。OAuthのコールバックはアプリ本体のURLを引き続き使い、紹介ページのURLには変更しない。
 
 ブランディングの構成を保存し、対象画面で本番環境へ変更した後、アプリのメール画面からGoogleと再連携して新しいトークンを取得する。
 
