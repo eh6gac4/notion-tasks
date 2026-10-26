@@ -12,7 +12,7 @@ import {
 } from "@/lib/gmail-batch"
 
 // Gmail REST API を fetch で直叩きする。googleapis パッケージは Node 依存が重く
-// Cloudflare Workers 上で動かないため使わない（src/lib/notion.ts と同様の方針）。
+// Cloudflare Workers 上で動かないため使わない。
 const GMAIL_API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 const TOKEN_URL = "https://oauth2.googleapis.com/token"
 
@@ -268,7 +268,7 @@ function getHeader(headers: GmailHeader[], name: string): string {
 }
 
 function parseSender(fromHeader: string): EmailSender {
-  // "Alex Rivers <alex.rivers@notion.so>" または "alex.rivers@notion.so" の両方に対応
+  // "Alex Rivers <alex.rivers@example.com>" または "alex.rivers@example.com" の両方に対応
   const match = fromHeader.match(/^(.*?)\s*<(.+)>$/)
   if (match) {
     const name = match[1].trim().replace(/^"|"$/g, "")
@@ -334,7 +334,7 @@ export interface MailBodyParts {
 }
 
 // text/plain と text/html の両方を取り出す。HTML があれば詳細画面はそちらを優先表示し、
-// テキストは Taskify/AI Draft 等プレーンテキストが必要な用途のフォールバックに使う。
+// テキストは AI Draft 等プレーンテキストが必要な用途のフォールバックに使う。
 export function extractBodyParts(payload: GmailMessagePart): MailBodyParts {
   const plainPart = findBodyPart(payload, "text/plain")
   const text = plainPart?.body?.data ? decodeBase64Url(plainPart.body.data) : ""
@@ -462,7 +462,7 @@ async function fetchUnreadCountsFromGmail(): Promise<Record<MailFolder, number>>
   return counts
 }
 
-// ---- 公開 API(dev モードでは mockMailData にフォールバック。src/lib/notion.ts と同じ方針) ----
+// ---- 公開 API(dev モードでは mockMailData にフォールバック) ----
 export function getMails(folder: MailFolder, label?: string, pageToken?: string): Promise<MailPage> {
   if (isDevMode()) {
     const filtered = label

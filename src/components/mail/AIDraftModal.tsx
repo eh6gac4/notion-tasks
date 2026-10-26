@@ -66,7 +66,7 @@ export function AIDraftModal({
       setIsGenerating(false);
       const subject = email ? email.subject : 'Reply';
       const senderName = email ? email.sender.name : 'there';
-      const generated = `Hi ${senderName},\n\nThank you for your email regarding "${subject}".\n\n${prompt}\n\nLooking forward to working together.\n\nBest regards,\nNotion AI Assistant`;
+      const generated = `Hi ${senderName},\n\nThank you for your email regarding "${subject}".\n\n${prompt}\n\nLooking forward to working together.\n\nBest regards,\nAI Assistant`;
       setGeneratedDraft(generated);
     }, 600);
   };

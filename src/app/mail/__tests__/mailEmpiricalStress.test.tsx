@@ -21,7 +21,7 @@ vi.mock('@/app/mail/actions', async () => {
   };
 });
 
-describe('Empirical Adversarial Stress Suite for Notion Mail (Milestone 1)', () => {
+describe('Empirical Adversarial Stress Suite for Mail (Milestone 1)', () => {
   beforeEach(() => {
     // Clean setup
   });

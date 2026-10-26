@@ -318,8 +318,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
 
     try {
       await updateTaskBlocksAction(task.id, editBlocksContent)
-      // Re-fetch: saved markdown drops image lines, but Notion still has the
-      // image blocks. Re-read so the preview reflects the real state.
+      // Re-read the saved body so the preview reflects the persisted state.
       const refreshed = await getTaskBlocksAction(task.id)
       setBlocks(refreshed)
       setIsEditingBlocks(false)
@@ -870,19 +869,6 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
             )}
           </div>
         </div>
-
-        {/* Notion link — D1 で新規作成したタスクは url が空なので出さない */}
-        {task.url && (
-          <a
-            href={task.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-pixel mt-4 flex items-center justify-center gap-2 w-full rounded-none py-3 text-sm text-[var(--text-dim)] hover:text-[var(--accent)] hover:border-[var(--border-accent)] transition-colors tracking-widest uppercase"
-            style={{ border: "1px solid var(--border-strong)" }}
-          >
-            Open in Notion →
-          </a>
-        )}
       </div>
 
       <TaskFormSheet

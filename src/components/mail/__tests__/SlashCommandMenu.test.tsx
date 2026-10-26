@@ -25,7 +25,7 @@ describe('SlashCommandMenu Component', () => {
       render(<SlashCommandMenu {...defaultProps} />);
 
       expect(screen.getByTestId('slash-command-menu')).toBeInTheDocument();
-      expect(screen.getByText('/task (Notion Task)')).toBeInTheDocument();
+      expect(screen.getByText('/task (Task)')).toBeInTheDocument();
       expect(screen.getByText('/ai (AI Draft)')).toBeInTheDocument();
       expect(screen.getByText('/h1 (Heading 1)')).toBeInTheDocument();
       expect(screen.getByText('/h2 (Heading 2)')).toBeInTheDocument();
@@ -37,13 +37,13 @@ describe('SlashCommandMenu Component', () => {
     it('filters commands list dynamically based on filterText and supports aliases', () => {
       const { rerender } = render(<SlashCommandMenu {...defaultProps} filterText="task" />);
 
-      expect(screen.getByText('/task (Notion Task)')).toBeInTheDocument();
+      expect(screen.getByText('/task (Task)')).toBeInTheDocument();
       expect(screen.queryByText('/list (Bullet List)')).not.toBeInTheDocument();
 
       rerender(<SlashCommandMenu {...defaultProps} filterText="h" />);
       expect(screen.getByText('/h1 (Heading 1)')).toBeInTheDocument();
       expect(screen.getByText('/h2 (Heading 2)')).toBeInTheDocument();
-      expect(screen.queryByText('/task (Notion Task)')).not.toBeInTheDocument();
+      expect(screen.queryByText('/task (Task)')).not.toBeInTheDocument();
 
       rerender(<SlashCommandMenu {...defaultProps} filterText="bullet" />);
       expect(screen.getByText('/list (Bullet List)')).toBeInTheDocument();

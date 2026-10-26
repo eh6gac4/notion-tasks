@@ -172,7 +172,7 @@ describe('SlashCommandMenu Empirical Stress & Verification Test Suite', () => {
       const onClose = vi.fn();
       render(<SlashCommandMenu {...defaultProps} onClose={onClose} />);
 
-      const menuHeader = screen.getByText('Notion Commands');
+      const menuHeader = screen.getByText('Commands');
       fireEvent.mouseDown(menuHeader);
       expect(onClose).not.toHaveBeenCalled();
     });

@@ -22,8 +22,8 @@ export interface SlashCommandMenuProps {
 export const DEFAULT_SLASH_COMMANDS: SlashCommandOption[] = [
   {
     id: 'task',
-    label: '/task (Notion Task)',
-    description: 'Convert selection or line to Notion task item',
+    label: '/task (Task)',
+    description: 'Convert selection or line to task item',
     icon: '☑',
     insertText: '[ ] ',
     action: 'task',
@@ -167,7 +167,7 @@ export function SlashCommandMenu({
       aria-label="Slash Commands"
     >
       <div className="px-3 py-2 bg-[var(--surface-2)] border-b border-[var(--border)] text-[10px] text-[var(--accent)] font-pixel font-bold tracking-wider uppercase flex justify-between items-center">
-        <span>Notion Commands</span>
+        <span>Commands</span>
         {filterText && <span className="text-[var(--text-faint)]">&quot;{filterText}&quot;</span>}
       </div>
 

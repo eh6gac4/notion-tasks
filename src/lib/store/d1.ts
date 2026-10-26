@@ -12,12 +12,11 @@ import type {
 } from "@/types/task"
 import type { AttachmentReadableStore, TaskStore } from "./types"
 
-/** 添付ファイル 1 件あたりの上限 (Notion 実装と合わせる) */
+/** 添付ファイル 1 件あたりの上限 */
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 type TaskRow = {
   id: string
-  notion_url: string
   title: string
   icon_type: "emoji" | "url" | null
   icon_value: string | null
@@ -62,7 +61,7 @@ function rowToIcon(row: TaskRow): TaskIcon | null {
 }
 
 /**
- * 添付の公開 URL。Notion 実装と同じ形にしておくことで
+ * 添付の公開 URL。
  * `/api/file/[pageId]/[index]` proxy route と UI をそのまま流用できる。
  */
 function attachmentUrl(taskId: string, index: number, lastEditedTime: string): string {
@@ -80,7 +79,7 @@ function toAttachments(rows: AttachmentRow[], taskId: string, lastEditedTime: st
 /**
  * Cloudflare D1 (+ 添付実体は R2) をバックエンドとする TaskStore 実装。
  *
- * Notion 実装との差分で意図的に変えている点:
+ * 保存形式:
  * - 本文は Markdown を `tasks.body` に丸ごと持つ (block 差分適用が不要になる)
  * - 親/子・前/次は有向辺 1 本 (`task_relations`) だけを持ち、逆方向は導出する
  * - 添付の署名 URL 問題が無いので、proxy route は R2 から直接返すだけになる
@@ -176,7 +175,6 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
 
     return rows.map((row) => ({
       id: row.id,
-      url: row.notion_url,
       title: row.title,
       icon: rowToIcon(row),
       status: (row.status ?? null) as TaskStatus | null,
@@ -225,8 +223,8 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
     const statements = [
       this.db
         .prepare(
-          `INSERT INTO tasks (id, notion_url, title, status, priority, due, location, source, source_url, body, created_time, last_edited_time)
-           VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO tasks (id, title, status, priority, due, location, source, source_url, body, created_time, last_edited_time)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(
           id,
@@ -340,7 +338,7 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
 
   /**
    * タスク保存時に、使われたタグ/場所を option_sets へ昇格させる。
-   * Notion では data source の select 定義が候補の正だが、D1 には定義が無いので
+   * 選択肢は option_sets に保存し、
    * 「保存された値がそのまま次回の候補になる」方式にする。既存値は PK 衝突で無視。
    * sort_order は同 kind の現在最大 +1。
    */
@@ -402,7 +400,7 @@ export class D1TaskStore implements TaskStore, AttachmentReadableStore {
     const contentType = file.type || "application/octet-stream"
 
     // Workers ランタイムでは受信 multipart 由来の File がストリーム読み取り済みに
-    // なり得るため、arrayBuffer() で実体化してから put する (Notion 実装と同じ理由)。
+    // なり得るため、arrayBuffer() で実体化してから put する。
     const buf = await file.arrayBuffer()
     await this.bucket.put(key, buf, { httpMetadata: { contentType } })
 

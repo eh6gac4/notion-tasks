@@ -5,7 +5,6 @@ import { applyAdvancedFilter, isAdvancedFilterActive, parseAdvancedFilter, DEFAU
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "t",
-    url: "https://notion.so/t",
     title: "title",
     icon: null,
     status: "未着手",

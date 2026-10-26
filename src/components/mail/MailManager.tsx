@@ -10,7 +10,6 @@ import { MailSidebar } from '@/components/mail/MailSidebar';
 import { MailList } from '@/components/mail/MailList';
 import { MailDetail } from '@/components/mail/MailDetail';
 import { MailComposeModal } from '@/components/mail/MailComposeModal';
-import { TaskifyModal } from '@/components/mail/TaskifyModal';
 import { AIDraftModal } from '@/components/mail/AIDraftModal';
 import { MailToast } from '@/components/mail/MailToast';
 
@@ -55,7 +54,6 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
   const [activeSearch, setActiveSearch] = useState<string>('');
   const [isComposeOpen, setIsComposeOpen] = useState<boolean>(false);
   const [composeInitialDraft, setComposeInitialDraft] = useState<Partial<ComposeDraft> | undefined>(undefined);
-  const [taskifyEmail, setTaskifyEmail] = useState<Email | null>(null);
   const [aiDraftEmail, setAiDraftEmail] = useState<Email | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastType, setToastType] = useState<'success' | 'info' | 'error'>('info');
@@ -399,7 +397,7 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
   const handleSendDraft = (draft: ComposeDraft) => {
     const newEmail: Email = {
       id: generateMailId(),
-      sender: { name: 'You', email: 'user@notion-tasks.local', avatar: 'ME' },
+      sender: { name: 'You', email: 'user@tasks.local', avatar: 'ME' },
       recipients: [draft.to],
       subject: draft.subject,
       body: draft.body,
@@ -414,16 +412,6 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
     }
     setIsComposeOpen(false);
     showToast('Email sent successfully!', 'success');
-  };
-
-  // Handle Taskify action trigger
-  const handleTaskify = (email: Email) => {
-    setTaskifyEmail(email);
-  };
-
-  const handleCreateTask = (taskData: { title: string; status: string; priority: string; tags: string[] }) => {
-    setTaskifyEmail(null);
-    showToast(`Task created in Notion: "${taskData.title}"`, 'success');
   };
 
   // Handle AI Draft action trigger
@@ -454,7 +442,7 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
     selectedId,
     onSelectEmail: handleSelectEmail,
     onOpenCompose: () => handleOpenCompose(),
-    enabled: !isComposeOpen && !taskifyEmail && !aiDraftEmail,
+    enabled: !isComposeOpen && !aiDraftEmail,
   });
 
   const selectedEmail = useMemo(() => {
@@ -578,7 +566,6 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
         <MailDetail
           email={selectedEmail}
           isBodyLoading={!!selectedEmail && loadingBodyId === selectedEmail.id}
-          onTaskify={handleTaskify}
           onAIDraft={handleAIDraft}
           onToggleArchive={handleToggleArchive}
           onBack={() => setSelectedId(null)}
@@ -591,14 +578,6 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
         initialDraft={composeInitialDraft}
         onClose={() => setIsComposeOpen(false)}
         onSend={handleSendDraft}
-      />
-
-      {/* Taskify Modal */}
-      <TaskifyModal
-        isOpen={!!taskifyEmail}
-        email={taskifyEmail}
-        onClose={() => setTaskifyEmail(null)}
-        onCreateTask={handleCreateTask}
       />
 
       {/* AI Draft Modal */}

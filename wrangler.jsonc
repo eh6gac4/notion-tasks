@@ -33,7 +33,6 @@
 		}
 	],
 	// D1 移行用バインディング。リソースは作成・スキーマ適用済み。
-	// 実際に使われるのは TASK_STORE=d1 を設定した時点から (src/lib/store/index.ts)。
 	// 詳細は docs/backend-migration.md
 	"d1_databases": [
 		{

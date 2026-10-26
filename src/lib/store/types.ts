@@ -12,17 +12,7 @@ import type {
   UpdateRecurringTaskInput,
 } from "@/types/recurring"
 
-/**
- * タスクの永続化層インターフェース。
- *
- * これまで `src/lib/notion.ts` が事実上の唯一の実装で、`src/app/actions.ts` が
- * 直接 import していた。バックエンド差し替え(Notion → D1)を可能にするため、
- * 既存の 12 エクスポートをそのままの signature で型として切り出したもの。
- *
- * 実装:
- * - `notion.ts` : 既存 Notion API 実装(dev では in-memory mock に委譲)
- * - `d1.ts`     : Cloudflare D1 + R2 実装
- */
+/** タスクの永続化層。D1 と開発用インメモリで共通の操作を定義する。 */
 export interface TaskStore {
   getTasks(options?: { statuses?: TaskStatus[] }): Promise<Task[]>
   getTask(id: string): Promise<Task | null>
@@ -33,7 +23,7 @@ export interface TaskStore {
   getTagOptions(): Promise<string[]>
   getLocationOptions(): Promise<string[]>
 
-  /** タスク本文(Markdown)。Notion 実装では block ツリーと相互変換される。 */
+  /** タスク本文(Markdown)。 */
   getTaskBlocks(id: string): Promise<string>
   updateTaskBlocks(id: string, markdown: string): Promise<void>
 

@@ -11,16 +11,15 @@ export type TaskStatus =
 
 export type TaskPriority = "high" | "medium" | "low"
 
-// Notion ページの icon を正規化したもの。
+// タスクのアイコン。
 // - emoji: ネイティブ絵文字 (string)
-// - url:   external (CDN) または file (Notion S3、署名付き) の画像 URL
+// - url: 画像 URL
 export type TaskIcon =
   | { type: "emoji"; emoji: string }
   | { type: "url"; url: string }
 
 export type Task = {
   id: string
-  url: string
   title: string
   icon: TaskIcon | null
   status: TaskStatus | null

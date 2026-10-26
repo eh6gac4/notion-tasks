@@ -37,7 +37,6 @@ export interface MailState {
   selectedId: string | null;
   activeFolder: MailFolder;
   isComposeOpen: boolean;
-  taskifyEmail: Email | null;
   aiDraftEmail: Email | null;
   toastMessage: string | null;
 }

@@ -5,7 +5,6 @@ const now = new Date().toISOString()
 const INITIAL_TASKS: Task[] = [
   {
     id: "mock-1",
-    url: "https://notion.so/mock-1",
     title: "【DEV】ルーターのファームウェア更新",
     icon: { type: "emoji", emoji: "🌐" },
     status: "未着手",
@@ -26,7 +25,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-2",
-    url: "https://notion.so/mock-2",
     title: "【DEV】技術ブログ記事を書く",
     icon: { type: "emoji", emoji: "✍️" },
     status: "未着手",
@@ -47,7 +45,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-3",
-    url: "https://notion.so/mock-3",
     title: "【DEV】ドラフト作成",
     icon: { type: "emoji", emoji: "📝" },
     status: "未着手",
@@ -68,7 +65,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-4",
-    url: "https://notion.so/mock-4",
     title: "【DEV】家計簿の月次集計",
     icon: null,
     status: "進行中",
@@ -89,7 +85,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-5",
-    url: "https://notion.so/mock-5",
     title: "【DEV】サーバー監視ダッシュボード改善",
     icon: { type: "emoji", emoji: "🖥️" },
     status: "進行中",
@@ -110,7 +105,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-6",
-    url: "https://notion.so/mock-6",
     title: "【DEV】デプロイ手順の見直し",
     icon: null,
     status: "確認中",
@@ -131,7 +125,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-7",
-    url: "https://notion.so/mock-7",
     title: "【DEV】外付けHDD整理",
     icon: { type: "emoji", emoji: "💾" },
     status: "一時中断",
@@ -152,7 +145,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-8",
-    url: "https://notion.so/mock-8",
     title: "【DEV】DNS設定変更（完了済みサンプル）",
     icon: null,
     status: "完了",
@@ -173,7 +165,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-9",
-    url: "https://notion.so/mock-9",
     title: "【DEV】画像付きサンプル（ambient agent 経由想定）",
     icon: { type: "emoji", emoji: "🖼️" },
     status: "進行中",
@@ -194,7 +185,6 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "mock-10",
-    url: "https://notion.so/mock-10",
     title: "【DEV】タイトルしかないタスク",
     icon: null,
     status: "未着手",
@@ -229,7 +219,6 @@ function generateBulkTasks(
     const idx = i - 1
     result.push({
       id: `mock-${prefix}-${String(i).padStart(3, "0")}`,
-      url: `https://notion.so/mock-${prefix}-${i}`,
       title: `[BULK] ${status}タスク #${String(i).padStart(3, "0")}`,
       icon: idx % 3 === 0 ? { type: "emoji", emoji: "✅" } : null,
       status,
@@ -263,7 +252,7 @@ let nextId = 100
 const mockBlockStore = new Map<string, string>([
   ["mock-1", "## 作業メモ\n\n- ファームウェアバージョン確認\n- バックアップ取得後に適用"],
   ["mock-2", "## 構成\n\n- 導入\n- 本題\n- まとめ"],
-  ["mock-9", "## 概要\n\nambient agent から画像付きで投げられた想定のサンプル。\n\n![参考スクリーンショット](https://picsum.photos/seed/notion-tasks-1/600/400)\n\n## 補足\n\n複数枚も表示できる。\n\n![図解](https://picsum.photos/seed/notion-tasks-2/600/300)\n\n- 編集して保存しても画像は保持される\n- 画像は ![alt](url) の markdown としてレンダリングされる"],
+  ["mock-9", "## 概要\n\nambient agent から画像付きで投げられた想定のサンプル。\n\n![参考スクリーンショット](https://picsum.photos/seed/tasks-1/600/400)\n\n## 補足\n\n複数枚も表示できる。\n\n![図解](https://picsum.photos/seed/tasks-2/600/300)\n\n- 編集して保存しても画像は保持される\n- 画像は ![alt](url) の markdown としてレンダリングされる"],
 ])
 
 let mockCommentNextId = 1
@@ -303,7 +292,6 @@ export function createMockTask(input: CreateTaskInput): Task {
   const ts = new Date().toISOString()
   const task: Task = {
     id: `mock-${++nextId}`,
-    url: `https://notion.so/mock-${nextId}`,
     title: input.title,
     icon: null,
     status: input.status ?? "未着手",
@@ -323,7 +311,7 @@ export function createMockTask(input: CreateTaskInput): Task {
     attachments: [],
   }
   store.push(task)
-  // Notion のシンクド・リレーション挙動を模倣: 片方を設定したら相手側にも反映する。
+  // 双方向リレーション: 片方を設定したら相手側にも反映する。
   linkMockRelation(input.parentTaskId, task.id, "childTaskIds")
   linkMockRelation(input.prevTaskId, task.id, "nextTaskIds")
   linkMockRelation(input.nextTaskId, task.id, "prevTaskIds")

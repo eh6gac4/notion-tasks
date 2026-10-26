@@ -39,7 +39,7 @@ function greet(name: string): string {
 
 > This is a blockquote with **bold** inside.
 
-[Notion Link](https://notion.so)
+[Example Link](https://example.com)
 ![Logo](https://via.placeholder.com/150)
 
 | Header 1 | Header 2 |
@@ -60,7 +60,7 @@ function greet(name: string): string {
       expect(previewContainer.textContent).toContain('Main Header H1');
       expect(previewContainer.textContent).toContain('Sub Header H2');
       expect(previewContainer.textContent).toContain('function greet');
-      expect(previewContainer.textContent).toContain('Notion Link');
+      expect(previewContainer.textContent).toContain('Example Link');
     });
 
     it('handles rapid switching between Edit and Preview tabs 50 times', () => {
@@ -155,7 +155,7 @@ function greet(name: string): string {
       render(<MailComposeModal {...defaultProps} />);
       const bodyTextarea = screen.getByTestId('compose-body-textarea') as HTMLTextAreaElement;
 
-      fireEvent.change(bodyTextarea, { target: { value: 'Visit https://notion.so' } });
+      fireEvent.change(bodyTextarea, { target: { value: 'Visit https://example.com' } });
       expect(screen.queryByTestId('slash-command-menu')).not.toBeInTheDocument();
 
       fireEvent.change(bodyTextarea, { target: { value: 'folder/subfolder/file' } });

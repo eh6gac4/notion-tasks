@@ -12,7 +12,6 @@ vi.mock("@/app/actions", () => ({
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "t1",
-    url: "https://notion.so/t1",
     title: "テストタスク",
     icon: null,
     status: "未着手",

@@ -115,28 +115,6 @@ describe('MailPage Orchestrator & Integration Suite', () => {
       expect(screen.queryByTestId('compose-modal')).not.toBeInTheDocument();
     });
 
-    it('opens TaskifyModal when clicking Taskify button in MailDetail, and creates task with toast feedback', () => {
-      render(<MailManager {...getDefaultMailManagerProps()} />);
-
-      // Select the first inbox email (render no longer auto-selects it)
-      const inboxEmails = INITIAL_MOCK_EMAILS.filter((e) => e.folder === 'inbox');
-      fireEvent.click(screen.getAllByText(inboxEmails[0].subject)[0]);
-
-      const taskifyBtn = screen.getByRole('button', { name: /Taskify to Notion/i });
-      fireEvent.click(taskifyBtn);
-
-      expect(screen.getByTestId('taskify-modal')).toBeInTheDocument();
-
-      // Submit task form
-      const submitBtn = screen.getByTestId('taskify-submit-button');
-      fireEvent.click(submitBtn);
-
-      // Taskify modal closes and Toast notification appears
-      expect(screen.queryByTestId('taskify-modal')).not.toBeInTheDocument();
-      expect(screen.getByTestId('mail-toast')).toBeInTheDocument();
-      expect(screen.getByText(/Task created in Notion/)).toBeInTheDocument();
-    });
-
     it('executes AI draft flow: open AIDraftModal -> generate draft -> populate ComposeModal', () => {
       vi.useFakeTimers();
 

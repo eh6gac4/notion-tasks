@@ -6,7 +6,6 @@ import { getDefaultMailManagerProps } from '@/test/mailTestHelpers';
 import { submitSearch } from '@/test/mailDomHelpers';
 import { AIDraftModal } from '@/components/mail/AIDraftModal';
 import { MailComposeModal } from '@/components/mail/MailComposeModal';
-import { TaskifyModal } from '@/components/mail/TaskifyModal';
 import { INITIAL_MOCK_EMAILS, getFilteredEmails, searchMockEmails } from '@/lib/mockMailData';
 import { Email } from '@/types/mail';
 
@@ -246,32 +245,5 @@ describe('Adversarial State Synchronization & Purity Verification (Milestone 1)'
       expect(screen.queryByTestId('compose-markdown-preview')).not.toBeInTheDocument();
     });
 
-    it('resets TaskifyModal state cleanly when target email changes without useEffect setState cascading renders', () => {
-      const mockClose = vi.fn();
-      const mockCreate = vi.fn();
-      const email1: Email = INITIAL_MOCK_EMAILS[0];
-      const email2: Email = INITIAL_MOCK_EMAILS[1];
-
-      // 1. Render with email1
-      const { rerender } = render(
-        <TaskifyModal isOpen={true} email={email1} onClose={mockClose} onCreateTask={mockCreate} />
-      );
-
-      expect(screen.getByTestId('taskify-title-input')).toHaveValue(email1.subject);
-
-      // Change status and priority
-      fireEvent.change(screen.getByTestId('taskify-status-select'), { target: { value: 'Done' } });
-      fireEvent.change(screen.getByTestId('taskify-priority-select'), { target: { value: 'High' } });
-
-      // 2. Switch email prop to email2
-      rerender(
-        <TaskifyModal isOpen={true} email={email2} onClose={mockClose} onCreateTask={mockCreate} />
-      );
-
-      // Title should reset to email2.subject, and status/priority to defaults ('To Do', 'Medium')
-      expect(screen.getByTestId('taskify-title-input')).toHaveValue(email2.subject);
-      expect(screen.getByTestId('taskify-status-select')).toHaveValue('To Do');
-      expect(screen.getByTestId('taskify-priority-select')).toHaveValue('Medium');
-    });
   });
 });
