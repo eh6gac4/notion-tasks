@@ -27,7 +27,7 @@ export async function updateTaskStatus(id: string, status: TaskStatus) {
   try {
     await (await getTaskStore()).updateTask(id, { status })
   } catch (e) {
-    console.error("[updateTaskStatus] Notion error:", e)
+    console.error("[updateTaskStatus] store error:", e)
     throw e
   }
   updateTag("tasks")

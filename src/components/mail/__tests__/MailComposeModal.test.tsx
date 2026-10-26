@@ -24,7 +24,7 @@ describe('MailComposeModal Component', () => {
       render(<MailComposeModal {...defaultProps} />);
 
       expect(screen.getByTestId('compose-modal')).toBeInTheDocument();
-      expect(screen.getByText('New Message (Notion Compose)')).toBeInTheDocument();
+      expect(screen.getByText('New Message')).toBeInTheDocument();
     });
 
     it('updates to, subject, and body form fields on typing', () => {

@@ -14,7 +14,7 @@ declare const self: WorkerGlobalScope
 // /api/ の GET を丸ごと NetworkFirst("apis" キャッシュ)に載せるが、この経路は
 // Set-Cookie 付きの 307 で state を受け渡すため、キャッシュに一切関わらせてはいけない。
 // defaultCache より前に置く(先にマッチしたルートが勝つ)。
-// /api/ 全体ではなく /api/google/ に限るのは、/api/file/・/api/icon/ は
+// /api/ 全体ではなく /api/google/ に限るのは、/api/file/ は
 // キャッシュの恩恵があるため。defaultCache が /api/auth/ だけを NetworkOnly に
 // している粒度に合わせている。
 const oauthPassthrough: RuntimeCaching = {

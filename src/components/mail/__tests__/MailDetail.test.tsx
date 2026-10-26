@@ -8,11 +8,11 @@ const sampleEmail: Email = {
   id: 'mail-100',
   sender: {
     name: 'Alex Rivers',
-    email: 'alex.rivers@notion.so',
+    email: 'alex.rivers@example.com',
     avatar: 'AR',
   },
-  recipients: ['user1@notion-tasks.local', 'user2@notion-tasks.local'],
-  subject: 'Q3 Product Roadmap Review & Notion Tasks Integration',
+  recipients: ['user1@tasks.local', 'user2@tasks.local'],
+  subject: 'Q3 Product Roadmap Review & Task Management',
   body: `# Roadmap Spec\n\nThis is the markdown body of the email.`,
   date: '2026-07-31T09:30:00Z',
   folder: 'inbox',
@@ -23,7 +23,6 @@ const sampleEmail: Email = {
 describe('MailDetail Component', () => {
   const defaultProps = {
     email: sampleEmail,
-    onTaskify: vi.fn(),
     onAIDraft: vi.fn(),
   };
 
@@ -45,19 +44,9 @@ describe('MailDetail Component', () => {
       expect(screen.getByText(sampleEmail.subject)).toBeInTheDocument();
       expect(screen.getByText('inbox')).toBeInTheDocument();
       expect(screen.getByText('Alex Rivers')).toBeInTheDocument();
-      expect(screen.getByText('<alex.rivers@notion.so>')).toBeInTheDocument();
-      expect(screen.getByText('to user1@notion-tasks.local, user2@notion-tasks.local')).toBeInTheDocument();
+      expect(screen.getByText('<alex.rivers@example.com>')).toBeInTheDocument();
+      expect(screen.getByText('to user1@tasks.local, user2@tasks.local')).toBeInTheDocument();
       expect(screen.getByText(/Roadmap Spec/)).toBeInTheDocument();
-    });
-
-    it('triggers onTaskify callback when Notion Taskify button is clicked', () => {
-      const onTaskify = vi.fn();
-      render(<MailDetail {...defaultProps} onTaskify={onTaskify} />);
-
-      const taskifyBtn = screen.getByRole('button', { name: /Taskify to Notion/i });
-      fireEvent.click(taskifyBtn);
-
-      expect(onTaskify).toHaveBeenCalledWith(sampleEmail);
     });
 
     it('triggers onAIDraft callback when AI Draft Reply button is clicked', () => {
@@ -102,14 +91,12 @@ describe('MailDetail Component', () => {
       expect(screen.getByText('to onlyone@example.com')).toBeInTheDocument();
     });
 
-    it('prevents crashes when optional callback handlers (onTaskify/onAIDraft) are undefined', () => {
+    it('prevents crashes when optional callback handlers (onAIDraft) are undefined', () => {
       render(<MailDetail email={sampleEmail} />);
 
-      const taskifyBtn = screen.getByRole('button', { name: /Taskify to Notion/i });
       const aiDraftBtn = screen.getByRole('button', { name: /AI Draft Reply/i });
 
       expect(() => {
-        fireEvent.click(taskifyBtn);
         fireEvent.click(aiDraftBtn);
       }).not.toThrow();
     });

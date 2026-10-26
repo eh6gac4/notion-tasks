@@ -1,6 +1,6 @@
 # notion-tasks
 
-Notionのタスク管理DBに高速アクセスするWebツール。
+タスク管理とGmail連携のWebツール。タスクはCloudflare D1、添付ファイルはR2に保存する。開発時はインメモリのサンプルデータを使う。
 
 ## セットアップ
 
@@ -24,17 +24,9 @@ npm run dev
 | `NEXTAUTH_URL` | アプリのURL（本番では `https://your-domain.vercel.app`）|
 | `APP_USERNAME` | ログインユーザー名 |
 | `APP_PASSWORD` | ログインパスワード |
-| `NOTION_TOKEN` | Notionインテグレーショントークン |
-| `NOTION_DATABASE_ID` | 対象データベースのID |
 | `GOOGLE_CLIENT_ID` | Google OAuth クライアントID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット |
 | `GOOGLE_REFRESH_TOKEN` | Gmail refresh token（初回ブートストラップ用。失効後は `/mail` の再連携ボタンから更新される） |
-
-## Notionトークンの取得
-
-1. [Notion Integrations](https://www.notion.so/profile/integrations) でインテグレーションを作成
-2. 生成されたトークンを `NOTION_TOKEN` に設定
-3. NotionのDBページで「接続先」からインテグレーションを追加
 
 ## Gmail連携のセットアップ
 

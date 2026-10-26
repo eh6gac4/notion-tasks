@@ -25,7 +25,7 @@ function buildGmailLikeEmail(overrides: Partial<Email> = {}): Email {
   return {
     id: '18abctestmessage',
     sender: { name: 'Real Sender', email: 'real.sender@example.com' },
-    recipients: ['user@notion-tasks.local'],
+    recipients: ['user@tasks.local'],
     subject: 'Gmail 実データ相当のテストメール',
     body: 'この行の後に…見えるはずの改行',
     date: '2026-07-31T09:30:00Z',

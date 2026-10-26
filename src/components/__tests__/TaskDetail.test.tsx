@@ -33,7 +33,6 @@ afterEach(() => {
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
     id: "t1",
-    url: "https://notion.so/t1",
     title: "テストタスク",
     icon: null,
     status: "未着手",
@@ -189,11 +188,9 @@ describe("TaskDetail レンダリング", () => {
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
     expect(screen.getByText("なし")).toBeInTheDocument()
   })
-
-  it("Notion リンクが正しい href を持つ", () => {
-    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ url: "https://notion.so/abc" })} onClose={() => {}} />)
-    const link = screen.getByText(/Open in Notion/)
-    expect(link.closest("a")).toHaveAttribute("href", "https://notion.so/abc")
+  it("外部サービスで開くボタンを表示しない", () => {
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
+    expect(screen.queryByRole("link", { name: /Open in/ })).not.toBeInTheDocument()
   })
 })
 
@@ -412,7 +409,7 @@ describe("TaskDetail 本文編集", () => {
   it("画像付き本文を編集・保存しても画像が再フェッチで戻る", async () => {
     vi.mocked(getTaskBlocksAction)
       .mockResolvedValueOnce("元の本文\n![プレビュー](https://example.com/img.png)")
-      // 保存後の再フェッチ：Notion 側に画像は残ったまま、テキストだけ更新された状態を返す
+      // 保存後の再フェッチ：保存先に画像は残ったまま、テキストだけ更新された状態を返す
       .mockResolvedValueOnce("更新後の本文\n![プレビュー](https://example.com/img.png)")
 
     render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={() => {}} />)
@@ -508,7 +505,7 @@ describe("TaskDetail 本文編集", () => {
 
     const { rerender } = render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t1" })} onClose={() => {}} />)
 
-    rerender(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t2", url: "https://notion.so/t2" })} onClose={() => {}} />)
+    rerender(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask({ id: "t2" })} onClose={() => {}} />)
 
     await act(async () => {
       second.resolve("新しい本文")

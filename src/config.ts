@@ -7,10 +7,6 @@ function requireEnv(key: string): string {
 }
 
 export const config = {
-  notion: {
-    token:      requireEnv("NOTION_TOKEN"),
-    databaseId: requireEnv("NOTION_DATABASE_ID"),
-  },
   auth: {
     username: process.env.APP_USERNAME ?? "",
     password: process.env.APP_PASSWORD ?? "",

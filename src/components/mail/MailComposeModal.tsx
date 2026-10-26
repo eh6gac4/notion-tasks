@@ -109,7 +109,7 @@ export function MailComposeModal({
         <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
           <div className="flex items-center gap-3">
             <h3 className="text-base font-pixel font-bold text-[var(--accent)]">
-              New Message (Notion Compose)
+              New Message
             </h3>
             {/* Tab Controls */}
             <div className="flex items-center gap-1 bg-[var(--surface-2)] p-1 border border-[var(--border-strong)]">
@@ -188,7 +188,7 @@ export function MailComposeModal({
                 rows={6}
                 value={body}
                 onChange={handleBodyChange}
-                placeholder="Write your email body here... (Type '/' for Notion slash commands)"
+                placeholder="Write your email body here... (Type '/' for slash commands)"
                 data-testid="compose-body-textarea"
                 className="w-full flex-1 bg-[var(--bg)] border border-[var(--border-strong)] p-2 text-[var(--text)] focus:outline-none focus:border-[var(--accent)] resize-none font-pixel leading-relaxed"
               />

@@ -15,8 +15,6 @@ services:
       - NEXTAUTH_URL
       - APP_USERNAME
       - APP_PASSWORD
-      - NOTION_TOKEN
-      - NOTION_DATABASE_ID
 
 volumes:
   node_modules:

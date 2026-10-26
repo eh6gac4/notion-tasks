@@ -37,9 +37,9 @@ describe("D1TaskStore", () => {
     expect(await store.getTaskBlocks(created.id)).toBe("## 手順\n- 管理画面を開く")
   })
 
-  it("D1 で新規作成したタスクの url は空 (Notion リンクを持たない)", async () => {
+  it("タスクに外部ページのリンクを含めない", async () => {
     const created = await store.createTask({ title: "x" })
-    expect(created.url).toBe("")
+    expect(created).not.toHaveProperty("url")
   })
 
   it("親タスクの指定が子タスク側からも逆引きできる", async () => {

@@ -32,7 +32,6 @@ vi.mock("@/components/TaskCreate", () => ({
 function makeTask(overrides: Partial<Task>): Task {
   return {
     id: "t1",
-    url: "https://notion.so/t1",
     title: "タスク",
     icon: null,
     status: "未着手",

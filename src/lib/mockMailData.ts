@@ -5,18 +5,18 @@ export const INITIAL_MOCK_EMAILS: Email[] = [
     id: 'mail-1',
     sender: {
       name: 'Alex Rivers',
-      email: 'alex.rivers@notion.so',
+      email: 'alex.rivers@example.com',
       avatar: 'AR',
     },
-    recipients: ['user@notion-tasks.local'],
-    subject: 'Q3 Product Roadmap Review & Notion Tasks Integration',
+    recipients: ['user@tasks.local'],
+    subject: 'Q3 Product Roadmap Review & Task Management',
     body: `# Q3 Product Roadmap Review
 
 Hi Team,
 
-Here is the outline for our Q3 priorities regarding the Notion Tasks integration:
+Here is the outline for our Q3 priorities regarding task management:
 
-- **Notion Mail Sync**: Direct conversion of email messages into actionable database tasks.
+- **Mail Workflow**: Faster inbox navigation and email organization.
 - **Cyberpunk UI Refresh**: Dark mode theme with 4px strict grid compliance and crisp micro-interactions.
 - **Keyboard Shortcuts**: Power-user navigation using \`j\`, \`k\`, and \`c\` keys for rapid mail triaging.
 
@@ -37,7 +37,7 @@ Alex`,
       email: 'kaito.t@neontech.io',
       avatar: 'KT',
     },
-    recipients: ['user@notion-tasks.local'],
+    recipients: ['user@tasks.local'],
     subject: 'Weekly Cyberpunk UI Sync & Retro Theme Mockups',
     body: `Hey there,
 
@@ -65,7 +65,7 @@ Kaito`,
       email: 'schen@devops.org',
       avatar: 'SC',
     },
-    recipients: ['user@notion-tasks.local'],
+    recipients: ['user@tasks.local'],
     subject: 'API Spec Update: Antigravity Agent Orchestration',
     body: `Team,
 
@@ -93,11 +93,11 @@ Sarah`,
     id: 'mail-4',
     sender: {
       name: 'You',
-      email: 'user@notion-tasks.local',
+      email: 'user@tasks.local',
       avatar: 'ME',
     },
-    recipients: ['alex.rivers@notion.so'],
-    subject: 'Re: Notion Mail Mock Feature Architecture Proposal',
+    recipients: ['alex.rivers@example.com'],
+    subject: 'Re: Mail Feature Architecture Proposal',
     body: `Hi Alex,
 
 I have finalized the M1 milestone breakdown:
@@ -122,14 +122,14 @@ Developer`,
       email: 'no-reply@buildsystem.internal',
       avatar: 'CB',
     },
-    recipients: ['user@notion-tasks.local'],
+    recipients: ['user@tasks.local'],
     subject: 'Automated Notification: Build #4082 Completed',
     body: `Build status for commit \`a12e58e\`: SUCCESS.
 
 All 42 unit tests passed. Total build time: 14.2s.
 
 Artifacts generated:
-- \`notion-tasks-dist.tar.gz\`
+- \`tasks-dist.tar.gz\`
 `,
     date: '2026-07-29T11:00:00Z',
     folder: 'trash',
@@ -144,7 +144,7 @@ Artifacts generated:
       email: 'elena@people.io',
       avatar: 'ER',
     },
-    recipients: ['user@notion-tasks.local'],
+    recipients: ['user@tasks.local'],
     subject: 'Quarterly Team Feedback Request',
     body: `Hello Everyone,
 

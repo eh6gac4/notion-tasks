@@ -2,17 +2,6 @@
 // 繰り返しルールの一括投入スクリプト。
 //
 //   node scripts/import-recurring.mjs <rules.tsv> [--out .migration]
-//   node scripts/import-recurring.mjs --suggest [--out .migration]
-//
-// なぜ手書き TSV なのか:
-//   移行元 (Notion) の定期タスクはデータベースの「繰り返しテンプレート」で作られている。
-//   テンプレートページは databases.query の結果に現れず、繰り返しスケジュール自体も
-//   公開 API のプロパティとして露出しない。つまり API 経由の自動移行は原理的にできない。
-//   そこで「画面を見て書き出す → 検証して SQL 化」を最短にする。
-//
-// --suggest は NOTION_TOKEN がある場合のみ動く補助機能で、完了ぶんも含めた全タスクを
-// 走査し、同じタイトルが現れた間隔から周期の候補を推定して TSV の下書きを出す。
-// あくまで下書きであり、そのまま投入はしない (必ず目で直してから使う)。
 //
 // 出力: .migration/0003_recurring_seed.sql
 // 適用:
@@ -26,7 +15,6 @@ import { randomUUID } from "node:crypto"
 import { join, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 import { build } from "esbuild"
-import { config as loadEnv } from "dotenv"
 
 const COLUMNS = [
   "title",
@@ -54,7 +42,6 @@ function argValue(flag) {
 }
 
 const outDir = resolve(argValue("--out") ?? ".migration")
-const suggest = args.includes("--suggest")
 // フラグとその値を取り除いた残りが入力ファイル
 const positional = args.filter((a, i) => !a.startsWith("--") && args[i - 1] !== "--out")
 const inputPath = positional[0]
@@ -211,106 +198,11 @@ function toSql(records) {
 }
 
 /** 同じタイトルが現れた間隔から周期を推定し、TSV の下書きを書き出す */
-async function runSuggest() {
-  loadEnv({ path: ".env.local", quiet: true })
-  if (!process.env.NOTION_TOKEN) {
-    console.error("--suggest には NOTION_TOKEN が必要です (.env.local を確認してください)")
-    process.exit(1)
-  }
-  process.env.NODE_ENV = "production"
-  process.env.NEXTJS_ENV = "production"
-
-  const lib = await loadTs("lib/notion", { external: ["@notionhq/client"] })
-  // 全ステータスを本番コードの定義から取る。ここを手書きするとステータス名の
-  // 変更時に --suggest が静かに件数を取りこぼす。
-  const { STATUS_ORDER } = await loadTs("lib/task-sort")
-
-  console.log("Notion から全タスクを取得中 (完了ぶんを含む)...")
-  const tasks = await lib.getTasks({ statuses: STATUS_ORDER })
-  console.log(`  ${tasks.length} 件`)
-
-  const byTitle = new Map()
-  for (const t of tasks) {
-    if (!t.due) continue
-    const date = t.due.slice(0, 10)
-    if (!byTitle.has(t.title)) byTitle.set(t.title, [])
-    byTitle.get(t.title).push(date)
-  }
-
-  const rows = []
-  for (const [title, datesRaw] of byTitle) {
-    const dates = [...new Set(datesRaw)].sort()
-    if (dates.length < 3) continue // 3 回以上出ていないと周期とは言えない
-
-    const gaps = dates.slice(1).map((d, i) => (Date.parse(d) - Date.parse(dates[i])) / 86_400_000)
-    const median = gaps.slice().sort((a, b) => a - b)[Math.floor(gaps.length / 2)]
-    const last = dates[dates.length - 1]
-
-    // 中央値の間隔から、いちばん近い頻度を当てる。あくまで下書き。
-    let freq = "daily"
-    let interval = Math.max(1, Math.round(median))
-    let byweekday = ""
-    let bymonthday = ""
-    if (median >= 6 && median <= 8) {
-      freq = "weekly"
-      interval = 1
-      byweekday = String(new Date(`${last}T12:00:00Z`).getUTCDay())
-    } else if (median >= 13 && median <= 16) {
-      freq = "weekly"
-      interval = 2
-      byweekday = String(new Date(`${last}T12:00:00Z`).getUTCDay())
-    } else if (median >= 27 && median <= 32) {
-      freq = "monthly"
-      interval = 1
-      bymonthday = String(Number(last.slice(8, 10)))
-    } else if (median >= 350 && median <= 380) {
-      freq = "yearly"
-      interval = 1
-      bymonthday = String(Number(last.slice(8, 10)))
-    }
-
-    rows.push({ title, freq, interval, byweekday, bymonthday, last, count: dates.length, median })
-  }
-
-  rows.sort((a, b) => b.count - a.count)
-
-  const today = new Date().toISOString().slice(0, 10)
-  const lines = [
-    "# scripts/import-recurring.mjs --suggest が生成した下書き。",
-    "# 過去タスクの出現間隔からの推定であり、Notion の繰り返し設定そのものではない。",
-    "# 必ず Notion の画面と突き合わせて直してから投入すること。",
-    "# 不要な行は削除するか、行頭に # を付けて無効化する。",
-    "#",
-    "# 推定の根拠 (件数 / 間隔の中央値 / 直近の期日):",
-    ...rows.map((r) => `#   ${r.title}: ${r.count} 件 / ${r.median} 日 / ${r.last}`),
-    "",
-    COLUMNS.join("\t"),
-    ...rows.map((r) =>
-      [
-        r.title, r.freq, r.interval, r.byweekday, r.bymonthday, "",
-        "", "0", today, "", "", "", "", "", "",
-      ].join("\t"),
-    ),
-  ]
-
-  mkdirSync(outDir, { recursive: true })
-  const path = join(outDir, "recurring-rules.suggested.tsv")
-  writeFileSync(path, lines.join("\n") + "\n")
-  console.log(`\n${rows.length} 件の候補を書き出しました: ${path}`)
-  console.log("内容を直してから、引数に渡して再実行してください。")
-}
-
 async function main() {
   mkdirSync(outDir, { recursive: true })
 
-  if (suggest) {
-    await runSuggest()
-    return
-  }
-
   if (!inputPath) {
     console.error("使い方: node scripts/import-recurring.mjs <rules.tsv> [--out .migration]")
-    console.error("        node scripts/import-recurring.mjs --suggest")
     process.exit(1)
   }
 
