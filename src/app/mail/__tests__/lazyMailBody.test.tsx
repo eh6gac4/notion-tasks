@@ -49,6 +49,7 @@ describe('メール詳細の本文遅延取得', () => {
       body: 'plain fallback',
       bodyHtml: '<p>Hello HTML</p>',
       bodyLoaded: true,
+      attachments: [{ id: '0.1', filename: '資料.pdf', mimeType: 'application/pdf', size: 2048 }],
     });
 
     const props = getDefaultMailManagerProps();
@@ -63,6 +64,7 @@ describe('メール詳細の本文遅延取得', () => {
     await waitFor(() => {
       const iframe = screen.getByTitle('メール本文');
       expect(iframe.getAttribute('srcdoc')).toContain('<p>Hello HTML</p>');
+      expect(screen.getByRole('link', { name: /資料.pdf/ })).toHaveAttribute('href', `/api/mail/${target.id}/attachments/0.1`);
     });
   });
 

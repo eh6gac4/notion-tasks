@@ -197,6 +197,28 @@ export function MailDetail({ email, isBodyLoading, onAIDraft, onToggleArchive, o
       </div>
 
       {/* Email Body */}
+      {!isBodyLoading && !!email.attachments?.length && (
+        <section aria-label="添付ファイル" className="p-4 md:px-6 border-b border-[var(--border)]">
+          <h3 className="text-xs text-[var(--text-dim)] mb-2">添付ファイル ({email.attachments.length})</h3>
+          <ul className="flex flex-wrap gap-2">
+            {email.attachments.map((attachment) => (
+              <li key={attachment.id} className="min-w-0 max-w-full">
+                <a
+                  href={`/api/mail/${encodeURIComponent(email.id)}/attachments/${encodeURIComponent(attachment.id)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 border border-[var(--border)] bg-[var(--surface-2)] text-sm text-[var(--accent)] hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+                >
+                  <span className="min-w-0 wrap-anywhere">{attachment.filename}</span>
+                  <span className="shrink-0 text-xs text-[var(--text-dim)]">
+                    {attachment.size < 1024 ? `${attachment.size} B` : attachment.size < 1024 * 1024 ? `${Math.ceil(attachment.size / 1024)} KB` : `${(attachment.size / (1024 * 1024)).toFixed(1)} MB`}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <MailBody body={email.body} bodyHtml={email.bodyHtml} isLoading={isBodyLoading} />
     </div>
   );

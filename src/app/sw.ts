@@ -22,12 +22,18 @@ const oauthPassthrough: RuntimeCaching = {
   handler: new NetworkOnly(),
 }
 
+// メール添付は認証後に毎回取得し、端末の共有キャッシュに残さない。
+const mailPassthrough: RuntimeCaching = {
+  matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && pathname.startsWith("/api/mail/"),
+  handler: new NetworkOnly(),
+}
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false, // バナーからの手動更新を維持するため
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [oauthPassthrough, ...defaultCache],
+  runtimeCaching: [oauthPassthrough, mailPassthrough, ...defaultCache],
   // オフライン時にページ遷移が失敗した場合、ブラウザ標準のエラー画面ではなく /offline を返す。
   // /offline は force-static なのでプリキャッシュに含まれる。
   fallbacks: {

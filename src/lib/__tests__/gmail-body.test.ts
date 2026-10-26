@@ -9,7 +9,7 @@ vi.mock("@/lib/require-auth", () => ({
   isDevMode: () => false,
 }))
 
-const { extractBodyParts, stripHtml } = await import("@/lib/gmail")
+const { extractBodyParts, stripHtml, extractAttachments } = await import("@/lib/gmail")
 
 // Gmail API の body.data は base64url。テストデータ作成用ヘルパー。
 const toBase64Url = (text: string): string =>
@@ -63,3 +63,18 @@ describe("extractBodyParts", () => {
     expect(extractBodyParts(payload)).toEqual({ text: "", html: "" })
   })
 })
+
+ it("添付本文をメール本文から除外し、入れ子の添付を抽出する", () => {
+   const payload = { mimeType: "multipart/mixed", parts: [
+     { mimeType: "text/plain", filename: "添付.txt", body: { data: toBase64Url("attachment"), size: 10 } },
+     { mimeType: "multipart/mixed", parts: [
+       { mimeType: "application/pdf", filename: "資料.pdf", body: { attachmentId: "external", size: 20 } },
+       { mimeType: "text/plain", body: { data: toBase64Url("mail body") } },
+     ] },
+   ] }
+   expect(extractBodyParts(payload).text).toBe("mail body")
+   expect(extractAttachments(payload)).toEqual([
+     { id: "0.0", filename: "添付.txt", mimeType: "text/plain", size: 10 },
+     { id: "0.1.0", filename: "資料.pdf", mimeType: "application/pdf", size: 20 },
+   ])
+ })
