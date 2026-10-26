@@ -6,6 +6,13 @@ export interface EmailSender {
   avatar?: string;
 }
 
+export interface MailAttachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 export interface Email {
   id: string;
   sender: EmailSender;
@@ -14,6 +21,7 @@ export interface Email {
   body: string;
   bodyHtml?: string;
   bodyLoaded?: boolean;
+  attachments?: MailAttachment[];
   date: string;
   folder: MailFolder;
   isRead: boolean;

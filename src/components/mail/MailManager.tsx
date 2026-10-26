@@ -285,6 +285,7 @@ export function MailManager({ initialEmails, initialSelectedId, initialNextPageT
             body: full.body,
             bodyHtml: full.bodyHtml,
             bodyLoaded: full.bodyLoaded,
+            attachments: full.attachments,
           });
           setEmails((prev) => prev.map((email) => (email.id === id ? patch(email) : email)));
           patchCachedEmail(id, patch);

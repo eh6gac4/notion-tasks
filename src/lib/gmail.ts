@@ -1,4 +1,4 @@
-import { Email, EmailSender, MailFolder, MailPage } from "@/types/mail"
+import { Email, EmailSender, MailFolder, MailPage, MailAttachment } from "@/types/mail"
 import { config } from "@/config"
 import { isDevMode } from "@/lib/require-auth"
 import { getGoogleRefreshToken } from "@/lib/token-store"
@@ -288,8 +288,37 @@ function parseRecipients(toHeader: string): string[] {
 // ---- MIME 本文の抽出 ----
 interface GmailMessagePart {
   mimeType: string
-  body?: { data?: string; size?: number }
+  filename?: string
+  body?: { data?: string; size?: number; attachmentId?: string }
   parts?: GmailMessagePart[]
+}
+
+// MIME の階層位置をキーにする。body.data 内の小さな添付も同じ URL で扱う。
+function attachmentParts(part: GmailMessagePart, id = "0"): { id: string; part: GmailMessagePart }[] {
+  if (part.filename) return [{ id, part }]
+  return (part.parts ?? []).flatMap((child, index) => attachmentParts(child, `${id}.${index}`))
+}
+
+export function extractAttachments(payload: GmailMessagePart): MailAttachment[] {
+  return attachmentParts(payload).map(({ id, part }) => ({
+    id,
+    filename: part.filename!,
+    mimeType: part.mimeType,
+    size: part.body?.size ?? 0,
+  }))
+}
+
+export async function getMailAttachment(messageId: string, id: string) {
+  const message = await gmailGet<GmailMessage>(`/messages/${encodeURIComponent(messageId)}`, { format: "full" })
+  const part = attachmentParts(message.payload).find((attachment) => attachment.id === id)?.part
+  if (!part) return null
+  const body = part.body?.attachmentId
+    ? await gmailGet<{ data?: string }>(`/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(part.body.attachmentId)}`)
+    : part.body
+  if (body?.data === undefined) return null
+  const binary = atob(body.data.replace(/-/g, "+").replace(/_/g, "/"))
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return { bytes, filename: part.filename!, mimeType: part.mimeType }
 }
 
 function decodeBase64Url(data: string): string {
@@ -318,6 +347,7 @@ export function stripHtml(html: string): string {
 }
 
 function findBodyPart(part: GmailMessagePart, mimeType: string): GmailMessagePart | null {
+  if (part.filename) return null
   if (part.mimeType === mimeType && part.body?.data) return part
   if (part.parts) {
     for (const child of part.parts) {
@@ -366,6 +396,7 @@ function toEmail(message: GmailMessage, idToName: Map<string, string>, bodyOverr
     body: plainText || message.snippet || "",
     bodyHtml: bodyOverride?.html || undefined,
     bodyLoaded: bodyOverride !== undefined,
+    attachments: bodyOverride ? extractAttachments(message.payload) : undefined,
     date: message.internalDate
       ? new Date(Number(message.internalDate)).toISOString()
       : new Date(getHeader(headers, "Date")).toISOString(),
