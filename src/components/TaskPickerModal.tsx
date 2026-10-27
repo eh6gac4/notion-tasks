@@ -1,5 +1,6 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useEffect, useMemo, useState } from "react"
 import type { Task } from "@/types/task"
 import { STATUS_ACCENT } from "@/constants/styles"
@@ -28,6 +29,7 @@ export function TaskPickerModal({
   onClear?: () => void
   clearLabel?: string
 }) {
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: onClose, disabled: !open, pcBreakpoint: 1024 })
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set(selectedIds))
   const [prevOpen, setPrevOpen] = useState(open)
@@ -76,7 +78,7 @@ export function TaskPickerModal({
   }
 
   return (
-    <div data-testid="picker-modal" className="fixed inset-0 z-[70] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+    <div ref={swipeBackRef} data-testid="picker-modal" className="fixed inset-0 z-[70] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
       <div
         className="relative flex flex-col rounded-none-2xl pt-4 pb-[var(--safe-bottom)] h-[85svh] lg:h-auto lg:max-h-[80vh] lg:rounded-none lg:w-full lg:border lg:border-[var(--border-strong)] lg:mx-auto lg:max-w-md"

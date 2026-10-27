@@ -1,10 +1,12 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useEffect, useState } from "react"
 import { useSettings } from "./SettingsContext"
 
 export function Settings() {
   const [open, setOpen] = useState(false)
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: () => setOpen(false), disabled: !open, pcBreakpoint: 1024 })
   const { settings, update } = useSettings()
 
   // シート開閉時に背景スクロールを抑制
@@ -41,7 +43,7 @@ export function Settings() {
       </button>
 
       {open && (
-        <div data-testid="settings-sheet" className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+        <div ref={swipeBackRef} data-testid="settings-sheet" className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
           <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
 
           <div

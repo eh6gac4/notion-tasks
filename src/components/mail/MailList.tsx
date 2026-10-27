@@ -240,8 +240,10 @@ export function MailList({
   };
 
   const handleTouchStart = useCallback((id: string, e: React.TouchEvent) => {
+    touchStartRef.current = null;
+    updateSwipe(null);
     const touch = e.touches[0];
-    if (!touch) return;
+    if (!touch || e.touches.length !== 1 || touch.clientX <= 24) return;
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     updateSwipe({ id, dx: 0 });
   }, []);

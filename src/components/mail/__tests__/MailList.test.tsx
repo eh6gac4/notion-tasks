@@ -163,13 +163,23 @@ describe('MailList Component', () => {
 
   describe('Swipe to archive', () => {
     const swipe = (row: Element, dx: number, dy = 0) => {
-      fireEvent.touchStart(row, { touches: [{ clientX: 0, clientY: 0 }] });
-      fireEvent.touchMove(row, { touches: [{ clientX: dx, clientY: dy }] });
+      fireEvent.touchStart(row, { touches: [{ clientX: 120, clientY: 0 }] });
+      fireEvent.touchMove(row, { touches: [{ clientX: 120 + dx, clientY: dy }] });
       fireEvent.touchEnd(row);
     };
 
     const getRow = (senderName: string) =>
       screen.getByText(senderName).closest('div[role="option"]')!;
+
+    it('reserves left-edge swipes for navigation without archiving', () => {
+      const onToggleArchive = vi.fn();
+      render(<MailList {...defaultProps} onToggleArchive={onToggleArchive} />);
+      const row = getRow('Kaito Tanaka');
+      fireEvent.touchStart(row, { touches: [{ clientX: 10, clientY: 100 }] });
+      fireEvent.touchMove(row, { touches: [{ clientX: 160, clientY: 100 }] });
+      fireEvent.touchEnd(row);
+      expect(onToggleArchive).not.toHaveBeenCalled();
+    });
 
     it('archives the email when swiped beyond the threshold', () => {
       const onToggleArchive = vi.fn();

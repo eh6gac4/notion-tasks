@@ -1,5 +1,6 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useEffect, useState, useRef, useTransition } from "react"
 import { useFormStatus } from "react-dom"
 import { createTaskAction } from "@/app/actions"
@@ -51,6 +52,7 @@ export function TaskFormSheet({
   submitLabel?: string
   onCreated?: () => void
 }) {
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: handleClose, disabled: !open, pcBreakpoint: 1024 })
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [dueDate, setDueDate] = useState("")
   const [dueTime, setDueTime] = useState("")
@@ -104,7 +106,7 @@ export function TaskFormSheet({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+    <div ref={swipeBackRef} className="fixed inset-0 z-[60] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={handleClose} />
 
       <div

@@ -3,6 +3,7 @@ import localFont from "next/font/local"
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration"
 import { SplashScreen } from "@/components/SplashScreen"
 import { DebugUI } from "@/components/DebugUI"
+import { SwipeBackNavigation } from "@/components/SwipeBackNavigation"
 import { SettingsProvider } from "@/components/SettingsContext"
 import { splashStartupImages } from "@/constants/splash"
 import "./globals.css"
@@ -82,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegistration />
         <SplashScreen />
         <SettingsProvider>
-          {children}
+          <SwipeBackNavigation>{children}</SwipeBackNavigation>
           <DebugUI />
         </SettingsProvider>
       </body>

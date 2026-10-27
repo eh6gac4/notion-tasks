@@ -1,5 +1,6 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useEffect, useMemo, useState } from "react"
 import { describeRule, nextOccurrences, todayLocal, validateRule, WEEKDAY_LABELS } from "@/lib/recurrence"
 import { snapTimeTo5Min } from "@/lib/due-date"
@@ -94,6 +95,7 @@ export function RecurringFormSheet({
 }) {
   const [form, setForm] = useState<FormState>(() => toFormState(rule))
   const [pending, setPending] = useState(false)
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: onClose, disabled: pending, pcBreakpoint: 1024 })
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -157,7 +159,7 @@ export function RecurringFormSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+    <div ref={swipeBackRef} className="fixed inset-0 z-[60] flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
       <div

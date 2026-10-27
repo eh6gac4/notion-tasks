@@ -569,6 +569,20 @@ describe("TaskDetail スワイプ動作", () => {
     expect(document.body.style.overflow).toBe("auto")
   })
 
+  it("左端から右スワイプで閉じ、縦スワイプを同時発火させない", () => {
+    vi.useFakeTimers()
+    const onClose = vi.fn()
+    render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={onClose} />)
+    const panel = screen.getByTestId("task-detail")
+    fireEvent.touchStart(panel, { touches: [{ clientX: 10, clientY: 100, identifier: 0 }] })
+    fireEvent.touchMove(panel, { touches: [{ clientX: 120, clientY: 120, identifier: 0 }] })
+    fireEvent.touchMove(panel, { touches: [{ clientX: 150, clientY: 260, identifier: 0 }] })
+    fireEvent.touchEnd(panel, { touches: [], changedTouches: [{ clientX: 150, clientY: 260, identifier: 0 }] })
+    act(() => { vi.advanceTimersByTime(280) })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
   it("80px 以上スワイプで onClose が 280ms 後に呼ばれる", () => {
     vi.useFakeTimers()
     const onClose = vi.fn()
@@ -576,9 +590,9 @@ describe("TaskDetail スワイプ動作", () => {
 
     const panel = container.querySelector(".rounded-none-2xl") as HTMLElement
     act(() => {
-      fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
-      fireEvent.touchMove(panel, { touches: [{ clientY: 90 }] })
-      fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 90 }] })
+      fireEvent.touchStart(panel, { touches: [{ clientX: 100, clientY: 0 }] })
+      fireEvent.touchMove(panel, { touches: [{ clientX: 100, clientY: 90 }] })
+      fireEvent.touchEnd(panel, { changedTouches: [{ clientX: 100, clientY: 90 }] })
     })
 
     expect(onClose).not.toHaveBeenCalled()
@@ -592,9 +606,9 @@ describe("TaskDetail スワイプ動作", () => {
     const { container } = render(<TaskDetail tagOptions={TAG_OPTIONS} task={makeTask()} onClose={onClose} />)
 
     const panel = container.querySelector(".rounded-none-2xl") as HTMLElement
-    fireEvent.touchStart(panel, { touches: [{ clientY: 0 }] })
-    fireEvent.touchMove(panel, { touches: [{ clientY: 50 }] })
-    fireEvent.touchEnd(panel, { changedTouches: [{ clientY: 50 }] })
+    fireEvent.touchStart(panel, { touches: [{ clientX: 100, clientY: 0 }] })
+    fireEvent.touchMove(panel, { touches: [{ clientX: 100, clientY: 50 }] })
+    fireEvent.touchEnd(panel, { changedTouches: [{ clientX: 100, clientY: 50 }] })
 
     expect(onClose).not.toHaveBeenCalled()
   })

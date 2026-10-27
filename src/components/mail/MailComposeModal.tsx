@@ -1,5 +1,6 @@
 'use client';
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import React, { useState, useEffect, useRef } from 'react';
 import { ComposeDraft } from '@/types/mail';
 import { SlashCommandMenu, SlashCommandOption } from './SlashCommandMenu';
@@ -27,6 +28,7 @@ export function MailComposeModal({
   const [prevIsOpen, setPrevIsOpen] = useState<boolean>(false);
   const [prevInitialDraft, setPrevInitialDraft] = useState<Partial<ComposeDraft> | undefined>(undefined);
 
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: () => isSlashOpen ? setIsSlashOpen(false) : onClose(), disabled: !isOpen, pcBreakpoint: 768 })
   const slashPos = { top: 180, left: 32 };
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -98,6 +100,7 @@ export function MailComposeModal({
 
   return (
     <div
+      ref={swipeBackRef}
       data-testid="compose-modal"
       className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 select-none"
       role="dialog"
