@@ -1,5 +1,6 @@
 'use client';
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import React, { useState, useEffect } from 'react';
 import { Email } from '@/types/mail';
 import { CyberLoader } from '../CyberLoader';
@@ -27,6 +28,7 @@ export function AIDraftModal({
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedDraft, setGeneratedDraft] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: onClose, disabled: !isOpen || isGenerating, pcBreakpoint: 768 })
   const [prevIsOpen, setPrevIsOpen] = useState<boolean>(false);
 
   if (isOpen !== prevIsOpen) {
@@ -79,6 +81,7 @@ export function AIDraftModal({
 
   return (
     <div
+      ref={swipeBackRef}
       data-testid="ai-draft-modal"
       className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 select-none"
       role="dialog"

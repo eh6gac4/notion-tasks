@@ -38,6 +38,20 @@ describe('MailDetail Component', () => {
       expect(screen.getByText(/Select an email from the list/i)).toBeInTheDocument();
     });
 
+    it('swipes back after selecting the first email from an empty detail pane', () => {
+      const onBack = vi.fn();
+      const { rerender } = render(<MailDetail email={null} onBack={onBack} />);
+      for (let i = 0; i < 2; i++) {
+        rerender(<MailDetail email={sampleEmail} onBack={onBack} />);
+        const el = screen.getByRole('button', { name: 'Back to List' });
+        fireEvent.touchStart(el, { touches: [{ clientX: 10, clientY: 100, identifier: 0 }] });
+        fireEvent.touchMove(el, { touches: [{ clientX: 110, clientY: 105, identifier: 0 }] });
+        fireEvent.touchEnd(el, { touches: [], changedTouches: [{ clientX: 110, clientY: 105, identifier: 0 }] });
+        rerender(<MailDetail email={null} onBack={onBack} />);
+      }
+      expect(onBack).toHaveBeenCalledTimes(2);
+    });
+
     it('renders full email details including subject, folder badge, sender, recipients, and body', () => {
       render(<MailDetail {...defaultProps} />);
 

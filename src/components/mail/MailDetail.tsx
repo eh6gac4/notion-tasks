@@ -24,7 +24,7 @@ export function getSenderInitials(name: string): string {
 
 export function MailDetail({ email, isBodyLoading, onAIDraft, onToggleArchive, onBack }: MailDetailProps) {
   // 左端からのスワイプで一覧へ戻る（standalone PWA では OS のエッジスワイプバックが効かないため）
-  const panelRef = useSwipeBack<HTMLDivElement>({ onBack: () => onBack?.() });
+  const panelRef = useSwipeBack<HTMLDivElement>({ onBack: () => onBack?.(), disabled: !email || !onBack });
 
   if (!email) {
     return (
@@ -219,7 +219,13 @@ export function MailDetail({ email, isBodyLoading, onAIDraft, onToggleArchive, o
           </ul>
         </section>
       )}
-      <MailBody body={email.body} bodyHtml={email.bodyHtml} isLoading={isBodyLoading} />
+      <div className="relative">
+        <MailBody body={email.body} bodyHtml={email.bodyHtml} isLoading={isBodyLoading} />
+        {/* sandbox iframe 内のタッチは親に届かないため、左端を戻る操作用に確保する。 */}
+        {email.bodyHtml && onBack && (
+          <div aria-hidden="true" className="absolute inset-y-0 left-0 w-6 md:hidden" />
+        )}
+      </div>
     </div>
   );
 }

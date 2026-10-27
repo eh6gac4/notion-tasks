@@ -1,5 +1,6 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useState } from "react"
 import type { SortConfig, SortDirection, SortKey } from "@/types/task"
 import { DEFAULT_SORT } from "@/lib/task-sort"
@@ -47,6 +48,7 @@ export function TaskSortSheet({
   onApply: (next: SortConfig) => void
   onClose: () => void
 }) {
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: onClose, disabled: !open, pcBreakpoint: 1024 })
   const [draft, setDraft] = useState<SortConfig>(sort)
   const [prevOpen, setPrevOpen] = useState(open)
   const [prevSort, setPrevSort] = useState(sort)
@@ -79,7 +81,7 @@ export function TaskSortSheet({
   const directionDisabled = draft.key === "default"
 
   return (
-    <div data-testid="task-sort-sheet" className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+    <div ref={swipeBackRef} data-testid="task-sort-sheet" className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
       <div

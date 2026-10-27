@@ -1,5 +1,6 @@
 "use client"
 
+import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useTransition, useState, useEffect, useRef, useMemo, type CSSProperties } from "react"
 import type { Task, TaskAttachment, TaskComment, TaskStatus, TaskPriority } from "@/types/task"
 import { updateTaskAction, getTaskBlocksAction, updateTaskBlocksAction, getTaskCommentsAction, createTaskCommentAction, getTasksByIdsAction, uploadTaskAttachmentAction, removeTaskAttachmentAction } from "@/app/actions"
@@ -108,6 +109,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const [saveError, setSaveError] = useState<string | null>(null)
   const [blocksSaveError, setBlocksSaveError] = useState<string | null>(null)
 
+  const swipeBackRef = useSwipeBack<HTMLDivElement>({ onBack: handleClose, pcBreakpoint: 1024 })
   const [comments, setComments] = useState<TaskComment[]>([])
   const [isLoadingComments, setIsLoadingComments] = useState(true)
   const [commentsLoadError, setCommentsLoadError] = useState<string | null>(null)
@@ -124,6 +126,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const touchStartYRef = useRef(0)
+  const touchStartXRef = useRef(0)
   const dragYRef = useRef(0)
   const isDraggingRef = useRef(false)
   const rafIdRef = useRef(0)
@@ -180,15 +183,27 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
     const el = panel
 
     const THRESHOLD = 80
+    let direction: "horizontal" | "vertical" | null = null
 
     function onTouchStart(e: TouchEvent) {
-      touchStartYRef.current = e.touches[0].clientY
+      direction = null
       isDraggingRef.current = false
+      if (e.touches.length !== 1) return
+      touchStartXRef.current = e.touches[0].clientX
+      touchStartYRef.current = e.touches[0].clientY
       dragYRef.current = 0
     }
 
     function onTouchMove(e: TouchEvent) {
+      if (e.touches.length !== 1) return
+      if (e.target instanceof Element && e.target.closest("[data-swipe-back]") !== el.closest("[data-swipe-back]")) return
+      const deltaX = e.touches[0].clientX - touchStartXRef.current
       const deltaY = e.touches[0].clientY - touchStartYRef.current
+      if (!direction) {
+        if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < 8) return
+        direction = Math.abs(deltaX) >= Math.abs(deltaY) ? "horizontal" : "vertical"
+      }
+      if (direction === "horizontal") return
       if (deltaY <= 0) return
       if (el.scrollTop > 0) return
       if (isEditingBlocksRef.current) return
@@ -219,12 +234,21 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
       }
     }
 
+    function onTouchCancel() {
+      cancelAnimationFrame(rafIdRef.current)
+      isDraggingRef.current = false
+      dragYRef.current = 0
+      el.style.transform = "translateY(0)"
+    }
+
+    el.addEventListener("touchcancel", onTouchCancel, { passive: true })
     el.addEventListener("touchstart", onTouchStart, { passive: true })
     el.addEventListener("touchmove", onTouchMove, { passive: false })
     el.addEventListener("touchend", onTouchEnd, { passive: true })
 
     return () => {
       cancelAnimationFrame(rafIdRef.current)
+      el.removeEventListener("touchcancel", onTouchCancel)
       el.removeEventListener("touchstart", onTouchStart)
       el.removeEventListener("touchmove", onTouchMove)
       el.removeEventListener("touchend", onTouchEnd)
@@ -421,7 +445,7 @@ export function TaskDetail({ task, tagOptions, locationOptions = [], allTasks = 
   const statusStyle = STATUS_STYLES[editStatus] ?? STATUS_STYLES["未着手"]
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
+    <div ref={swipeBackRef} className="fixed inset-0 z-50 flex flex-col justify-end lg:justify-center lg:items-center lg:p-6">
       <div
         data-testid="task-detail-backdrop"
         className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
