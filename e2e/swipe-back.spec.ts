@@ -5,10 +5,19 @@ import { BOARD, TASK_ITEM, resetAndOpenHome } from './helpers'
 async function swipeBack(target: Locator) {
   await target.evaluate(el => {
     const y = Math.max(30, el.getBoundingClientRect().top + 20)
-    const touch = (x: number) => new Touch({ identifier: 1, target: el, clientX: x, clientY: y })
-    el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, touches: [touch(10)] }))
-    el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true, touches: [touch(120)] }))
-    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [touch(120)], touches: [] }))
+    const touch = (x: number) => ({ identifier: 1, target: el, clientX: x, clientY: y })
+    // WebKit では Touch / TouchEvent の直接生成ができないため、イベントにタッチ列を渡す。
+    const dispatch = (type: string, touches: ReturnType<typeof touch>[], changedTouches = touches) => {
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperties(event, {
+        touches: { value: touches },
+        changedTouches: { value: changedTouches },
+      })
+      el.dispatchEvent(event)
+    }
+    dispatch('touchstart', [touch(10)])
+    dispatch('touchmove', [touch(120)])
+    dispatch('touchend', [], [touch(120)])
   })
 }
 
