@@ -44,6 +44,7 @@ e2e/.auth/
 
 # OpenNext
 .open-next
+/.wrangler/
 
 # deploy script (contains secrets)
 deploy.sh

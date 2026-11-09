@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     ".agents/**",
     ".claude/**",
     ".open-next/**",
+    ".wrangler/**",
     // ビルドで生成される Service Worker のバンドル(src/app/sw.ts が実体)。
     "public/sw.js",
     "public/sw.js.map",
