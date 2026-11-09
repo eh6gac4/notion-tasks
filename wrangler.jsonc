@@ -2,6 +2,9 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": "./.open-next/worker.js",
 	"name": "notion-tasks",
+	"vars": {
+		"PASSKEY_ORIGIN": "https://todo.eh6gac4.work"
+	},
 	"compatibility_date": "2026-04-21",
 	"compatibility_flags": [
 		"nodejs_compat",

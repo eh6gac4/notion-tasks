@@ -35,7 +35,7 @@ npm run dev
 本番反映前に以下を実施する。
 
 ```bash
-npx wrangler d1 migrations apply notion-tasks --remote
+npx wrangler d1 execute notion-tasks --remote --file=./migrations/0004_passkeys.sql
 ```
 
 `PASSKEY_ORIGIN` に公開 URL（例 `https://tasks.example.com`）を設定する。省略時は `AUTH_URL`、`NEXTAUTH_URL` の順に参照する。HTTPS が必須で、開発用には `http://localhost:3000` のみ利用できる。登録したパスキーは登録時のドメインに紐づくため、普段アクセスするドメインに統一する。`APP_USERNAME` を変更した場合は再登録が必要。
