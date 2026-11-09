@@ -17,6 +17,7 @@
     "test:visual:update": "bash scripts/visual-regression.sh --update-snapshots",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "test:passkeys": "node scripts/passkey-smoke.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
@@ -26,6 +27,8 @@
   },
   "dependencies": {
     "@serwist/next": "^9.5.12",
+    "@simplewebauthn/browser-v13": "npm:@simplewebauthn/browser@^13.3.0",
+    "@simplewebauthn/server-v13": "npm:@simplewebauthn/server@^13.3.3",
     "next": "16.2.4",
     "next-auth": "^5.0.0-beta.31",
     "react": "19.2.4",

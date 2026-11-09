@@ -28,6 +28,24 @@ npm run dev
 | `GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット |
 | `GOOGLE_REFRESH_TOKEN` | Gmail refresh token（初回ブートストラップ用。失効後は `/mail` の再連携ボタンから更新される） |
 
+## パスキー
+
+パスワードでログインし、「設定 → パスキー」から登録する。次回からログイン画面の「パスキーでログイン」を使える。複数端末の登録と削除に対応し、パスワードログインも引き続き利用できる。
+
+本番反映前に以下を実施する。
+
+```bash
+npx wrangler d1 migrations apply notion-tasks --remote
+```
+
+`PASSKEY_ORIGIN` に公開 URL（例 `https://tasks.example.com`）を設定する。省略時は `AUTH_URL`、`NEXTAUTH_URL` の順に参照する。HTTPS が必須で、開発用には `http://localhost:3000` のみ利用できる。登録したパスキーは登録時のドメインに紐づくため、普段アクセスするドメインに統一する。`APP_USERNAME` を変更した場合は再登録が必要。
+
+パスキーの保存・認証には D1 バインディング `DB` と上記マイグレーションが必要。通常の開発サーバーはタスク用のインメモリデータを使うため、パスキーの実機確認には D1 を使える Cloudflare プレビュー環境を利用する。開発環境でも登録・削除には実際のログインが必要。
+
+SimpleWebAuthn は現行の 13 系を npm alias で参照する。Auth.js の組み込み WebAuthn provider が要求する任意の 9 系 peer 依存と分離し、認証結果は既存の Credentials provider と同じ JWT セッションに接続する。
+
+ローカルの Cloudflare プレビューとローカル D1 を起動し、マイグレーション適用後に `APP_USERNAME=... APP_PASSWORD=... npm run test:passkeys` を実行すると、Chromium の仮想認証器で登録・ログイン・削除・削除後の認証拒否を確認できる。接続先は既定で `http://localhost:8787`（`PASSKEY_TEST_URL` で変更可能）。`PASSKEY_ORIGIN` と `NEXTAUTH_URL` を接続先に揃える。ローカルプレビューは本番 `routes` を外した一時設定を使う（Wrangler による Origin の本番ドメインへの書き換えを防ぐため）。テスト用アカウントとローカル D1 を使用する。
+
 ## Gmail連携のセットアップ
 
 1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) で OAuth クライアント（ウェブアプリケーション）を作成

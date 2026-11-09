@@ -28,12 +28,17 @@ const mailPassthrough: RuntimeCaching = {
   handler: new NetworkOnly(),
 }
 
+const passkeyPassthrough: RuntimeCaching = {
+  matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && pathname.startsWith("/api/passkeys"),
+  handler: new NetworkOnly(),
+}
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false, // バナーからの手動更新を維持するため
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [oauthPassthrough, mailPassthrough, ...defaultCache],
+  runtimeCaching: [oauthPassthrough, mailPassthrough, passkeyPassthrough, ...defaultCache],
   // オフライン時にページ遷移が失敗した場合、ブラウザ標準のエラー画面ではなく /offline を返す。
   // /offline は force-static なのでプリキャッシュに含まれる。
   fallbacks: {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
+import { PasskeyLogin } from "@/components/PasskeyLogin"
 
 type SearchParams = {
   callbackUrl?: string
@@ -93,6 +94,7 @@ export default async function LoginPage({
             ACCESS
           </button>
         </form>
+        <PasskeyLogin callbackUrl={callbackUrl ?? "/"} />
       </div>
     </div>
   )

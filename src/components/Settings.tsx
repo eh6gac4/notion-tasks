@@ -3,6 +3,7 @@
 import { useSwipeBack } from "@/hooks/useSwipeBack"
 import { useEffect, useState } from "react"
 import { useSettings } from "./SettingsContext"
+import { PasskeySettings } from "./PasskeySettings"
 
 export function Settings() {
   const [open, setOpen] = useState(false)
@@ -61,6 +62,8 @@ export function Settings() {
             <h2 className="font-pixel text-sm text-[var(--accent)] tracking-widest uppercase mb-5 accent-glow-text-sm">
               ✦ Settings
             </h2>
+
+            <PasskeySettings />
 
             <div className="flex items-center justify-between py-3 border-t border-[var(--border)]">
               <div className="flex flex-col gap-1">
